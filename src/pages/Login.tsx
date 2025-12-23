@@ -34,7 +34,7 @@ export default function Login() {
     try {
       const success = await login(username, pincode);
       if (success) {
-        toast.success('Welkom terug!');
+        toast.success('Welkom terug!', { duration: 1500 });
         navigate('/dashboard');
       } else {
         setError('Ongeldige gebruikersnaam of pincode');

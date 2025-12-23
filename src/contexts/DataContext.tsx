@@ -2,6 +2,9 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { User, Lesson, LessonCredits, LessonStatus, Vehicle } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
+import { sendLessonNotification } from '@/utils/notifications';
+import { format } from 'date-fns';
+import { nl } from 'date-fns/locale';
 
 interface DataContextType {
   users: User[];
@@ -267,6 +270,20 @@ export function DataProvider({ children }: { children: ReactNode }) {
         });
 
       if (error) throw error;
+
+      // Send notification for new lesson
+      const instructor = users.find(u => u.id === lesson.instructor_id);
+      const student = users.find(u => u.id === lesson.student_id);
+      if (instructor && student) {
+        sendLessonNotification(
+          'planned',
+          student.name,
+          instructor.name,
+          format(new Date(lesson.date), 'd MMMM', { locale: nl }),
+          lesson.start_time.slice(0, 5)
+        );
+      }
+
       await fetchData();
       return true;
     } catch (error) {
@@ -288,7 +305,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
       if (error) throw error;
 
-      // If accepted, increment used_credits
+      // If accepted, increment used_credits and send notification
       if (status === 'accepted' && lesson.status === 'pending') {
         const studentCredit = credits.find(c => c.student_id === lesson.student_id);
         if (studentCredit) {
@@ -296,6 +313,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
             .from('lesson_credits')
             .update({ used_credits: studentCredit.used_credits + 1 })
             .eq('student_id', lesson.student_id);
+        }
+
+        // Send notification for accepted lesson
+        const instructor = users.find(u => u.id === lesson.instructor_id);
+        const student = users.find(u => u.id === lesson.student_id);
+        if (instructor && student) {
+          sendLessonNotification(
+            'accepted',
+            student.name,
+            instructor.name,
+            format(new Date(lesson.date), 'd MMMM', { locale: nl }),
+            lesson.start_time.slice(0, 5)
+          );
         }
       }
 
