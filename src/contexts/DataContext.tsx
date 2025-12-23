@@ -305,7 +305,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
       if (error) throw error;
 
-      // If accepted, increment used_credits and send notification
+      const instructor = users.find(u => u.id === lesson.instructor_id);
+      const student = users.find(u => u.id === lesson.student_id);
+      const formattedDate = format(new Date(lesson.date), 'd MMMM', { locale: nl });
+      const formattedTime = lesson.start_time.slice(0, 5);
+
+      // If accepted, increment used_credits
       if (status === 'accepted' && lesson.status === 'pending') {
         const studentCredit = credits.find(c => c.student_id === lesson.student_id);
         if (studentCredit) {
@@ -314,18 +319,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
             .update({ used_credits: studentCredit.used_credits + 1 })
             .eq('student_id', lesson.student_id);
         }
+      }
 
-        // Send notification for accepted lesson
-        const instructor = users.find(u => u.id === lesson.instructor_id);
-        const student = users.find(u => u.id === lesson.student_id);
-        if (instructor && student) {
-          sendLessonNotification(
-            'accepted',
-            student.name,
-            instructor.name,
-            format(new Date(lesson.date), 'd MMMM', { locale: nl }),
-            lesson.start_time.slice(0, 5)
-          );
+      // Send notification based on status change
+      if (instructor && student) {
+        if (status === 'accepted') {
+          sendLessonNotification('accepted', student.name, instructor.name, formattedDate, formattedTime);
+        } else if (status === 'cancelled' && lesson.status === 'pending') {
+          // Refused (student weigert pending les)
+          sendLessonNotification('refused', student.name, instructor.name, formattedDate, formattedTime);
         }
       }
 
@@ -375,6 +377,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
             .update({ used_credits: studentCredit.used_credits - 1 })
             .eq('student_id', lesson.student_id);
         }
+      }
+
+      // Send cancellation notification
+      const instructor = users.find(u => u.id === lesson.instructor_id);
+      const student = users.find(u => u.id === lesson.student_id);
+      if (instructor && student) {
+        sendLessonNotification(
+          'cancelled',
+          student.name,
+          instructor.name,
+          format(new Date(lesson.date), 'd MMMM', { locale: nl }),
+          lesson.start_time.slice(0, 5)
+        );
       }
 
       await fetchData();
