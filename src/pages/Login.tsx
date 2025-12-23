@@ -127,18 +127,8 @@ export default function Login() {
           </form>
         </div>
 
-        {/* Demo hint */}
-        <div className="mt-8 p-4 bg-card/60 backdrop-blur-sm rounded-2xl border border-border/40 shadow-sm">
-          <p className="text-sm text-muted-foreground text-center">
-            <strong className="text-foreground">Demo accounts:</strong><br />
-            <span className="text-xs mt-1 inline-block">
-              admin / 1234 • instructeur1 / 5678 • leerling1 / 9012
-            </span>
-          </p>
-        </div>
-
         {/* Install hint for PWA */}
-        <p className="text-xs text-muted-foreground text-center mt-6 opacity-60">
+        <p className="text-xs text-muted-foreground text-center mt-8 opacity-60">
           Tip: Voeg deze app toe aan je startscherm voor de beste ervaring
         </p>
       </div>
