@@ -5,7 +5,7 @@ import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { LessonCard } from '@/components/LessonCard';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Calendar, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Clock, CheckCircle } from 'lucide-react';
 import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -44,13 +44,17 @@ export default function Agenda() {
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
-  const dayLessons = lessons
+  
+  // Filter out cancelled lessons for the main view
+  const activeLessons = lessons.filter(l => l.status !== 'cancelled');
+  
+  const dayLessons = activeLessons
     .filter(l => l.date === selectedDateStr)
     .sort((a, b) => a.start_time.localeCompare(b.start_time));
 
   const getLessonsForDay = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    return lessons.filter(l => l.date === dateStr);
+    return activeLessons.filter(l => l.date === dateStr);
   };
 
   const getStatusDotsForDay = (date: Date) => {
@@ -58,7 +62,6 @@ export default function Agenda() {
     const statuses = {
       pending: dayLessons.filter(l => l.status === 'pending').length,
       accepted: dayLessons.filter(l => l.status === 'accepted').length,
-      cancelled: dayLessons.filter(l => l.status === 'cancelled').length,
     };
     return statuses;
   };
@@ -70,7 +73,6 @@ export default function Agenda() {
   // Count by status for legend
   const pendingCount = dayLessons.filter(l => l.status === 'pending').length;
   const acceptedCount = dayLessons.filter(l => l.status === 'accepted').length;
-  const cancelledCount = dayLessons.filter(l => l.status === 'cancelled').length;
 
   return (
     <div className="page-container">
@@ -111,7 +113,7 @@ export default function Agenda() {
             const isSelected = isSameDay(day, selectedDate);
             const isToday = isSameDay(day, new Date());
             const statuses = getStatusDotsForDay(day);
-            const hasLessons = statuses.pending + statuses.accepted + statuses.cancelled > 0;
+            const hasLessons = statuses.pending + statuses.accepted > 0;
 
             return (
               <motion.button
@@ -147,12 +149,6 @@ export default function Agenda() {
                         isSelected ? "bg-primary-foreground/70" : STATUS_COLORS.pending.bg
                       )} />
                     )}
-                    {statuses.cancelled > 0 && (
-                      <div className={cn(
-                        "w-1.5 h-1.5 rounded-full",
-                        isSelected ? "bg-primary-foreground/50" : STATUS_COLORS.cancelled.bg
-                      )} />
-                    )}
                   </div>
                 )}
 
@@ -174,10 +170,6 @@ export default function Agenda() {
           <div className="flex items-center gap-1.5 text-xs">
             <div className="w-2 h-2 rounded-full bg-warning" />
             <span className="text-muted-foreground">In afwachting</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs">
-            <div className="w-2 h-2 rounded-full bg-destructive" />
-            <span className="text-muted-foreground">Geannuleerd</span>
           </div>
         </div>
       </div>
@@ -210,15 +202,6 @@ export default function Agenda() {
               )}>
                 <Clock className="w-3 h-3" />
                 {pendingCount} wachtend
-              </div>
-            )}
-            {cancelledCount > 0 && (
-              <div className={cn(
-                "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
-                STATUS_COLORS.cancelled.light, STATUS_COLORS.cancelled.text
-              )}>
-                <XCircle className="w-3 h-3" />
-                {cancelledCount} geannuleerd
               </div>
             )}
           </div>
