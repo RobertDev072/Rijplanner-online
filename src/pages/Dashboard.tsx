@@ -5,26 +5,31 @@ import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { LessonCard } from '@/components/LessonCard';
 import { CreditsBadge } from '@/components/CreditsBadge';
-import { Users, GraduationCap, Calendar, Clock, Building2 } from 'lucide-react';
+import { Users, GraduationCap, Calendar, Clock, Building2, Sparkles, ArrowRight, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 
-function StatCard({ icon: Icon, label, value, color }: { 
+function StatCard({ icon: Icon, label, value, color, delay = 0 }: { 
   icon: React.ElementType; 
   label: string; 
   value: string | number;
   color: string;
+  delay?: number;
 }) {
   return (
-    <div className="glass-card rounded-xl p-4 animate-slide-up">
+    <div 
+      className="glass-card p-4 animate-slide-up"
+      style={{ animationDelay: `${delay}ms` }}
+    >
       <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-lg ${color} flex items-center justify-center`}>
-          <Icon className="w-5 h-5 text-primary-foreground" />
+        <div className={cn("stat-icon", color)}>
+          <Icon className="w-5 h-5 text-white" />
         </div>
         <div>
           <p className="text-2xl font-bold text-foreground">{value}</p>
-          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className="text-xs text-muted-foreground font-medium">{label}</p>
         </div>
       </div>
     </div>
@@ -33,7 +38,7 @@ function StatCard({ icon: Icon, label, value, color }: {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { getInstructors, getStudents, getLessonsForUser, getCreditsForStudent, updateLessonStatus } = useData();
+  const { getInstructors, getStudents, getLessonsForUser, getCreditsForStudent, updateLessonStatus, isLoading } = useData();
   const navigate = useNavigate();
 
   const getGreeting = () => {
@@ -45,30 +50,51 @@ export default function Dashboard() {
 
   if (!user) return null;
 
-  // Superadmin has no tenant, redirect to tenants page
+  // Superadmin dashboard
   if (user.role === 'superadmin') {
     return (
       <div className="page-container">
         <Header showLogo />
-        <div className="mb-6">
+        
+        <div className="mb-8 animate-slide-up">
+          <p className="text-muted-foreground text-sm font-medium mb-1">{getGreeting()}</p>
           <h2 className="text-2xl font-bold text-foreground">
-            {getGreeting()}, {user.name.split(' ')[0]}!
+            {user.name.split(' ')[0]} 👋
           </h2>
-          <p className="text-muted-foreground">Super Administrator</p>
         </div>
+
         <div 
-          className="glass-card rounded-xl p-6 cursor-pointer hover:border-primary transition-colors"
+          className="glass-card p-6 cursor-pointer group animate-slide-up"
+          style={{ animationDelay: '100ms' }}
           onClick={() => navigate('/tenants')}
         >
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center">
-              <Building2 className="w-6 h-6 text-primary-foreground" />
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <Building2 className="w-7 h-7 text-white" />
             </div>
-            <div>
-              <h3 className="font-semibold text-foreground">Rijscholen beheren</h3>
+            <div className="flex-1">
+              <h3 className="font-bold text-foreground text-lg">Rijscholen beheren</h3>
               <p className="text-sm text-muted-foreground">Bekijk en beheer alle rijscholen</p>
             </div>
+            <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
           </div>
+        </div>
+
+        <BottomNav />
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="page-container">
+        <Header showLogo />
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
+          <div className="relative">
+            <div className="w-16 h-16 rounded-full border-4 border-muted" />
+            <div className="absolute inset-0 w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+          </div>
+          <p className="text-muted-foreground">Laden...</p>
         </div>
         <BottomNav />
       </div>
@@ -86,12 +112,14 @@ export default function Dashboard() {
     <div className="page-container">
       <Header showLogo />
 
-      <div className="mb-6">
+      {/* Greeting */}
+      <div className="mb-6 animate-slide-up">
+        <p className="text-muted-foreground text-sm font-medium mb-1">{getGreeting()}</p>
         <h2 className="text-2xl font-bold text-foreground">
-          {getGreeting()}, {user.name.split(' ')[0]}!
+          {user.name.split(' ')[0]} 👋
         </h2>
-        <p className="text-muted-foreground">
-          {format(new Date(), "EEEE d MMMM yyyy", { locale: nl })}
+        <p className="text-sm text-muted-foreground mt-1">
+          {format(new Date(), "EEEE d MMMM", { locale: nl })}
         </p>
       </div>
 
@@ -102,38 +130,50 @@ export default function Dashboard() {
             icon={Users}
             label="Instructeurs"
             value={getInstructors().length}
-            color="bg-primary"
+            color="bg-gradient-to-br from-primary to-primary/70"
+            delay={50}
           />
           <StatCard
             icon={GraduationCap}
             label="Leerlingen"
             value={getStudents().length}
-            color="bg-accent"
+            color="bg-gradient-to-br from-accent to-accent/70"
+            delay={100}
           />
           <StatCard
             icon={Calendar}
             label="Geplande lessen"
             value={upcomingLessons.length}
-            color="bg-success"
+            color="bg-gradient-to-br from-success to-success/70"
+            delay={150}
           />
           <StatCard
             icon={Clock}
             label="In afwachting"
             value={pendingLessons.length}
-            color="bg-warning"
+            color="bg-gradient-to-br from-warning to-warning/70"
+            delay={200}
           />
         </div>
       )}
 
       {/* Student Credits */}
       {user.role === 'student' && (
-        <div className="glass-card rounded-xl p-4 mb-6 animate-slide-up">
+        <div 
+          className="glass-card p-5 mb-6 animate-slide-up bg-gradient-to-br from-primary/5 to-transparent"
+          style={{ animationDelay: '50ms' }}
+        >
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Jouw lescredits</p>
-              <p className="text-lg font-semibold text-foreground mt-1">
-                Beschikbaar voor nieuwe lessen
-              </p>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
+                <Sparkles className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground font-medium">Jouw lescredits</p>
+                <p className="text-xs text-muted-foreground">
+                  Beschikbaar voor lessen
+                </p>
+              </div>
             </div>
             <CreditsBadge credits={getCreditsForStudent(user.id)} size="lg" />
           </div>
@@ -143,15 +183,22 @@ export default function Dashboard() {
       {/* Pending Lessons for Student */}
       {user.role === 'student' && pendingLessons.length > 0 && (
         <div className="mb-6">
-          <h3 className="section-title">Lesverzoeken</h3>
+          <h3 className="section-title">
+            <div className="w-2 h-2 rounded-full bg-warning animate-pulse" />
+            Lesverzoeken
+            <span className="ml-auto text-xs font-medium text-warning bg-warning/10 px-2 py-1 rounded-full">
+              {pendingLessons.length} nieuw
+            </span>
+          </h3>
           <div className="space-y-3">
-            {pendingLessons.map(lesson => (
-              <LessonCard
-                key={lesson.id}
-                lesson={lesson}
-                showActions
-                onStatusChange={updateLessonStatus}
-              />
+            {pendingLessons.map((lesson, index) => (
+              <div key={lesson.id} style={{ animationDelay: `${(index + 1) * 50}ms` }}>
+                <LessonCard
+                  lesson={lesson}
+                  showActions
+                  onStatusChange={updateLessonStatus}
+                />
+              </div>
             ))}
           </div>
         </div>
@@ -160,17 +207,25 @@ export default function Dashboard() {
       {/* Upcoming Lessons */}
       <div>
         <h3 className="section-title">
+          <Calendar className="w-4 h-4 text-primary" />
           {user.role === 'admin' ? 'Alle geplande lessen' : 'Komende lessen'}
         </h3>
         {upcomingLessons.length === 0 ? (
-          <div className="glass-card rounded-xl p-6 text-center">
-            <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-            <p className="text-muted-foreground">Geen geplande lessen</p>
+          <div className="glass-card p-8 text-center animate-slide-up">
+            <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-4">
+              <Calendar className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h4 className="font-semibold text-foreground mb-1">Geen lessen gepland</h4>
+            <p className="text-sm text-muted-foreground">Je hebt momenteel geen komende lessen</p>
           </div>
         ) : (
           <div className="space-y-3">
             {upcomingLessons.slice(0, 5).map((lesson, index) => (
-              <div key={lesson.id} style={{ animationDelay: `${index * 50}ms` }}>
+              <div 
+                key={lesson.id} 
+                className="animate-slide-up"
+                style={{ animationDelay: `${(index + 1) * 50}ms` }}
+              >
                 <LessonCard lesson={lesson} />
               </div>
             ))}
