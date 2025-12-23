@@ -27,6 +27,7 @@ export interface Lesson {
   start_time: string;
   duration: number;
   status: LessonStatus;
+  remarks?: string | null;
   created_at: string;
   instructor?: User;
   student?: User;

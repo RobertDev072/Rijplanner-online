@@ -7,10 +7,11 @@ import { BottomNav } from '@/components/BottomNav';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CreditsBadge } from '@/components/CreditsBadge';
-import { Calendar, Clock, User, Send, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, User, Send, AlertCircle, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { validateNewLesson } from '@/utils/lessonValidation';
+import { Textarea } from '@/components/ui/textarea';
 
 const DURATION_OPTIONS = [45, 60, 90, 120];
 
@@ -23,6 +24,7 @@ export default function Schedule() {
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [duration, setDuration] = useState(60);
+  const [remarks, setRemarks] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!user || user.role !== 'instructor') return null;
@@ -64,6 +66,7 @@ export default function Schedule() {
         start_time: time,
         duration: duration,
         status: 'pending',
+        remarks: remarks.trim() || null,
       });
 
       toast.success('Lesverzoek verstuurd!');
@@ -178,7 +181,20 @@ export default function Schedule() {
           </div>
         </div>
 
-        {/* Submit */}
+        {/* Remarks / Pickup location */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground flex items-center gap-2">
+            <MapPin className="w-4 h-4" />
+            Ophaallocatie / Opmerking
+          </label>
+          <Textarea
+            value={remarks}
+            onChange={e => setRemarks(e.target.value)}
+            placeholder="Bijv. Ophalen bij station, of andere opmerkingen..."
+            className="resize-none"
+            rows={2}
+          />
+        </div>
         <Button
           type="submit"
           size="lg"

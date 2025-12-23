@@ -13,33 +13,55 @@ import {
   Trash2,
   Edit2,
   X,
-  Check
+  Check,
+  KeyRound
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { UserRole } from '@/types';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 type TabType = 'instructors' | 'students';
 
 export default function Users() {
   const { user } = useAuth();
-  const { getInstructors, getStudents, getCreditsForStudent, addUser, deleteUser, updateCredits } = useData();
+  const { getInstructors, getStudents, getCreditsForStudent, addUser, deleteUser, updateCredits, resetUserPincode } = useData();
   
   const [activeTab, setActiveTab] = useState<TabType>('instructors');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingCredits, setEditingCredits] = useState<string | null>(null);
   const [newCredits, setNewCredits] = useState('');
+  const [resetPincodeUser, setResetPincodeUser] = useState<{ id: string; name: string; role: UserRole } | null>(null);
+  const [newPincode, setNewPincode] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
   
   // Form state
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [pincode, setPincode] = useState('');
 
-  if (!user || user.role !== 'admin') return null;
+  if (!user || (user.role !== 'admin' && user.role !== 'superadmin')) return null;
 
   const instructors = getInstructors();
   const students = getStudents();
   const currentList = activeTab === 'instructors' ? instructors : students;
+
+  // Check if user can reset pincode for target user
+  const canResetPincode = (targetRole: UserRole): boolean => {
+    if (user.role === 'superadmin') return true; // Superadmin can reset everyone
+    if (user.role === 'admin' && targetRole === 'instructor') return true; // Admin can reset instructor
+    if (user.role === 'instructor' && targetRole === 'student') return true; // Instructor can reset student
+    return false;
+  };
 
   const handleAddUser = (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,6 +103,27 @@ export default function Users() {
     setEditingCredits(null);
     setNewCredits('');
     toast.success('Credits bijgewerkt');
+  };
+
+  const handleResetPincode = async () => {
+    if (!resetPincodeUser || newPincode.length !== 4) {
+      toast.error('Pincode moet 4 cijfers zijn');
+      return;
+    }
+
+    setIsResetting(true);
+    try {
+      const success = await resetUserPincode(resetPincodeUser.id, newPincode);
+      if (success) {
+        toast.success(`Pincode van ${resetPincodeUser.name} is gereset`);
+        setResetPincodeUser(null);
+        setNewPincode('');
+      } else {
+        toast.error('Kon pincode niet resetten');
+      }
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   return (
@@ -216,6 +259,18 @@ export default function Users() {
                 </div>
               )}
 
+              {/* Reset Pincode Button */}
+              {canResetPincode(u.role) && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setResetPincodeUser({ id: u.id, name: u.name, role: u.role })}
+                  title="Pincode resetten"
+                >
+                  <KeyRound className="w-4 h-4 text-warning" />
+                </Button>
+              )}
+
               <Button
                 size="icon"
                 variant="ghost"
@@ -235,6 +290,38 @@ export default function Users() {
           </div>
         )}
       </div>
+
+      {/* Reset Pincode Dialog */}
+      <AlertDialog open={!!resetPincodeUser} onOpenChange={(open) => !open && setResetPincodeUser(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Pincode resetten</AlertDialogTitle>
+            <AlertDialogDescription>
+              Voer een nieuwe 4-cijferige pincode in voor {resetPincodeUser?.name}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <Input
+              type="text"
+              inputMode="numeric"
+              placeholder="Nieuwe pincode (4 cijfers)"
+              maxLength={4}
+              value={newPincode}
+              onChange={e => setNewPincode(e.target.value.replace(/\D/g, ''))}
+              className="text-center text-lg tracking-widest"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setNewPincode('')}>Annuleren</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleResetPincode}
+              disabled={newPincode.length !== 4 || isResetting}
+            >
+              {isResetting ? 'Bezig...' : 'Pincode resetten'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <BottomNav />
     </div>

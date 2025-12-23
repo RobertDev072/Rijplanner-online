@@ -66,6 +66,7 @@ export type Database = {
           duration: number
           id: string
           instructor_id: string
+          remarks: string | null
           start_time: string
           status: Database["public"]["Enums"]["lesson_status"]
           student_id: string
@@ -77,6 +78,7 @@ export type Database = {
           duration?: number
           id?: string
           instructor_id: string
+          remarks?: string | null
           start_time: string
           status?: Database["public"]["Enums"]["lesson_status"]
           student_id: string
@@ -88,6 +90,7 @@ export type Database = {
           duration?: number
           id?: string
           instructor_id?: string
+          remarks?: string | null
           start_time?: string
           status?: Database["public"]["Enums"]["lesson_status"]
           student_id?: string
