@@ -1,110 +1,115 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { User, Lesson, LessonCredits, LessonStatus } from '@/types';
-
-// Mock data
-const MOCK_USERS: User[] = [
-  {
-    id: '1',
-    tenant_id: 'tenant-1',
-    username: 'admin',
-    pincode: '1234',
-    role: 'admin',
-    name: 'Jan de Vries',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    tenant_id: 'tenant-1',
-    username: 'instructeur1',
-    pincode: '5678',
-    role: 'instructor',
-    name: 'Peter Jansen',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: '3',
-    tenant_id: 'tenant-1',
-    username: 'leerling1',
-    pincode: '9012',
-    role: 'student',
-    name: 'Lisa Bakker',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: '4',
-    tenant_id: 'tenant-1',
-    username: 'leerling2',
-    pincode: '3456',
-    role: 'student',
-    name: 'Mark Visser',
-    created_at: new Date().toISOString(),
-  },
-];
-
-const MOCK_LESSONS: Lesson[] = [
-  {
-    id: 'lesson-1',
-    tenant_id: 'tenant-1',
-    instructor_id: '2',
-    student_id: '3',
-    date: '2024-12-24',
-    start_time: '10:00',
-    duration_minutes: 60,
-    status: 'pending',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'lesson-2',
-    tenant_id: 'tenant-1',
-    instructor_id: '2',
-    student_id: '4',
-    date: '2024-12-24',
-    start_time: '14:00',
-    duration_minutes: 90,
-    status: 'accepted',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'lesson-3',
-    tenant_id: 'tenant-1',
-    instructor_id: '2',
-    student_id: '3',
-    date: '2024-12-26',
-    start_time: '09:00',
-    duration_minutes: 60,
-    status: 'accepted',
-    created_at: new Date().toISOString(),
-  },
-];
-
-const MOCK_CREDITS: LessonCredits[] = [
-  { id: 'credit-1', tenant_id: 'tenant-1', student_id: '3', credits: 8, updated_at: new Date().toISOString() },
-  { id: 'credit-2', tenant_id: 'tenant-1', student_id: '4', credits: 3, updated_at: new Date().toISOString() },
-];
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from './AuthContext';
 
 interface DataContextType {
   users: User[];
   lessons: Lesson[];
   credits: LessonCredits[];
+  isLoading: boolean;
   getInstructors: () => User[];
   getStudents: () => User[];
   getUserById: (id: string) => User | undefined;
   getLessonsForUser: (userId: string, role: string) => Lesson[];
   getCreditsForStudent: (studentId: string) => number;
-  addUser: (user: Omit<User, 'id' | 'created_at'>) => void;
-  updateUser: (id: string, updates: Partial<User>) => void;
-  deleteUser: (id: string) => void;
-  addLesson: (lesson: Omit<Lesson, 'id' | 'created_at'>) => void;
-  updateLessonStatus: (lessonId: string, status: LessonStatus) => void;
-  updateCredits: (studentId: string, credits: number) => void;
+  addUser: (user: Omit<User, 'id' | 'created_at'>) => Promise<boolean>;
+  updateUser: (id: string, updates: Partial<User>) => Promise<boolean>;
+  deleteUser: (id: string) => Promise<boolean>;
+  addLesson: (lesson: Omit<Lesson, 'id' | 'created_at'>) => Promise<boolean>;
+  updateLessonStatus: (lessonId: string, status: LessonStatus) => Promise<boolean>;
+  updateCredits: (studentId: string, totalCredits: number) => Promise<boolean>;
+  refreshData: () => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export function DataProvider({ children }: { children: ReactNode }) {
-  const [users, setUsers] = useState<User[]>(MOCK_USERS);
-  const [lessons, setLessons] = useState<Lesson[]>(MOCK_LESSONS);
-  const [credits, setCredits] = useState<LessonCredits[]>(MOCK_CREDITS);
+  const { user: currentUser } = useAuth();
+  const [users, setUsers] = useState<User[]>([]);
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [credits, setCredits] = useState<LessonCredits[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    if (!currentUser) {
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Fetch users for the same tenant
+      const { data: usersData, error: usersError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('tenant_id', currentUser.tenant_id);
+
+      if (usersError) throw usersError;
+
+      // Fetch lessons for the same tenant
+      const { data: lessonsData, error: lessonsError } = await supabase
+        .from('lessons')
+        .select('*')
+        .eq('tenant_id', currentUser.tenant_id)
+        .order('date', { ascending: true })
+        .order('start_time', { ascending: true });
+
+      if (lessonsError) throw lessonsError;
+
+      // Fetch credits for the same tenant
+      const { data: creditsData, error: creditsError } = await supabase
+        .from('lesson_credits')
+        .select('*')
+        .eq('tenant_id', currentUser.tenant_id);
+
+      if (creditsError) throw creditsError;
+
+      const mappedUsers: User[] = (usersData || []).map(u => ({
+        id: u.id,
+        tenant_id: u.tenant_id,
+        username: u.username,
+        pincode: u.pincode,
+        role: u.role as User['role'],
+        name: u.name,
+        created_at: u.created_at,
+      }));
+
+      const mappedLessons: Lesson[] = (lessonsData || []).map(l => ({
+        id: l.id,
+        tenant_id: l.tenant_id,
+        instructor_id: l.instructor_id,
+        student_id: l.student_id,
+        date: l.date,
+        start_time: l.start_time,
+        duration: l.duration,
+        status: l.status as LessonStatus,
+        created_at: l.created_at,
+      }));
+
+      const mappedCredits: LessonCredits[] = (creditsData || []).map(c => ({
+        id: c.id,
+        tenant_id: c.tenant_id,
+        student_id: c.student_id,
+        total_credits: c.total_credits,
+        used_credits: c.used_credits,
+        created_at: c.created_at,
+        updated_at: c.updated_at,
+      }));
+
+      setUsers(mappedUsers);
+      setLessons(mappedLessons);
+      setCredits(mappedCredits);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const getInstructors = () => users.filter(u => u.role === 'instructor');
   const getStudents = () => users.filter(u => u.role === 'student');
@@ -118,74 +123,156 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const getCreditsForStudent = (studentId: string) => {
     const credit = credits.find(c => c.student_id === studentId);
-    return credit?.credits ?? 0;
+    if (!credit) return 0;
+    return credit.total_credits - credit.used_credits;
   };
 
-  const addUser = (user: Omit<User, 'id' | 'created_at'>) => {
-    const newUser: User = {
-      ...user,
-      id: `user-${Date.now()}`,
-      created_at: new Date().toISOString(),
-    };
-    setUsers(prev => [...prev, newUser]);
+  const addUser = async (user: Omit<User, 'id' | 'created_at'>): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .insert({
+          tenant_id: user.tenant_id,
+          username: user.username,
+          pincode: user.pincode,
+          role: user.role,
+          name: user.name,
+        })
+        .select()
+        .single();
 
-    // Als het een student is, maak ook credits aan
-    if (user.role === 'student') {
-      const newCredit: LessonCredits = {
-        id: `credit-${Date.now()}`,
-        tenant_id: user.tenant_id,
-        student_id: newUser.id,
-        credits: 10,
-        updated_at: new Date().toISOString(),
-      };
-      setCredits(prev => [...prev, newCredit]);
+      if (error) throw error;
+
+      // If student, create credits
+      if (user.role === 'student' && data) {
+        await supabase
+          .from('lesson_credits')
+          .insert({
+            tenant_id: user.tenant_id,
+            student_id: data.id,
+            total_credits: 10,
+            used_credits: 0,
+          });
+      }
+
+      await fetchData();
+      return true;
+    } catch (error) {
+      console.error('Error adding user:', error);
+      return false;
     }
   };
 
-  const updateUser = (id: string, updates: Partial<User>) => {
-    setUsers(prev => prev.map(u => (u.id === id ? { ...u, ...updates } : u)));
+  const updateUser = async (id: string, updates: Partial<User>): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({
+          username: updates.username,
+          pincode: updates.pincode,
+          name: updates.name,
+          role: updates.role,
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+      await fetchData();
+      return true;
+    } catch (error) {
+      console.error('Error updating user:', error);
+      return false;
+    }
   };
 
-  const deleteUser = (id: string) => {
-    setUsers(prev => prev.filter(u => u.id !== id));
-    setCredits(prev => prev.filter(c => c.student_id !== id));
+  const deleteUser = async (id: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      await fetchData();
+      return true;
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      return false;
+    }
   };
 
-  const addLesson = (lesson: Omit<Lesson, 'id' | 'created_at'>) => {
-    const newLesson: Lesson = {
-      ...lesson,
-      id: `lesson-${Date.now()}`,
-      created_at: new Date().toISOString(),
-    };
-    setLessons(prev => [...prev, newLesson]);
+  const addLesson = async (lesson: Omit<Lesson, 'id' | 'created_at'>): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('lessons')
+        .insert({
+          tenant_id: lesson.tenant_id,
+          instructor_id: lesson.instructor_id,
+          student_id: lesson.student_id,
+          date: lesson.date,
+          start_time: lesson.start_time,
+          duration: lesson.duration,
+          status: lesson.status,
+        });
+
+      if (error) throw error;
+      await fetchData();
+      return true;
+    } catch (error) {
+      console.error('Error adding lesson:', error);
+      return false;
+    }
   };
 
-  const updateLessonStatus = (lessonId: string, status: LessonStatus) => {
-    setLessons(prev =>
-      prev.map(l => {
-        if (l.id === lessonId) {
-          // Als geaccepteerd, trek credits af
-          if (status === 'accepted' && l.status === 'pending') {
-            const currentCredits = getCreditsForStudent(l.student_id);
-            if (currentCredits > 0) {
-              updateCredits(l.student_id, currentCredits - 1);
-            }
-          }
-          return { ...l, status };
+  const updateLessonStatus = async (lessonId: string, status: LessonStatus): Promise<boolean> => {
+    try {
+      const lesson = lessons.find(l => l.id === lessonId);
+      if (!lesson) return false;
+
+      // Update lesson status
+      const { error } = await supabase
+        .from('lessons')
+        .update({ status })
+        .eq('id', lessonId);
+
+      if (error) throw error;
+
+      // If accepted, increment used_credits
+      if (status === 'accepted' && lesson.status === 'pending') {
+        const studentCredit = credits.find(c => c.student_id === lesson.student_id);
+        if (studentCredit) {
+          await supabase
+            .from('lesson_credits')
+            .update({ used_credits: studentCredit.used_credits + 1 })
+            .eq('student_id', lesson.student_id);
         }
-        return l;
-      })
-    );
+      }
+
+      await fetchData();
+      return true;
+    } catch (error) {
+      console.error('Error updating lesson status:', error);
+      return false;
+    }
   };
 
-  const updateCredits = (studentId: string, newCredits: number) => {
-    setCredits(prev =>
-      prev.map(c =>
-        c.student_id === studentId
-          ? { ...c, credits: newCredits, updated_at: new Date().toISOString() }
-          : c
-      )
-    );
+  const updateCredits = async (studentId: string, totalCredits: number): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('lesson_credits')
+        .update({ total_credits: totalCredits })
+        .eq('student_id', studentId);
+
+      if (error) throw error;
+      await fetchData();
+      return true;
+    } catch (error) {
+      console.error('Error updating credits:', error);
+      return false;
+    }
+  };
+
+  const refreshData = async () => {
+    await fetchData();
   };
 
   return (
@@ -194,6 +281,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         users,
         lessons,
         credits,
+        isLoading,
         getInstructors,
         getStudents,
         getUserById,
@@ -205,6 +293,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         addLesson,
         updateLessonStatus,
         updateCredits,
+        refreshData,
       }}
     >
       {children}

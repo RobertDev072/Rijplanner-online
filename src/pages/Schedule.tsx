@@ -45,13 +45,13 @@ export default function Schedule() {
     setIsSubmitting(true);
 
     try {
-      addLesson({
+      await addLesson({
         tenant_id: user.tenant_id,
         instructor_id: user.id,
         student_id: selectedStudent,
         date,
         start_time: time,
-        duration_minutes: duration,
+        duration: duration,
         status: 'pending',
       });
 

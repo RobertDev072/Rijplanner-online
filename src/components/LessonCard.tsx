@@ -39,7 +39,7 @@ export function LessonCard({ lesson, showActions = false, onStatusChange }: Less
 
   const generateICS = () => {
     const startDate = new Date(`${lesson.date}T${lesson.start_time}`);
-    const endDate = new Date(startDate.getTime() + lesson.duration_minutes * 60000);
+    const endDate = new Date(startDate.getTime() + lesson.duration * 60000);
 
     const formatICSDate = (date: Date) => {
       return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
@@ -54,7 +54,7 @@ DTSTAMP:${formatICSDate(new Date())}
 DTSTART:${formatICSDate(startDate)}
 DTEND:${formatICSDate(endDate)}
 SUMMARY:Rijles met ${user?.role === 'student' ? instructor?.name : student?.name}
-DESCRIPTION:Rijles van ${lesson.duration_minutes} minuten
+DESCRIPTION:Rijles van ${lesson.duration} minuten
 END:VEVENT
 END:VCALENDAR`;
 
@@ -98,7 +98,7 @@ END:VCALENDAR`;
         <div className="flex items-center gap-2">
           <Clock className="w-4 h-4" />
           <span>
-            {lesson.start_time} - {lesson.duration_minutes} min
+            {lesson.start_time} - {lesson.duration} min
           </span>
         </div>
         <div className="flex items-center gap-2">
