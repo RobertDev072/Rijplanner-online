@@ -18,7 +18,9 @@ interface DataContextType {
   deleteUser: (id: string) => Promise<boolean>;
   addLesson: (lesson: Omit<Lesson, 'id' | 'created_at'>) => Promise<boolean>;
   updateLessonStatus: (lessonId: string, status: LessonStatus) => Promise<boolean>;
+  cancelLesson: (lessonId: string, refundCredits: boolean) => Promise<boolean>;
   updateCredits: (studentId: string, totalCredits: number) => Promise<boolean>;
+  resetUserPincode: (userId: string, newPincode: string) => Promise<boolean>;
   refreshData: () => Promise<void>;
 }
 
@@ -84,6 +86,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         start_time: l.start_time,
         duration: l.duration,
         status: l.status as LessonStatus,
+        remarks: l.remarks,
         created_at: l.created_at,
       }));
 
@@ -212,6 +215,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           start_time: lesson.start_time,
           duration: lesson.duration,
           status: lesson.status,
+          remarks: lesson.remarks,
         });
 
       if (error) throw error;
@@ -271,6 +275,54 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const cancelLesson = async (lessonId: string, refundCredits: boolean): Promise<boolean> => {
+    try {
+      const lesson = lessons.find(l => l.id === lessonId);
+      if (!lesson) return false;
+
+      // Update lesson status to cancelled
+      const { error } = await supabase
+        .from('lessons')
+        .update({ status: 'cancelled' })
+        .eq('id', lessonId);
+
+      if (error) throw error;
+
+      // Refund credits if the lesson was accepted and refund is requested
+      if (refundCredits && lesson.status === 'accepted') {
+        const studentCredit = credits.find(c => c.student_id === lesson.student_id);
+        if (studentCredit && studentCredit.used_credits > 0) {
+          await supabase
+            .from('lesson_credits')
+            .update({ used_credits: studentCredit.used_credits - 1 })
+            .eq('student_id', lesson.student_id);
+        }
+      }
+
+      await fetchData();
+      return true;
+    } catch (error) {
+      console.error('Error cancelling lesson:', error);
+      return false;
+    }
+  };
+
+  const resetUserPincode = async (userId: string, newPincode: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ pincode: newPincode })
+        .eq('id', userId);
+
+      if (error) throw error;
+      await fetchData();
+      return true;
+    } catch (error) {
+      console.error('Error resetting pincode:', error);
+      return false;
+    }
+  };
+
   const refreshData = async () => {
     await fetchData();
   };
@@ -292,7 +344,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
         deleteUser,
         addLesson,
         updateLessonStatus,
+        cancelLesson,
         updateCredits,
+        resetUserPincode,
         refreshData,
       }}
     >
