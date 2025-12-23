@@ -14,6 +14,7 @@ import Users from "./pages/Users";
 import Lessons from "./pages/Lessons";
 import Profile from "./pages/Profile";
 import Tenants from "./pages/Tenants";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -94,6 +95,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Tenants />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <Settings />
           </ProtectedRoute>
         }
       />
