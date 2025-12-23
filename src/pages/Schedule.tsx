@@ -6,7 +6,7 @@ import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { CreditsBadge } from '@/components/CreditsBadge';
+import { StudentSearch } from '@/components/StudentSearch';
 import { Calendar, Clock, User, Send, AlertCircle, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -86,40 +86,18 @@ export default function Schedule() {
       <Header title="Les inplannen" />
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Student Selection */}
+        {/* Student Selection with Search */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground flex items-center gap-2">
             <User className="w-4 h-4" />
             Leerling
           </label>
-          <div className="grid grid-cols-1 gap-2">
-            {students.map(student => {
-              const credits = getCreditsForStudent(student.id);
-              const isSelected = selectedStudent === student.id;
-
-              return (
-                <button
-                  key={student.id}
-                  type="button"
-                  onClick={() => setSelectedStudent(student.id)}
-                  className={cn(
-                    "glass-card rounded-xl p-4 text-left transition-all duration-200",
-                    isSelected
-                      ? "ring-2 ring-primary border-primary"
-                      : "hover:border-primary/50"
-                  )}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-foreground">{student.name}</p>
-                      <p className="text-sm text-muted-foreground">@{student.username}</p>
-                    </div>
-                    <CreditsBadge credits={credits} size="sm" showLabel={false} />
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+          <StudentSearch
+            students={students}
+            selectedStudentId={selectedStudent}
+            onSelect={setSelectedStudent}
+            getCredits={getCreditsForStudent}
+          />
         </div>
 
         {/* Credit Warning */}

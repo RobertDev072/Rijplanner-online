@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { User, Lesson, LessonCredits, LessonStatus } from '@/types';
+import { User, Lesson, LessonCredits, LessonStatus, Vehicle } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
 
@@ -7,12 +7,14 @@ interface DataContextType {
   users: User[];
   lessons: Lesson[];
   credits: LessonCredits[];
+  vehicles: Vehicle[];
   isLoading: boolean;
   getInstructors: () => User[];
   getStudents: () => User[];
   getUserById: (id: string) => User | undefined;
   getLessonsForUser: (userId: string, role: string) => Lesson[];
   getCreditsForStudent: (studentId: string) => number;
+  getStudentsWithLowCredits: () => { student: User; credits: number }[];
   addUser: (user: Omit<User, 'id' | 'created_at'>) => Promise<boolean>;
   updateUser: (id: string, updates: Partial<User>) => Promise<boolean>;
   deleteUser: (id: string) => Promise<boolean>;
@@ -21,6 +23,10 @@ interface DataContextType {
   cancelLesson: (lessonId: string, refundCredits: boolean) => Promise<boolean>;
   updateCredits: (studentId: string, totalCredits: number) => Promise<boolean>;
   resetUserPincode: (userId: string, newPincode: string) => Promise<boolean>;
+  // Vehicle functions
+  addVehicle: (vehicle: Omit<Vehicle, 'id' | 'created_at' | 'updated_at'>) => Promise<boolean>;
+  updateVehicle: (id: string, updates: Partial<Vehicle>) => Promise<boolean>;
+  deleteVehicle: (id: string) => Promise<boolean>;
   refreshData: () => Promise<void>;
 }
 
@@ -31,6 +37,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [users, setUsers] = useState<User[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [credits, setCredits] = useState<LessonCredits[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
@@ -67,6 +74,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
       if (creditsError) throw creditsError;
 
+      // Fetch vehicles for the same tenant
+      const { data: vehiclesData, error: vehiclesError } = await supabase
+        .from('vehicles')
+        .select('*')
+        .eq('tenant_id', currentUser.tenant_id);
+
+      if (vehiclesError) throw vehiclesError;
+
       const mappedUsers: User[] = (usersData || []).map(u => ({
         id: u.id,
         tenant_id: u.tenant_id,
@@ -74,6 +89,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
         pincode: u.pincode,
         role: u.role as User['role'],
         name: u.name,
+        avatar_url: u.avatar_url,
+        email: u.email,
+        phone: u.phone,
+        address: u.address,
         created_at: u.created_at,
       }));
 
@@ -100,9 +119,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
         updated_at: c.updated_at,
       }));
 
+      const mappedVehicles: Vehicle[] = (vehiclesData || []).map(v => ({
+        id: v.id,
+        tenant_id: v.tenant_id,
+        brand: v.brand,
+        model: v.model,
+        license_plate: v.license_plate,
+        instructor_id: v.instructor_id,
+        created_at: v.created_at,
+        updated_at: v.updated_at,
+      }));
+
       setUsers(mappedUsers);
       setLessons(mappedLessons);
       setCredits(mappedCredits);
+      setVehicles(mappedVehicles);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -128,6 +159,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const credit = credits.find(c => c.student_id === studentId);
     if (!credit) return 0;
     return credit.total_credits - credit.used_credits;
+  };
+
+  // Get students with low credits (≤3)
+  const getStudentsWithLowCredits = () => {
+    const studentsList = users.filter(u => u.role === 'student');
+    return studentsList
+      .map(student => ({
+        student,
+        credits: getCreditsForStudent(student.id)
+      }))
+      .filter(item => item.credits <= 3)
+      .sort((a, b) => a.credits - b.credits);
   };
 
   const addUser = async (user: Omit<User, 'id' | 'created_at'>): Promise<boolean> => {
@@ -168,14 +211,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const updateUser = async (id: string, updates: Partial<User>): Promise<boolean> => {
     try {
+      const updateData: Record<string, unknown> = {};
+      if (updates.username !== undefined) updateData.username = updates.username;
+      if (updates.pincode !== undefined) updateData.pincode = updates.pincode;
+      if (updates.name !== undefined) updateData.name = updates.name;
+      if (updates.role !== undefined) updateData.role = updates.role;
+      if (updates.avatar_url !== undefined) updateData.avatar_url = updates.avatar_url;
+      if (updates.email !== undefined) updateData.email = updates.email;
+      if (updates.phone !== undefined) updateData.phone = updates.phone;
+      if (updates.address !== undefined) updateData.address = updates.address;
+
       const { error } = await supabase
         .from('users')
-        .update({
-          username: updates.username,
-          pincode: updates.pincode,
-          name: updates.name,
-          role: updates.role,
-        })
+        .update(updateData)
         .eq('id', id);
 
       if (error) throw error;
@@ -327,18 +375,79 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await fetchData();
   };
 
+  // Vehicle functions
+  const addVehicle = async (vehicle: Omit<Vehicle, 'id' | 'created_at' | 'updated_at'>): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('vehicles')
+        .insert({
+          tenant_id: vehicle.tenant_id,
+          brand: vehicle.brand,
+          model: vehicle.model,
+          license_plate: vehicle.license_plate,
+          instructor_id: vehicle.instructor_id,
+        });
+
+      if (error) throw error;
+      await fetchData();
+      return true;
+    } catch (error) {
+      console.error('Error adding vehicle:', error);
+      return false;
+    }
+  };
+
+  const updateVehicle = async (id: string, updates: Partial<Vehicle>): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('vehicles')
+        .update({
+          brand: updates.brand,
+          model: updates.model,
+          license_plate: updates.license_plate,
+          instructor_id: updates.instructor_id,
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+      await fetchData();
+      return true;
+    } catch (error) {
+      console.error('Error updating vehicle:', error);
+      return false;
+    }
+  };
+
+  const deleteVehicle = async (id: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('vehicles')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      await fetchData();
+      return true;
+    } catch (error) {
+      console.error('Error deleting vehicle:', error);
+      return false;
+    }
+  };
+
   return (
     <DataContext.Provider
       value={{
         users,
         lessons,
         credits,
+        vehicles,
         isLoading,
         getInstructors,
         getStudents,
         getUserById,
         getLessonsForUser,
         getCreditsForStudent,
+        getStudentsWithLowCredits,
         addUser,
         updateUser,
         deleteUser,
@@ -347,6 +456,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
         cancelLesson,
         updateCredits,
         resetUserPincode,
+        addVehicle,
+        updateVehicle,
+        deleteVehicle,
         refreshData,
       }}
     >

@@ -6,7 +6,7 @@ import { BottomNav } from '@/components/BottomNav';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CreditsBadge } from '@/components/CreditsBadge';
-import { GraduationCap, KeyRound } from 'lucide-react';
+import { GraduationCap, KeyRound, UserPlus, Trash2, X, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -21,11 +21,15 @@ import {
 
 export default function Students() {
   const { user } = useAuth();
-  const { getStudents, getCreditsForStudent, resetUserPincode } = useData();
+  const { getStudents, getCreditsForStudent, resetUserPincode, addUser, deleteUser } = useData();
   
   const [resetPincodeUser, setResetPincodeUser] = useState<{ id: string; name: string } | null>(null);
   const [newPincode, setNewPincode] = useState('');
   const [isResetting, setIsResetting] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
+  const [pincode, setPincode] = useState('');
 
   if (!user || user.role !== 'instructor') return null;
 
@@ -52,9 +56,74 @@ export default function Students() {
     }
   };
 
+  const handleAddStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !username.trim() || pincode.length !== 4) {
+      toast.error('Vul alle velden correct in (pincode = 4 cijfers)');
+      return;
+    }
+
+    const success = await addUser({
+      tenant_id: user.tenant_id,
+      username: username.toLowerCase(),
+      pincode,
+      role: 'student',
+      name,
+    });
+
+    if (success) {
+      toast.success('Leerling toegevoegd!');
+      setName('');
+      setUsername('');
+      setPincode('');
+      setShowAddForm(false);
+    } else {
+      toast.error('Kon leerling niet toevoegen');
+    }
+  };
+
+  const handleDeleteStudent = async (studentId: string, studentName: string) => {
+    if (confirm(`Weet je zeker dat je ${studentName} wilt verwijderen?`)) {
+      const success = await deleteUser(studentId);
+      if (success) {
+        toast.success('Leerling verwijderd');
+      } else {
+        toast.error('Kon leerling niet verwijderen');
+      }
+    }
+  };
+
   return (
     <div className="page-container">
       <Header title="Mijn leerlingen" />
+
+      {/* Add Student Button */}
+      <Button
+        onClick={() => setShowAddForm(!showAddForm)}
+        variant={showAddForm ? 'secondary' : 'accent'}
+        className="w-full mb-4"
+      >
+        {showAddForm ? <><X className="w-4 h-4" />Annuleren</> : <><UserPlus className="w-4 h-4" />Leerling toevoegen</>}
+      </Button>
+
+      {/* Add Form */}
+      {showAddForm && (
+        <form onSubmit={handleAddStudent} className="glass-card rounded-xl p-4 mb-4 space-y-4 animate-slide-up">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Naam</label>
+            <Input placeholder="Volledige naam" value={name} onChange={e => setName(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Gebruikersnaam</label>
+            <Input placeholder="Gebruikersnaam" value={username} onChange={e => setUsername(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Pincode (4 cijfers)</label>
+            <Input type="text" inputMode="numeric" placeholder="1234" maxLength={4} value={pincode} onChange={e => setPincode(e.target.value.replace(/\D/g, ''))} />
+          </div>
+          <Button type="submit" className="w-full"><Check className="w-4 h-4" />Toevoegen</Button>
+        </form>
+      )}
 
       <div className="space-y-3">
         {students.map(student => (
@@ -72,13 +141,11 @@ export default function Students() {
               
               <div className="flex items-center gap-2">
                 <CreditsBadge credits={getCreditsForStudent(student.id)} size="sm" />
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => setResetPincodeUser({ id: student.id, name: student.name })}
-                  title="Pincode resetten"
-                >
+                <Button size="icon" variant="ghost" onClick={() => setResetPincodeUser({ id: student.id, name: student.name })} title="Pincode resetten">
                   <KeyRound className="w-4 h-4 text-warning" />
+                </Button>
+                <Button size="icon" variant="ghost" onClick={() => handleDeleteStudent(student.id, student.name)}>
+                  <Trash2 className="w-4 h-4 text-destructive" />
                 </Button>
               </div>
             </div>
@@ -93,34 +160,18 @@ export default function Students() {
         )}
       </div>
 
-      {/* Reset Pincode Dialog */}
       <AlertDialog open={!!resetPincodeUser} onOpenChange={(open) => !open && setResetPincodeUser(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Pincode resetten</AlertDialogTitle>
-            <AlertDialogDescription>
-              Voer een nieuwe 4-cijferige pincode in voor {resetPincodeUser?.name}.
-            </AlertDialogDescription>
+            <AlertDialogDescription>Voer een nieuwe 4-cijferige pincode in voor {resetPincodeUser?.name}.</AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-4">
-            <Input
-              type="text"
-              inputMode="numeric"
-              placeholder="Nieuwe pincode (4 cijfers)"
-              maxLength={4}
-              value={newPincode}
-              onChange={e => setNewPincode(e.target.value.replace(/\D/g, ''))}
-              className="text-center text-lg tracking-widest"
-            />
+            <Input type="text" inputMode="numeric" placeholder="Nieuwe pincode (4 cijfers)" maxLength={4} value={newPincode} onChange={e => setNewPincode(e.target.value.replace(/\D/g, ''))} className="text-center text-lg tracking-widest" />
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setNewPincode('')}>Annuleren</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleResetPincode}
-              disabled={newPincode.length !== 4 || isResetting}
-            >
-              {isResetting ? 'Bezig...' : 'Pincode resetten'}
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleResetPincode} disabled={newPincode.length !== 4 || isResetting}>{isResetting ? 'Bezig...' : 'Pincode resetten'}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -38,7 +38,7 @@ function StatCard({ icon: Icon, label, value, color, delay = 0 }: {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { getInstructors, getStudents, getLessonsForUser, getCreditsForStudent, updateLessonStatus, isLoading } = useData();
+  const { getInstructors, getStudents, getLessonsForUser, getCreditsForStudent, getStudentsWithLowCredits, updateLessonStatus, isLoading } = useData();
   const navigate = useNavigate();
 
   const getGreeting = () => {
@@ -125,36 +125,61 @@ export default function Dashboard() {
 
       {/* Admin Stats */}
       {user.role === 'admin' && (
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          <StatCard
-            icon={Users}
-            label="Instructeurs"
-            value={getInstructors().length}
-            color="bg-gradient-to-br from-primary to-primary/70"
-            delay={50}
-          />
-          <StatCard
-            icon={GraduationCap}
-            label="Leerlingen"
-            value={getStudents().length}
-            color="bg-gradient-to-br from-accent to-accent/70"
-            delay={100}
-          />
-          <StatCard
-            icon={Calendar}
-            label="Geplande lessen"
-            value={upcomingLessons.length}
-            color="bg-gradient-to-br from-success to-success/70"
-            delay={150}
-          />
-          <StatCard
-            icon={Clock}
-            label="In afwachting"
-            value={pendingLessons.length}
-            color="bg-gradient-to-br from-warning to-warning/70"
-            delay={200}
-          />
-        </div>
+        <>
+          {/* Low Credits Warning */}
+          {getStudentsWithLowCredits().length > 0 && (
+            <div className="glass-card p-4 mb-6 border-l-4 border-warning bg-warning/5 animate-slide-up">
+              <h3 className="font-semibold text-foreground flex items-center gap-2 mb-2">
+                <Sparkles className="w-4 h-4 text-warning" />
+                Lage credits waarschuwing
+              </h3>
+              <div className="space-y-2">
+                {getStudentsWithLowCredits().map(({ student, credits }) => (
+                  <div key={student.id} className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">{student.name}</span>
+                    <span className={cn(
+                      "font-medium px-2 py-0.5 rounded-full text-xs",
+                      credits === 0 ? "bg-destructive/10 text-destructive" : "bg-warning/10 text-warning"
+                    )}>
+                      {credits} credits
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <StatCard
+              icon={Users}
+              label="Instructeurs"
+              value={getInstructors().length}
+              color="bg-gradient-to-br from-primary to-primary/70"
+              delay={50}
+            />
+            <StatCard
+              icon={GraduationCap}
+              label="Leerlingen"
+              value={getStudents().length}
+              color="bg-gradient-to-br from-accent to-accent/70"
+              delay={100}
+            />
+            <StatCard
+              icon={Calendar}
+              label="Geplande lessen"
+              value={upcomingLessons.length}
+              color="bg-gradient-to-br from-success to-success/70"
+              delay={150}
+            />
+            <StatCard
+              icon={Clock}
+              label="In afwachting"
+              value={pendingLessons.length}
+              color="bg-gradient-to-br from-warning to-warning/70"
+              delay={200}
+            />
+          </div>
+        </>
       )}
 
       {/* Student Credits */}

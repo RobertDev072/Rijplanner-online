@@ -16,6 +16,7 @@ import Profile from "./pages/Profile";
 import Tenants from "./pages/Tenants";
 import Settings from "./pages/Settings";
 import Students from "./pages/Students";
+import Vehicles from "./pages/Vehicles";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -112,6 +113,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Students />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/vehicles"
+        element={
+          <ProtectedRoute>
+            <Vehicles />
           </ProtectedRoute>
         }
       />
