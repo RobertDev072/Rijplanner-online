@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { Header } from '@/components/Header';
@@ -14,11 +14,15 @@ import {
   Edit2,
   X,
   Check,
-  KeyRound
+  KeyRound,
+  Building2,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { UserRole } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,8 +33,28 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 
 type TabType = 'instructors' | 'students';
+
+interface Tenant {
+  id: string;
+  name: string;
+}
+
+interface AllUser {
+  id: string;
+  tenant_id: string | null;
+  username: string;
+  name: string;
+  role: UserRole;
+  email: string | null;
+  phone: string | null;
+}
 
 export default function Users() {
   const { user } = useAuth();
@@ -44,22 +68,266 @@ export default function Users() {
   const [newPincode, setNewPincode] = useState('');
   const [isResetting, setIsResetting] = useState(false);
   
+  // Superadmin specific state
+  const [allUsers, setAllUsers] = useState<AllUser[]>([]);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [expandedTenants, setExpandedTenants] = useState<Set<string>>(new Set());
+  const [isLoadingSuperadmin, setIsLoadingSuperadmin] = useState(false);
+  
   // Form state
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [pincode, setPincode] = useState('');
 
+  // Fetch all users and tenants for superadmin
+  useEffect(() => {
+    if (user?.role === 'superadmin') {
+      fetchAllData();
+    }
+  }, [user]);
+
+  const fetchAllData = async () => {
+    setIsLoadingSuperadmin(true);
+    try {
+      // Fetch all tenants
+      const { data: tenantsData, error: tenantsError } = await supabase
+        .from('tenants')
+        .select('id, name')
+        .order('name');
+
+      if (tenantsError) throw tenantsError;
+
+      // Fetch all users
+      const { data: usersData, error: usersError } = await supabase
+        .from('users')
+        .select('id, tenant_id, username, name, role, email, phone')
+        .order('name');
+
+      if (usersError) throw usersError;
+
+      setTenants(tenantsData || []);
+      setAllUsers((usersData || []).map(u => ({
+        ...u,
+        role: u.role as UserRole
+      })));
+      
+      // Expand all tenants by default
+      setExpandedTenants(new Set((tenantsData || []).map(t => t.id)));
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      toast.error('Fout bij ophalen gegevens');
+    } finally {
+      setIsLoadingSuperadmin(false);
+    }
+  };
+
+  const handleSuperadminResetPincode = async () => {
+    if (!resetPincodeUser || newPincode.length !== 4) {
+      toast.error('Pincode moet 4 cijfers zijn');
+      return;
+    }
+
+    setIsResetting(true);
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ pincode: newPincode })
+        .eq('id', resetPincodeUser.id);
+
+      if (error) throw error;
+
+      toast.success(`Pincode van ${resetPincodeUser.name} is gereset`);
+      setResetPincodeUser(null);
+      setNewPincode('');
+    } catch (error) {
+      console.error('Error resetting pincode:', error);
+      toast.error('Kon pincode niet resetten');
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
+  const toggleTenant = (tenantId: string) => {
+    const newExpanded = new Set(expandedTenants);
+    if (newExpanded.has(tenantId)) {
+      newExpanded.delete(tenantId);
+    } else {
+      newExpanded.add(tenantId);
+    }
+    setExpandedTenants(newExpanded);
+  };
+
+  const getRoleBadge = (role: UserRole) => {
+    const styles = {
+      admin: 'bg-primary/10 text-primary',
+      instructor: 'bg-accent/10 text-accent',
+      student: 'bg-success/10 text-success',
+      superadmin: 'bg-warning/10 text-warning'
+    };
+    const labels = {
+      admin: 'Admin',
+      instructor: 'Instructeur',
+      student: 'Leerling',
+      superadmin: 'Superadmin'
+    };
+    return (
+      <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", styles[role])}>
+        {labels[role]}
+      </span>
+    );
+  };
+
   if (!user || (user.role !== 'admin' && user.role !== 'superadmin')) return null;
 
+  // Superadmin view - show all users grouped by tenant
+  if (user.role === 'superadmin') {
+    return (
+      <div className="page-container">
+        <Header title="Alle Gebruikers" />
+
+        {isLoadingSuperadmin ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {tenants.map(tenant => {
+              const tenantUsers = allUsers.filter(u => u.tenant_id === tenant.id);
+              const isExpanded = expandedTenants.has(tenant.id);
+
+              return (
+                <Collapsible key={tenant.id} open={isExpanded} onOpenChange={() => toggleTenant(tenant.id)}>
+                  <CollapsibleTrigger asChild>
+                    <div className="glass-card p-4 cursor-pointer hover:bg-muted/30 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
+                          <Building2 className="w-5 h-5 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-foreground">{tenant.name}</h3>
+                          <p className="text-xs text-muted-foreground">{tenantUsers.length} gebruikers</p>
+                        </div>
+                        {isExpanded ? (
+                          <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                        ) : (
+                          <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                        )}
+                      </div>
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="mt-2 ml-4 space-y-2">
+                      {tenantUsers.length === 0 ? (
+                        <p className="text-sm text-muted-foreground py-2 px-4">Geen gebruikers</p>
+                      ) : (
+                        tenantUsers.map(u => (
+                          <div key={u.id} className="glass-card p-3 animate-fade-in">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <p className="font-medium text-foreground truncate">{u.name}</p>
+                                  {getRoleBadge(u.role)}
+                                </div>
+                                <p className="text-xs text-muted-foreground">@{u.username}</p>
+                              </div>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => setResetPincodeUser({ id: u.id, name: u.name, role: u.role })}
+                                title="Pincode resetten"
+                              >
+                                <KeyRound className="w-4 h-4 text-warning" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              );
+            })}
+
+            {/* Users without tenant */}
+            {allUsers.filter(u => !u.tenant_id && u.role !== 'superadmin').length > 0 && (
+              <div className="glass-card p-4">
+                <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <UsersIcon className="w-4 h-4" />
+                  Zonder rijschool
+                </h3>
+                <div className="space-y-2">
+                  {allUsers.filter(u => !u.tenant_id && u.role !== 'superadmin').map(u => (
+                    <div key={u.id} className="flex items-center justify-between gap-2 p-2 bg-muted/30 rounded-lg">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-foreground truncate">{u.name}</p>
+                          {getRoleBadge(u.role)}
+                        </div>
+                        <p className="text-xs text-muted-foreground">@{u.username}</p>
+                      </div>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => setResetPincodeUser({ id: u.id, name: u.name, role: u.role })}
+                        title="Pincode resetten"
+                      >
+                        <KeyRound className="w-4 h-4 text-warning" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Reset Pincode Dialog */}
+        <AlertDialog open={!!resetPincodeUser} onOpenChange={(open) => !open && setResetPincodeUser(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Pincode resetten</AlertDialogTitle>
+              <AlertDialogDescription>
+                Voer een nieuwe 4-cijferige pincode in voor {resetPincodeUser?.name}.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="py-4">
+              <Input
+                type="text"
+                inputMode="numeric"
+                placeholder="Nieuwe pincode (4 cijfers)"
+                maxLength={4}
+                value={newPincode}
+                onChange={e => setNewPincode(e.target.value.replace(/\D/g, ''))}
+                className="text-center text-lg tracking-widest"
+              />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setNewPincode('')}>Annuleren</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleSuperadminResetPincode}
+                disabled={newPincode.length !== 4 || isResetting}
+              >
+                {isResetting ? 'Bezig...' : 'Pincode resetten'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <BottomNav />
+      </div>
+    );
+  }
+
+  // Admin view - existing functionality
   const instructors = getInstructors();
   const students = getStudents();
   const currentList = activeTab === 'instructors' ? instructors : students;
 
   // Check if user can reset pincode for target user
   const canResetPincode = (targetRole: UserRole): boolean => {
-    if (user.role === 'superadmin') return true; // Superadmin can reset everyone
-    if (user.role === 'admin' && targetRole === 'instructor') return true; // Admin can reset instructor
-    if (user.role === 'instructor' && targetRole === 'student') return true; // Instructor can reset student
+    if (user.role === 'superadmin') return true;
+    if (user.role === 'admin' && targetRole === 'instructor') return true;
+    if (user.role === 'instructor' && targetRole === 'student') return true;
     return false;
   };
 

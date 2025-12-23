@@ -5,7 +5,8 @@ import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { LessonCard } from '@/components/LessonCard';
 import { CreditsBadge } from '@/components/CreditsBadge';
-import { Users, GraduationCap, Calendar, Clock, Building2, Sparkles, ArrowRight, Loader2 } from 'lucide-react';
+import { InstallPWA } from '@/components/InstallPWA';
+import { Users, GraduationCap, Calendar, Clock, Building2, Sparkles, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
@@ -121,6 +122,11 @@ export default function Dashboard() {
         <p className="text-sm text-muted-foreground mt-1">
           {format(new Date(), "EEEE d MMMM", { locale: nl })}
         </p>
+      </div>
+
+      {/* PWA Install Prompt */}
+      <div className="mb-6">
+        <InstallPWA />
       </div>
 
       {/* Admin Stats */}
