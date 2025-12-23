@@ -163,6 +163,19 @@
     @apply min-h-screen pb-24 px-4 pt-6 max-w-lg mx-auto;
   }
 
+  /* Tablet and larger screens */
+  @media (min-width: 768px) {
+    .page-container {
+      @apply max-w-2xl px-6 pt-8;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .page-container {
+      @apply max-w-4xl px-8;
+    }
+  }
+
   .section-title {
     @apply text-base font-semibold text-foreground mb-4 flex items-center gap-2;
   }

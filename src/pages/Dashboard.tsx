@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { Header } from '@/components/Header';
@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { requestNotificationPermission } from '@/utils/notifications';
 
 function StatCard({ icon: Icon, label, value, color, delay = 0 }: { 
   icon: React.ElementType; 
@@ -41,6 +42,11 @@ export default function Dashboard() {
   const { user } = useAuth();
   const { getInstructors, getStudents, getLessonsForUser, getCreditsForStudent, getStudentsWithLowCredits, updateLessonStatus, isLoading } = useData();
   const navigate = useNavigate();
+
+  // Request notification permission on mount
+  useEffect(() => {
+    requestNotificationPermission();
+  }, []);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
