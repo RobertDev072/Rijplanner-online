@@ -98,7 +98,7 @@ export default function Login() {
           </Button>
         </form>
 
-        /* {/* /* {/* Demo hint */}
+        {/* Demo hint */}
         <div className="mt-8 p-4 bg-muted rounded-xl">
           <p className="text-sm text-muted-foreground text-center">
             <strong>Demo accounts:</strong><br />
@@ -106,7 +106,7 @@ export default function Login() {
             instructeur1 / 5678<br />
             leerling1 / 9012
           </p>
-        </div> */ */} */
+        </div>
       </div>
     </div>
   );
