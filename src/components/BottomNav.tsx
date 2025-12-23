@@ -32,7 +32,7 @@ export function BottomNav() {
 
   return (
     <nav className="mobile-nav">
-      <div className="flex items-center justify-around py-2">
+      <div className="flex items-center justify-around py-2 px-2">
         {visibleItems.map(item => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
@@ -42,19 +42,32 @@ export function BottomNav() {
               key={item.path}
               onClick={() => navigate(item.path)}
               className={cn(
-                "flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-all duration-200",
+                "flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-300 min-w-[60px]",
                 isActive
                   ? "text-primary"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <Icon
-                className={cn(
-                  "w-6 h-6 transition-transform duration-200",
-                  isActive && "scale-110"
+              <div className={cn(
+                "relative p-2 rounded-xl transition-all duration-300",
+                isActive && "bg-primary/10"
+              )}>
+                <Icon
+                  className={cn(
+                    "w-5 h-5 transition-all duration-300",
+                    isActive && "scale-110"
+                  )}
+                />
+                {isActive && (
+                  <div className="absolute inset-0 rounded-xl bg-primary/20 animate-pulse-soft" />
                 )}
-              />
-              <span className="text-xs font-medium">{item.label}</span>
+              </div>
+              <span className={cn(
+                "text-[10px] font-medium transition-colors",
+                isActive && "text-primary"
+              )}>
+                {item.label}
+              </span>
             </button>
           );
         })}
