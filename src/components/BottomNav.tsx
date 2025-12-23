@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Calendar, Users, User, Plus, BookOpen, Building2 } from 'lucide-react';
+import { Home, Calendar, Users, User, Plus, BookOpen, Building2, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
@@ -18,6 +18,7 @@ const NAV_ITEMS: NavItem[] = [
   { icon: Plus, label: 'Inplannen', path: '/schedule', roles: ['instructor'] },
   { icon: Users, label: 'Gebruikers', path: '/users', roles: ['admin'] },
   { icon: BookOpen, label: 'Lessen', path: '/lessons', roles: ['admin'] },
+  { icon: Settings, label: 'Instellingen', path: '/settings', roles: ['admin'] },
   { icon: User, label: 'Profiel', path: '/profile', roles: ['admin', 'instructor', 'student', 'superadmin'] },
 ];
 

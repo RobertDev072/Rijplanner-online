@@ -10,13 +10,14 @@ import { CreditsBadge } from '@/components/CreditsBadge';
 import { Calendar, Clock, User, Send, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { validateNewLesson } from '@/utils/lessonValidation';
 
 const DURATION_OPTIONS = [45, 60, 90, 120];
 
 export default function Schedule() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { getStudents, getCreditsForStudent, addLesson } = useData();
+  const { getStudents, getCreditsForStudent, addLesson, lessons } = useData();
   
   const [selectedStudent, setSelectedStudent] = useState('');
   const [date, setDate] = useState('');
@@ -36,9 +37,19 @@ export default function Schedule() {
       return;
     }
 
-    const studentCredits = getCreditsForStudent(selectedStudent);
-    if (studentCredits === 0) {
-      toast.error('Deze leerling heeft geen credits meer');
+    // Validate the lesson (credits, instructor availability, student availability)
+    const validation = validateNewLesson(
+      user.id,
+      selectedStudent,
+      date,
+      time,
+      duration,
+      lessons,
+      getCreditsForStudent(selectedStudent)
+    );
+
+    if (!validation.valid) {
+      toast.error(validation.error);
       return;
     }
 
