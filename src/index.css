@@ -114,6 +114,15 @@
   }
 }
 
+/* Login page specific colors */
+:root {
+  --login-navy: 222 47% 11%;
+  --login-navy-light: 217 33% 17%;
+  --login-amber: 38 92% 50%;
+  --login-amber-light: 43 96% 56%;
+  --login-muted: 215 20% 65%;
+}
+
 @layer base {
   * {
     @apply border-border;
