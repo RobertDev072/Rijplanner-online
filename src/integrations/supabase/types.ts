@@ -142,7 +142,7 @@ export type Database = {
           name: string
           pincode: string
           role: Database["public"]["Enums"]["user_role"]
-          tenant_id: string
+          tenant_id: string | null
           username: string
         }
         Insert: {
@@ -151,7 +151,7 @@ export type Database = {
           name: string
           pincode: string
           role?: Database["public"]["Enums"]["user_role"]
-          tenant_id: string
+          tenant_id?: string | null
           username: string
         }
         Update: {
@@ -160,7 +160,7 @@ export type Database = {
           name?: string
           pincode?: string
           role?: Database["public"]["Enums"]["user_role"]
-          tenant_id?: string
+          tenant_id?: string | null
           username?: string
         }
         Relationships: [

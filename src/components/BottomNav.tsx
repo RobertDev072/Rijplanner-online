@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Calendar, Users, User, Plus, BookOpen } from 'lucide-react';
+import { Home, Calendar, Users, User, Plus, BookOpen, Building2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
@@ -12,12 +12,13 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { icon: Home, label: 'Home', path: '/dashboard', roles: ['admin', 'instructor', 'student'] },
+  { icon: Home, label: 'Home', path: '/dashboard', roles: ['admin', 'instructor', 'student', 'superadmin'] },
+  { icon: Building2, label: 'Rijscholen', path: '/tenants', roles: ['superadmin'] },
   { icon: Calendar, label: 'Agenda', path: '/agenda', roles: ['instructor', 'student'] },
   { icon: Plus, label: 'Inplannen', path: '/schedule', roles: ['instructor'] },
   { icon: Users, label: 'Gebruikers', path: '/users', roles: ['admin'] },
   { icon: BookOpen, label: 'Lessen', path: '/lessons', roles: ['admin'] },
-  { icon: User, label: 'Profiel', path: '/profile', roles: ['admin', 'instructor', 'student'] },
+  { icon: User, label: 'Profiel', path: '/profile', roles: ['admin', 'instructor', 'student', 'superadmin'] },
 ];
 
 export function BottomNav() {

@@ -13,6 +13,7 @@ import Schedule from "./pages/Schedule";
 import Users from "./pages/Users";
 import Lessons from "./pages/Lessons";
 import Profile from "./pages/Profile";
+import Tenants from "./pages/Tenants";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -85,6 +86,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Profile />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tenants"
+        element={
+          <ProtectedRoute>
+            <Tenants />
           </ProtectedRoute>
         }
       />
