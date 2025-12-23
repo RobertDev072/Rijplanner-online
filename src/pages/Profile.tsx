@@ -13,7 +13,8 @@ import {
   Car, 
   GraduationCap,
   Calendar,
-  CheckCircle
+  CheckCircle,
+  Crown
 } from 'lucide-react';
 
 export default function Profile() {
@@ -34,23 +35,31 @@ export default function Profile() {
 
   const getRoleIcon = () => {
     switch (user.role) {
+      case 'superadmin':
+        return Crown;
       case 'admin':
         return Shield;
       case 'instructor':
         return Car;
       case 'student':
         return GraduationCap;
+      default:
+        return User;
     }
   };
 
   const getRoleLabel = () => {
     switch (user.role) {
+      case 'superadmin':
+        return 'Super Administrator';
       case 'admin':
         return 'Beheerder';
       case 'instructor':
         return 'Instructeur';
       case 'student':
         return 'Leerling';
+      default:
+        return 'Gebruiker';
     }
   };
 
