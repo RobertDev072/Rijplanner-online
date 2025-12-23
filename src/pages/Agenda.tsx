@@ -5,10 +5,32 @@ import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { LessonCard } from '@/components/LessonCard';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
-import { format, addDays, startOfWeek, isSameDay, parseISO } from 'date-fns';
+import { ChevronLeft, ChevronRight, Calendar, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const STATUS_COLORS = {
+  pending: {
+    bg: 'bg-warning',
+    light: 'bg-warning/20',
+    text: 'text-warning',
+    border: 'border-warning/30',
+  },
+  accepted: {
+    bg: 'bg-success',
+    light: 'bg-success/20',
+    text: 'text-success',
+    border: 'border-success/30',
+  },
+  cancelled: {
+    bg: 'bg-destructive',
+    light: 'bg-destructive/20',
+    text: 'text-destructive',
+    border: 'border-destructive/30',
+  },
+};
 
 export default function Agenda() {
   const { user } = useAuth();
@@ -26,96 +48,222 @@ export default function Agenda() {
     .filter(l => l.date === selectedDateStr)
     .sort((a, b) => a.start_time.localeCompare(b.start_time));
 
-  const getLessonCountForDay = (date: Date) => {
+  const getLessonsForDay = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    return lessons.filter(l => l.date === dateStr && l.status !== 'cancelled').length;
+    return lessons.filter(l => l.date === dateStr);
+  };
+
+  const getStatusDotsForDay = (date: Date) => {
+    const dayLessons = getLessonsForDay(date);
+    const statuses = {
+      pending: dayLessons.filter(l => l.status === 'pending').length,
+      accepted: dayLessons.filter(l => l.status === 'accepted').length,
+      cancelled: dayLessons.filter(l => l.status === 'cancelled').length,
+    };
+    return statuses;
   };
 
   const navigateWeek = (direction: 'prev' | 'next') => {
     setSelectedDate(prev => addDays(prev, direction === 'next' ? 7 : -7));
   };
 
+  // Count by status for legend
+  const pendingCount = dayLessons.filter(l => l.status === 'pending').length;
+  const acceptedCount = dayLessons.filter(l => l.status === 'accepted').length;
+  const cancelledCount = dayLessons.filter(l => l.status === 'cancelled').length;
+
   return (
     <div className="page-container">
       <Header title="Agenda" />
 
       {/* Week Navigation */}
-      <div className="glass-card rounded-xl p-4 mb-4">
+      <div className="glass-card rounded-2xl p-4 mb-4">
         <div className="flex items-center justify-between mb-4">
-          <Button variant="ghost" size="icon" onClick={() => navigateWeek('prev')}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => navigateWeek('prev')}
+            className="rounded-xl"
+          >
             <ChevronLeft className="w-5 h-5" />
           </Button>
-          <span className="font-semibold">
-            {format(weekStart, 'MMMM yyyy', { locale: nl })}
-          </span>
-          <Button variant="ghost" size="icon" onClick={() => navigateWeek('next')}>
+          <div className="text-center">
+            <span className="font-bold text-lg">
+              {format(weekStart, 'MMMM', { locale: nl })}
+            </span>
+            <span className="text-muted-foreground ml-2">
+              {format(weekStart, 'yyyy')}
+            </span>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => navigateWeek('next')}
+            className="rounded-xl"
+          >
             <ChevronRight className="w-5 h-5" />
           </Button>
         </div>
 
-        {/* Week Days */}
+        {/* Week Days with Status Dots */}
         <div className="grid grid-cols-7 gap-1">
           {weekDays.map(day => {
             const isSelected = isSameDay(day, selectedDate);
             const isToday = isSameDay(day, new Date());
-            const lessonCount = getLessonCountForDay(day);
+            const statuses = getStatusDotsForDay(day);
+            const hasLessons = statuses.pending + statuses.accepted + statuses.cancelled > 0;
 
             return (
-              <button
+              <motion.button
                 key={day.toISOString()}
                 onClick={() => setSelectedDate(day)}
+                whileTap={{ scale: 0.95 }}
                 className={cn(
-                  "flex flex-col items-center py-2 rounded-lg transition-all duration-200",
+                  "flex flex-col items-center py-2 px-1 rounded-xl transition-all duration-300 relative",
                   isSelected
-                    ? "bg-primary text-primary-foreground"
+                    ? "bg-primary text-primary-foreground shadow-lg"
                     : isToday
-                    ? "bg-accent/10 text-accent"
+                    ? "bg-primary/10 text-primary"
                     : "hover:bg-muted"
                 )}
               >
-                <span className="text-xs font-medium uppercase">
+                <span className="text-[10px] font-medium uppercase opacity-70">
                   {format(day, 'EEE', { locale: nl })}
                 </span>
                 <span className="text-lg font-bold">{format(day, 'd')}</span>
-                {lessonCount > 0 && (
-                  <div
-                    className={cn(
-                      "w-1.5 h-1.5 rounded-full mt-1",
-                      isSelected ? "bg-primary-foreground" : "bg-accent"
+                
+                {/* Status dots */}
+                {hasLessons && (
+                  <div className="flex gap-0.5 mt-1">
+                    {statuses.accepted > 0 && (
+                      <div className={cn(
+                        "w-1.5 h-1.5 rounded-full",
+                        isSelected ? "bg-primary-foreground" : STATUS_COLORS.accepted.bg
+                      )} />
                     )}
-                  />
+                    {statuses.pending > 0 && (
+                      <div className={cn(
+                        "w-1.5 h-1.5 rounded-full",
+                        isSelected ? "bg-primary-foreground/70" : STATUS_COLORS.pending.bg
+                      )} />
+                    )}
+                    {statuses.cancelled > 0 && (
+                      <div className={cn(
+                        "w-1.5 h-1.5 rounded-full",
+                        isSelected ? "bg-primary-foreground/50" : STATUS_COLORS.cancelled.bg
+                      )} />
+                    )}
+                  </div>
                 )}
-              </button>
+
+                {/* Today indicator */}
+                {isToday && !isSelected && (
+                  <div className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-primary" />
+                )}
+              </motion.button>
             );
           })}
         </div>
+
+        {/* Legend */}
+        <div className="flex items-center justify-center gap-4 mt-4 pt-3 border-t border-border/50">
+          <div className="flex items-center gap-1.5 text-xs">
+            <div className="w-2 h-2 rounded-full bg-success" />
+            <span className="text-muted-foreground">Bevestigd</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs">
+            <div className="w-2 h-2 rounded-full bg-warning" />
+            <span className="text-muted-foreground">In afwachting</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs">
+            <div className="w-2 h-2 rounded-full bg-destructive" />
+            <span className="text-muted-foreground">Geannuleerd</span>
+          </div>
+        </div>
       </div>
 
-      {/* Selected Day */}
+      {/* Selected Day Header */}
       <div className="mb-4">
-        <h3 className="section-title">
-          {format(selectedDate, "EEEE d MMMM", { locale: nl })}
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="section-title mb-0">
+            <Calendar className="w-4 h-4 text-primary" />
+            {format(selectedDate, "EEEE d MMMM", { locale: nl })}
+          </h3>
+        </div>
+        
+        {/* Day summary badges */}
+        {dayLessons.length > 0 && (
+          <div className="flex gap-2 mt-3">
+            {acceptedCount > 0 && (
+              <div className={cn(
+                "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
+                STATUS_COLORS.accepted.light, STATUS_COLORS.accepted.text
+              )}>
+                <CheckCircle className="w-3 h-3" />
+                {acceptedCount} bevestigd
+              </div>
+            )}
+            {pendingCount > 0 && (
+              <div className={cn(
+                "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
+                STATUS_COLORS.pending.light, STATUS_COLORS.pending.text
+              )}>
+                <Clock className="w-3 h-3" />
+                {pendingCount} wachtend
+              </div>
+            )}
+            {cancelledCount > 0 && (
+              <div className={cn(
+                "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
+                STATUS_COLORS.cancelled.light, STATUS_COLORS.cancelled.text
+              )}>
+                <XCircle className="w-3 h-3" />
+                {cancelledCount} geannuleerd
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Day Lessons */}
-      {dayLessons.length === 0 ? (
-        <div className="glass-card rounded-xl p-6 text-center">
-          <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground">Geen lessen op deze dag</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {dayLessons.map(lesson => (
-            <LessonCard
-              key={lesson.id}
-              lesson={lesson}
-              showActions={user.role === 'student'}
-              onStatusChange={updateLessonStatus}
-            />
-          ))}
-        </div>
-      )}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={selectedDateStr}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.2 }}
+        >
+          {dayLessons.length === 0 ? (
+            <div className="glass-card rounded-2xl p-8 text-center">
+              <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-4">
+                <Calendar className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <h4 className="font-semibold text-foreground mb-1">Geen lessen</h4>
+              <p className="text-sm text-muted-foreground">
+                Er zijn geen lessen gepland op deze dag
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {dayLessons.map((lesson, index) => (
+                <motion.div
+                  key={lesson.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <LessonCard
+                    lesson={lesson}
+                    showActions={user.role === 'student'}
+                    onStatusChange={updateLessonStatus}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
 
       <BottomNav />
     </div>
