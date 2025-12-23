@@ -149,27 +149,39 @@ export type Database = {
       }
       users: {
         Row: {
+          address: string | null
+          avatar_url: string | null
           created_at: string
+          email: string | null
           id: string
           name: string
+          phone: string | null
           pincode: string
           role: Database["public"]["Enums"]["user_role"]
           tenant_id: string | null
           username: string
         }
         Insert: {
+          address?: string | null
+          avatar_url?: string | null
           created_at?: string
+          email?: string | null
           id?: string
           name: string
+          phone?: string | null
           pincode: string
           role?: Database["public"]["Enums"]["user_role"]
           tenant_id?: string | null
           username: string
         }
         Update: {
+          address?: string | null
+          avatar_url?: string | null
           created_at?: string
+          email?: string | null
           id?: string
           name?: string
+          phone?: string | null
           pincode?: string
           role?: Database["public"]["Enums"]["user_role"]
           tenant_id?: string | null
@@ -181,6 +193,47 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicles: {
+        Row: {
+          brand: string
+          created_at: string
+          id: string
+          instructor_id: string | null
+          license_plate: string
+          model: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          brand: string
+          created_at?: string
+          id?: string
+          instructor_id?: string | null
+          license_plate: string
+          model: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          brand?: string
+          created_at?: string
+          id?: string
+          instructor_id?: string | null
+          license_plate?: string
+          model?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
