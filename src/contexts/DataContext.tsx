@@ -3,6 +3,7 @@ import { User, Lesson, LessonCredits, LessonStatus, Vehicle } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
 import { sendLessonNotification } from '@/utils/notifications';
+import { sendPushNotification } from '@/utils/pushNotifications';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 
@@ -271,16 +272,22 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
       if (error) throw error;
 
-      // Send notification for new lesson
+      // Send notifications for new lesson
       const instructor = users.find(u => u.id === lesson.instructor_id);
       const student = users.find(u => u.id === lesson.student_id);
       if (instructor && student) {
-        sendLessonNotification(
-          'planned',
-          student.name,
-          instructor.name,
-          format(new Date(lesson.date), 'd MMMM', { locale: nl }),
-          lesson.start_time.slice(0, 5)
+        const formattedDate = format(new Date(lesson.date), 'd MMMM', { locale: nl });
+        const formattedTime = lesson.start_time.slice(0, 5);
+        
+        // Local browser notification
+        sendLessonNotification('planned', student.name, instructor.name, formattedDate, formattedTime);
+        
+        // Push notification to student
+        sendPushNotification(
+          [lesson.student_id],
+          '📅 Nieuwe les gepland',
+          `Les met ${instructor.name} op ${formattedDate} om ${formattedTime}`,
+          lesson.tenant_id
         );
       }
 
@@ -321,13 +328,28 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Send notification based on status change
+      // Send notifications based on status change
       if (instructor && student) {
         if (status === 'accepted') {
+          // Local browser notification
           sendLessonNotification('accepted', student.name, instructor.name, formattedDate, formattedTime);
+          // Push to instructor that student accepted
+          sendPushNotification(
+            [lesson.instructor_id],
+            '✅ Les geaccepteerd',
+            `${student.name} heeft de les op ${formattedDate} om ${formattedTime} geaccepteerd`,
+            lesson.tenant_id
+          );
         } else if (status === 'cancelled' && lesson.status === 'pending') {
           // Refused (student weigert pending les)
           sendLessonNotification('refused', student.name, instructor.name, formattedDate, formattedTime);
+          // Push to instructor that student refused
+          sendPushNotification(
+            [lesson.instructor_id],
+            '🚫 Les geweigerd',
+            `${student.name} heeft de les op ${formattedDate} om ${formattedTime} geweigerd`,
+            lesson.tenant_id
+          );
         }
       }
 
@@ -379,16 +401,22 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Send cancellation notification
+      // Send cancellation notifications
       const instructor = users.find(u => u.id === lesson.instructor_id);
       const student = users.find(u => u.id === lesson.student_id);
       if (instructor && student) {
-        sendLessonNotification(
-          'cancelled',
-          student.name,
-          instructor.name,
-          format(new Date(lesson.date), 'd MMMM', { locale: nl }),
-          lesson.start_time.slice(0, 5)
+        const formattedDate = format(new Date(lesson.date), 'd MMMM', { locale: nl });
+        const formattedTime = lesson.start_time.slice(0, 5);
+        
+        // Local browser notification
+        sendLessonNotification('cancelled', student.name, instructor.name, formattedDate, formattedTime);
+        
+        // Push to both instructor and student
+        sendPushNotification(
+          [lesson.instructor_id, lesson.student_id],
+          '❌ Les geannuleerd',
+          `De les op ${formattedDate} om ${formattedTime} is geannuleerd`,
+          lesson.tenant_id
         );
       }
 

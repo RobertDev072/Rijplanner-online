@@ -11,7 +11,12 @@ import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { requestNotificationPermission } from '@/utils/notifications';
+import { 
+  registerServiceWorker, 
+  subscribeToPushNotifications, 
+  requestPushPermission,
+  checkPushNotificationSupport 
+} from '@/utils/pushNotifications';
 
 function StatCard({ icon: Icon, label, value, color, delay = 0 }: { 
   icon: React.ElementType; 
@@ -43,10 +48,28 @@ export default function Dashboard() {
   const { getInstructors, getStudents, getLessonsForUser, getCreditsForStudent, getStudentsWithLowCredits, updateLessonStatus, isLoading } = useData();
   const navigate = useNavigate();
 
-  // Request notification permission on mount
+  // Register service worker and subscribe to push notifications
   useEffect(() => {
-    requestNotificationPermission();
-  }, []);
+    const setupPushNotifications = async () => {
+      if (!user || !checkPushNotificationSupport()) return;
+      
+      // Register service worker
+      await registerServiceWorker();
+      
+      // Request permission
+      const granted = await requestPushPermission();
+      if (!granted) return;
+      
+      // Get VAPID public key
+      const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+      if (!vapidPublicKey || !user.tenant_id) return;
+      
+      // Subscribe to push notifications
+      await subscribeToPushNotifications(user.id, user.tenant_id, vapidPublicKey);
+    };
+    
+    setupPushNotifications();
+  }, [user]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
