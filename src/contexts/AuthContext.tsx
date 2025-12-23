@@ -1,45 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, AuthState } from '@/types';
-
-// Mock data voor development - later vervangen door Supabase
-const MOCK_USERS: User[] = [
-  {
-    id: '1',
-    tenant_id: 'tenant-1',
-    username: 'admin',
-    pincode: '1234',
-    role: 'admin',
-    name: 'Jan de Vries',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    tenant_id: 'tenant-1',
-    username: 'instructeur1',
-    pincode: '5678',
-    role: 'instructor',
-    name: 'Peter Jansen',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: '3',
-    tenant_id: 'tenant-1',
-    username: 'leerling1',
-    pincode: '9012',
-    role: 'student',
-    name: 'Lisa Bakker',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: '4',
-    tenant_id: 'tenant-1',
-    username: 'leerling2',
-    pincode: '3456',
-    role: 'student',
-    name: 'Mark Visser',
-    created_at: new Date().toISOString(),
-  },
-];
+import { supabase } from '@/integrations/supabase/client';
 
 interface AuthContextType extends AuthState {
   login: (username: string, pincode: string) => Promise<boolean>;
@@ -76,22 +37,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (username: string, pincode: string): Promise<boolean> => {
-    // Mock login - later vervangen door Supabase query
-    const user = MOCK_USERS.find(
-      u => u.username.toLowerCase() === username.toLowerCase() && u.pincode === pincode
-    );
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .ilike('username', username)
+        .eq('pincode', pincode)
+        .maybeSingle();
 
-    if (user) {
-      localStorage.setItem('rijplanner_user', JSON.stringify(user));
-      setState({
-        user,
-        isAuthenticated: true,
-        isLoading: false,
-      });
-      return true;
+      if (error) {
+        console.error('Login error:', error);
+        return false;
+      }
+
+      if (data) {
+        const user: User = {
+          id: data.id,
+          tenant_id: data.tenant_id,
+          username: data.username,
+          pincode: data.pincode,
+          role: data.role as User['role'],
+          name: data.name,
+          created_at: data.created_at,
+        };
+        localStorage.setItem('rijplanner_user', JSON.stringify(user));
+        setState({
+          user,
+          isAuthenticated: true,
+          isLoading: false,
+        });
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
     }
-
-    return false;
   };
 
   const logout = () => {
