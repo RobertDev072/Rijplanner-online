@@ -5,9 +5,10 @@ import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { LessonCard } from '@/components/LessonCard';
 import { CreditsBadge } from '@/components/CreditsBadge';
-import { Users, GraduationCap, Calendar, Clock } from 'lucide-react';
+import { Users, GraduationCap, Calendar, Clock, Building2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
+import { useNavigate } from 'react-router-dom';
 
 function StatCard({ icon: Icon, label, value, color }: { 
   icon: React.ElementType; 
@@ -33,15 +34,7 @@ function StatCard({ icon: Icon, label, value, color }: {
 export default function Dashboard() {
   const { user } = useAuth();
   const { getInstructors, getStudents, getLessonsForUser, getCreditsForStudent, updateLessonStatus } = useData();
-
-  if (!user) return null;
-
-  const lessons = getLessonsForUser(user.id, user.role);
-  const today = format(new Date(), 'yyyy-MM-dd');
-  const upcomingLessons = lessons
-    .filter(l => l.date >= today && l.status !== 'cancelled')
-    .sort((a, b) => a.date.localeCompare(b.date) || a.start_time.localeCompare(b.start_time));
-  const pendingLessons = lessons.filter(l => l.status === 'pending');
+  const navigate = useNavigate();
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -49,6 +42,45 @@ export default function Dashboard() {
     if (hour < 18) return 'Goedemiddag';
     return 'Goedenavond';
   };
+
+  if (!user) return null;
+
+  // Superadmin has no tenant, redirect to tenants page
+  if (user.role === 'superadmin') {
+    return (
+      <div className="page-container">
+        <Header showLogo />
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-foreground">
+            {getGreeting()}, {user.name.split(' ')[0]}!
+          </h2>
+          <p className="text-muted-foreground">Super Administrator</p>
+        </div>
+        <div 
+          className="glass-card rounded-xl p-6 cursor-pointer hover:border-primary transition-colors"
+          onClick={() => navigate('/tenants')}
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center">
+              <Building2 className="w-6 h-6 text-primary-foreground" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground">Rijscholen beheren</h3>
+              <p className="text-sm text-muted-foreground">Bekijk en beheer alle rijscholen</p>
+            </div>
+          </div>
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
+
+  const lessons = getLessonsForUser(user.id, user.role);
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const upcomingLessons = lessons
+    .filter(l => l.date >= today && l.status !== 'cancelled')
+    .sort((a, b) => a.date.localeCompare(b.date) || a.start_time.localeCompare(b.start_time));
+  const pendingLessons = lessons.filter(l => l.status === 'pending');
 
   return (
     <div className="page-container">

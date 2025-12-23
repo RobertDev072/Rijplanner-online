@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'instructor' | 'student';
+export type UserRole = 'admin' | 'instructor' | 'student' | 'superadmin';
 
 export type LessonStatus = 'pending' | 'accepted' | 'cancelled';
 
@@ -10,7 +10,7 @@ export interface Tenant {
 
 export interface User {
   id: string;
-  tenant_id: string;
+  tenant_id: string | null;
   username: string;
   pincode: string;
   role: UserRole;
