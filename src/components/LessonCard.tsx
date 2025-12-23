@@ -403,10 +403,10 @@ END:VCALENDAR`;
   // Swipeable card for pending lessons
   if (canSwipe) {
     return (
-      <div className="relative overflow-hidden rounded-2xl">
+      <div className="relative overflow-hidden rounded-2xl touch-pan-y">
         {/* Background indicators */}
         <motion.div 
-          className="absolute inset-0 flex items-center justify-start pl-6 rounded-2xl"
+          className="absolute inset-0 flex items-center justify-start pl-6 rounded-2xl pointer-events-none"
           style={{ backgroundColor: bgReject }}
         >
           <motion.div style={{ scale: rejectIconScale, opacity: rejectIconOpacity }}>
@@ -417,7 +417,7 @@ END:VCALENDAR`;
         </motion.div>
         
         <motion.div 
-          className="absolute inset-0 flex items-center justify-end pr-6 rounded-2xl"
+          className="absolute inset-0 flex items-center justify-end pr-6 rounded-2xl pointer-events-none"
           style={{ backgroundColor: bgAccept }}
         >
           <motion.div style={{ scale: acceptIconScale, opacity: acceptIconOpacity }}>
@@ -429,13 +429,23 @@ END:VCALENDAR`;
 
         {/* Swipeable card */}
         <motion.div
-          className="glass-card p-4 relative z-10 cursor-grab active:cursor-grabbing"
-          style={{ x, opacity, scale }}
+          className="glass-card p-4 relative z-10 will-change-transform"
+          style={{ 
+            x, 
+            opacity, 
+            scale,
+            touchAction: 'pan-y',
+          }}
           drag="x"
+          dragDirectionLock
           dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.7}
+          dragElastic={0.2}
+          dragSnapToOrigin
           onDragEnd={handleDragEnd}
-          whileTap={{ scale: 0.98 }}
+          dragTransition={{ 
+            bounceStiffness: 300, 
+            bounceDamping: 30 
+          }}
         >
           {cardContent}
         </motion.div>
