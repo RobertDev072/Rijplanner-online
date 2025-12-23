@@ -15,7 +15,23 @@ export interface User {
   pincode: string;
   role: UserRole;
   name: string;
+  avatar_url?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
   created_at: string;
+}
+
+export interface Vehicle {
+  id: string;
+  tenant_id: string;
+  brand: string;
+  model: string;
+  license_plate: string;
+  instructor_id: string | null;
+  created_at: string;
+  updated_at: string;
+  instructor?: User;
 }
 
 export interface Lesson {
@@ -41,6 +57,12 @@ export interface LessonCredits {
   used_credits: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
 }
 
 export interface AuthState {
