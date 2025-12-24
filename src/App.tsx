@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { DataProvider } from "@/contexts/DataContext";
 import { SplashScreen } from "@/components/SplashScreen";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -147,6 +148,7 @@ function AppWithSplash() {
 
   return (
     <>
+      <OfflineIndicator />
       <Toaster />
       <Sonner />
       <BrowserRouter>
