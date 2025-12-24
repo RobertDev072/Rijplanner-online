@@ -77,14 +77,21 @@ export default {
         },
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        '4xl': 'calc(var(--radius) + 0.5rem)',
+        '3xl': 'var(--radius)',
+        '2xl': 'calc(var(--radius) - 0.25rem)',
+        xl: 'calc(var(--radius) - 0.5rem)',
+        lg: 'calc(var(--radius) - 0.75rem)',
+        md: 'calc(var(--radius) - 1rem)',
+        sm: 'calc(var(--radius) - 1.125rem)',
       },
       boxShadow: {
         'card': 'var(--shadow-card)',
+        'card-hover': 'var(--shadow-card-hover)',
         'soft': 'var(--shadow-md)',
         'elevated': 'var(--shadow-lg)',
+        'button': 'var(--shadow-button)',
+        'input': 'var(--shadow-input)',
       },
       keyframes: {
         "accordion-down": {

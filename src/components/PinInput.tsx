@@ -1,4 +1,5 @@
 import React, { useRef, useState, KeyboardEvent, ClipboardEvent } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface PinInputProps {
@@ -11,6 +12,7 @@ interface PinInputProps {
 export function PinInput({ length = 4, value, onChange, className }: PinInputProps) {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [focused, setFocused] = useState<number | null>(null);
+  const [showPin, setShowPin] = useState(false);
 
   const handleChange = (index: number, digit: string) => {
     if (!/^\d*$/.test(digit)) return;
@@ -41,29 +43,50 @@ export function PinInput({ length = 4, value, onChange, className }: PinInputPro
   };
 
   return (
-    <div className={cn("flex gap-3 justify-center", className)}>
-      {Array.from({ length }).map((_, index) => (
-        <input
-          key={index}
-          ref={el => (inputRefs.current[index] = el)}
-          type="text"
-          inputMode="numeric"
-          maxLength={1}
-          value={value[index] || ''}
-          onChange={e => handleChange(index, e.target.value)}
-          onKeyDown={e => handleKeyDown(index, e)}
-          onPaste={handlePaste}
-          onFocus={() => setFocused(index)}
-          onBlur={() => setFocused(null)}
-          className={cn(
-            "w-14 h-16 text-center text-2xl font-bold rounded-xl border-2 bg-card transition-all duration-200",
-            focused === index
-              ? "border-primary ring-2 ring-primary/20"
-              : "border-input",
-            value[index] ? "border-primary/50" : ""
-          )}
-        />
-      ))}
+    <div className={cn("space-y-3", className)}>
+      <div className="flex gap-3 justify-center">
+        {Array.from({ length }).map((_, index) => (
+          <input
+            key={index}
+            ref={el => (inputRefs.current[index] = el)}
+            type={showPin ? "text" : "password"}
+            inputMode="numeric"
+            maxLength={1}
+            value={value[index] || ''}
+            onChange={e => handleChange(index, e.target.value)}
+            onKeyDown={e => handleKeyDown(index, e)}
+            onPaste={handlePaste}
+            onFocus={() => setFocused(index)}
+            onBlur={() => setFocused(null)}
+            className={cn(
+              "w-14 h-16 text-center text-2xl font-bold rounded-2xl border-2 bg-card transition-all duration-200",
+              focused === index
+                ? "border-primary ring-4 ring-primary/20 scale-105"
+                : "border-input",
+              value[index] ? "border-primary/50 bg-primary/5" : ""
+            )}
+          />
+        ))}
+      </div>
+      
+      {/* Toggle visibility button */}
+      <button
+        type="button"
+        onClick={() => setShowPin(!showPin)}
+        className="flex items-center justify-center gap-2 w-full py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
+        {showPin ? (
+          <>
+            <EyeOff className="w-4 h-4" />
+            <span>Pincode verbergen</span>
+          </>
+        ) : (
+          <>
+            <Eye className="w-4 h-4" />
+            <span>Pincode tonen</span>
+          </>
+        )}
+      </button>
     </div>
   );
 }
