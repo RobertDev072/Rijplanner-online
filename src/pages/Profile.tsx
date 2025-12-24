@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
+import { MobileMenu } from '@/components/MobileMenu';
 import { Button } from '@/components/ui/button';
 import { CreditsBadge } from '@/components/CreditsBadge';
 import { ProfileEditor } from '@/components/ProfileEditor';
@@ -89,6 +90,7 @@ export default function Profile() {
 
   return (
     <div className="page-container">
+      <MobileMenu />
       <Header title="Profiel" />
 
       {isEditing ? (
