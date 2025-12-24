@@ -34,7 +34,7 @@ export function BottomNav() {
 
   return (
     <nav className="mobile-nav">
-      <div className="flex items-center justify-around py-2 px-2">
+      <div className="flex items-center justify-around py-2 px-3">
         {visibleItems.map(item => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
@@ -44,15 +44,15 @@ export function BottomNav() {
               key={item.path}
               onClick={() => navigate(item.path)}
               className={cn(
-                "flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-300 min-w-[60px]",
+                "flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-all duration-300 min-w-[56px] touch-manipulation active:scale-95",
                 isActive
                   ? "text-primary"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
               <div className={cn(
-                "relative p-2 rounded-xl transition-all duration-300",
-                isActive && "bg-primary/10"
+                "relative p-2.5 rounded-2xl transition-all duration-300",
+                isActive && "bg-primary/10 shadow-sm"
               )}>
                 <Icon
                   className={cn(
@@ -61,12 +61,12 @@ export function BottomNav() {
                   )}
                 />
                 {isActive && (
-                  <div className="absolute inset-0 rounded-xl bg-primary/20 animate-pulse-soft" />
+                  <div className="absolute inset-0 rounded-2xl bg-primary/15 animate-pulse-soft" />
                 )}
               </div>
               <span className={cn(
                 "text-[10px] font-medium transition-colors",
-                isActive && "text-primary"
+                isActive ? "text-primary" : "text-muted-foreground"
               )}>
                 {item.label}
               </span>
