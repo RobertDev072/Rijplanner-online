@@ -1,15 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { 
-  Settings as SettingsIcon, 
   Palette, 
   Building2, 
   Download, 
@@ -19,93 +18,56 @@ import {
 } from 'lucide-react';
 import { exportLessonsToCSV, exportCreditsToCSV, exportFullReportToCSV } from '@/utils/csvExport';
 
-interface TenantSettings {
-  name: string;
-  logo_url: string | null;
-  primary_color: string;
-}
-
 export default function Settings() {
   const { user } = useAuth();
   const { lessons, credits, users } = useData();
-  const [settings, setSettings] = useState<TenantSettings>({
+  const { theme, isLoading, updateTheme } = useTheme();
+  const [localSettings, setLocalSettings] = React.useState({
     name: '',
-    logo_url: null,
+    logo_url: '',
     primary_color: '#3B82F6',
+    secondary_color: '#10B981',
   });
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSaving, setIsSaving] = React.useState(false);
 
-  useEffect(() => {
-    if (user?.tenant_id) {
-      fetchSettings();
-    }
-  }, [user?.tenant_id]);
-
-  const fetchSettings = async () => {
-    if (!user?.tenant_id) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('tenants')
-        .select('name, logo_url, primary_color')
-        .eq('id', user.tenant_id)
-        .maybeSingle();
-
-      if (error) throw error;
-      
-      if (data) {
-        setSettings({
-          name: data.name,
-          logo_url: data.logo_url,
-          primary_color: data.primary_color || '#3B82F6',
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching settings:', error);
-      toast.error('Kon instellingen niet laden');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  React.useEffect(() => {
+    setLocalSettings({
+      name: theme.name,
+      logo_url: theme.logo_url || '',
+      primary_color: theme.primary_color,
+      secondary_color: theme.secondary_color,
+    });
+  }, [theme]);
 
   const handleSave = async () => {
-    if (!user?.tenant_id) return;
-    
     setIsSaving(true);
-    try {
-      const { error } = await supabase
-        .from('tenants')
-        .update({
-          name: settings.name,
-          logo_url: settings.logo_url,
-          primary_color: settings.primary_color,
-        })
-        .eq('id', user.tenant_id);
-
-      if (error) throw error;
-      
-      toast.success('Instellingen opgeslagen');
-    } catch (error) {
-      console.error('Error saving settings:', error);
+    const success = await updateTheme({
+      name: localSettings.name,
+      logo_url: localSettings.logo_url || null,
+      primary_color: localSettings.primary_color,
+      secondary_color: localSettings.secondary_color,
+    });
+    
+    if (success) {
+      toast.success('Instellingen opgeslagen - kleuren zijn direct aangepast!');
+    } else {
       toast.error('Kon instellingen niet opslaan');
-    } finally {
-      setIsSaving(false);
     }
+    setIsSaving(false);
   };
 
   const handleExportLessons = () => {
-    exportLessonsToCSV(lessons, users, `${settings.name}-lessen`);
+    exportLessonsToCSV(lessons, users, `${localSettings.name}-lessen`);
     toast.success('Lessen geëxporteerd');
   };
 
   const handleExportCredits = () => {
-    exportCreditsToCSV(credits, users, `${settings.name}-credits`);
+    exportCreditsToCSV(credits, users, `${localSettings.name}-credits`);
     toast.success('Credits geëxporteerd');
   };
 
   const handleExportAll = () => {
-    exportFullReportToCSV(lessons, credits, users, settings.name);
+    exportFullReportToCSV(lessons, credits, users, localSettings.name);
     toast.success('Volledige export gestart');
   };
 
@@ -139,8 +101,8 @@ export default function Settings() {
             <Label htmlFor="name">Naam rijschool</Label>
             <Input
               id="name"
-              value={settings.name}
-              onChange={(e) => setSettings({ ...settings, name: e.target.value })}
+              value={localSettings.name}
+              onChange={(e) => setLocalSettings({ ...localSettings, name: e.target.value })}
               placeholder="Naam van je rijschool"
               className="mt-1.5"
             />
@@ -150,8 +112,8 @@ export default function Settings() {
             <Label htmlFor="logo_url">Logo URL</Label>
             <Input
               id="logo_url"
-              value={settings.logo_url || ''}
-              onChange={(e) => setSettings({ ...settings, logo_url: e.target.value || null })}
+              value={localSettings.logo_url}
+              onChange={(e) => setLocalSettings({ ...localSettings, logo_url: e.target.value })}
               placeholder="https://example.com/logo.png"
               className="mt-1.5"
             />
@@ -169,26 +131,50 @@ export default function Settings() {
           Kleuren
         </h3>
         
-        <div>
-          <Label htmlFor="primary_color">Primaire kleur</Label>
-          <div className="flex gap-3 mt-1.5">
-            <input
-              type="color"
-              id="primary_color"
-              value={settings.primary_color}
-              onChange={(e) => setSettings({ ...settings, primary_color: e.target.value })}
-              className="w-12 h-10 rounded-lg cursor-pointer border border-border"
-            />
-            <Input
-              value={settings.primary_color}
-              onChange={(e) => setSettings({ ...settings, primary_color: e.target.value })}
-              placeholder="#3B82F6"
-              className="flex-1"
-            />
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="primary_color">Primaire kleur</Label>
+            <div className="flex gap-3 mt-1.5">
+              <input
+                type="color"
+                id="primary_color"
+                value={localSettings.primary_color}
+                onChange={(e) => setLocalSettings({ ...localSettings, primary_color: e.target.value })}
+                className="w-12 h-10 rounded-lg cursor-pointer border border-border"
+              />
+              <Input
+                value={localSettings.primary_color}
+                onChange={(e) => setLocalSettings({ ...localSettings, primary_color: e.target.value })}
+                placeholder="#3B82F6"
+                className="flex-1"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              De hoofdkleur van je app (voor knoppen, accenten, etc.)
+            </p>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            De hoofdkleur van je app (voor knoppen, accenten, etc.)
-          </p>
+
+          <div>
+            <Label htmlFor="secondary_color">Secundaire kleur</Label>
+            <div className="flex gap-3 mt-1.5">
+              <input
+                type="color"
+                id="secondary_color"
+                value={localSettings.secondary_color}
+                onChange={(e) => setLocalSettings({ ...localSettings, secondary_color: e.target.value })}
+                className="w-12 h-10 rounded-lg cursor-pointer border border-border"
+              />
+              <Input
+                value={localSettings.secondary_color}
+                onChange={(e) => setLocalSettings({ ...localSettings, secondary_color: e.target.value })}
+                placeholder="#10B981"
+                className="flex-1"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              De accent kleur (voor badges, highlights, etc.)
+            </p>
+          </div>
         </div>
 
         <Button 
