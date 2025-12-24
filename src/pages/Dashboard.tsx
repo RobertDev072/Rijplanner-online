@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
+import { MobileMenu } from '@/components/MobileMenu';
 import { LessonCard } from '@/components/LessonCard';
 import { CreditsBadge } from '@/components/CreditsBadge';
 import { InstallPWA } from '@/components/InstallPWA';
@@ -141,6 +142,7 @@ export default function Dashboard() {
 
   return (
     <div className="page-container">
+      <MobileMenu />
       <UpdatePrompt />
       <Header showLogo />
 

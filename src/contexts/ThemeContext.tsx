@@ -7,6 +7,7 @@ interface TenantTheme {
   logo_url: string | null;
   primary_color: string;
   secondary_color: string;
+  whatsapp_number: string | null;
 }
 
 interface ThemeContextType {
@@ -21,6 +22,7 @@ const defaultTheme: TenantTheme = {
   logo_url: null,
   primary_color: '#3B82F6',
   secondary_color: '#10B981',
+  whatsapp_number: null,
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -108,7 +110,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     try {
       const { data, error } = await supabase
         .from('tenants')
-        .select('name, logo_url, primary_color, secondary_color')
+        .select('name, logo_url, primary_color, secondary_color, whatsapp_number')
         .eq('id', user.tenant_id)
         .maybeSingle();
 
@@ -120,6 +122,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
           logo_url: data.logo_url,
           primary_color: data.primary_color || '#3B82F6',
           secondary_color: data.secondary_color || '#10B981',
+          whatsapp_number: data.whatsapp_number,
         };
         setTheme(newTheme);
         applyThemeColors(newTheme.primary_color, newTheme.secondary_color);
@@ -144,6 +147,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       if (updates.logo_url !== undefined) updateData.logo_url = updates.logo_url;
       if (updates.primary_color !== undefined) updateData.primary_color = updates.primary_color;
       if (updates.secondary_color !== undefined) updateData.secondary_color = updates.secondary_color;
+      if (updates.whatsapp_number !== undefined) updateData.whatsapp_number = updates.whatsapp_number;
 
       const { error } = await supabase
         .from('tenants')

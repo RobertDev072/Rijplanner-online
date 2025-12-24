@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
+import { MobileMenu } from '@/components/MobileMenu';
 import { LessonCard } from '@/components/LessonCard';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Calendar, Clock, CheckCircle } from 'lucide-react';
@@ -76,6 +77,7 @@ export default function Agenda() {
 
   return (
     <div className="page-container">
+      <MobileMenu />
       <Header title="Agenda" />
 
       {/* Week Navigation */}

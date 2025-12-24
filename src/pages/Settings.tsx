@@ -14,7 +14,8 @@ import {
   Download, 
   FileSpreadsheet,
   Save,
-  Loader2
+  Loader2,
+  MessageCircle
 } from 'lucide-react';
 import { exportLessonsToCSV, exportCreditsToCSV, exportFullReportToCSV } from '@/utils/csvExport';
 
@@ -27,6 +28,7 @@ export default function Settings() {
     logo_url: '',
     primary_color: '#3B82F6',
     secondary_color: '#10B981',
+    whatsapp_number: '',
   });
   const [isSaving, setIsSaving] = React.useState(false);
 
@@ -36,6 +38,7 @@ export default function Settings() {
       logo_url: theme.logo_url || '',
       primary_color: theme.primary_color,
       secondary_color: theme.secondary_color,
+      whatsapp_number: theme.whatsapp_number || '',
     });
   }, [theme]);
 
@@ -46,6 +49,7 @@ export default function Settings() {
       logo_url: localSettings.logo_url || null,
       primary_color: localSettings.primary_color,
       secondary_color: localSettings.secondary_color,
+      whatsapp_number: localSettings.whatsapp_number || null,
     });
     
     if (success) {
@@ -188,6 +192,41 @@ export default function Settings() {
             <Save className="w-4 h-4" />
           )}
           Instellingen opslaan
+        </Button>
+      </div>
+
+      {/* WhatsApp Support Settings */}
+      <div className="glass-card rounded-2xl p-5 mb-4">
+        <h3 className="section-title mb-4">
+          <MessageCircle className="w-4 h-4 text-[#25D366]" />
+          WhatsApp Support
+        </h3>
+        
+        <div>
+          <Label htmlFor="whatsapp_number">WhatsApp nummer</Label>
+          <Input
+            id="whatsapp_number"
+            value={localSettings.whatsapp_number}
+            onChange={(e) => setLocalSettings({ ...localSettings, whatsapp_number: e.target.value })}
+            placeholder="+31 6 12345678"
+            className="mt-1.5"
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            Leerlingen kunnen via het menu direct contact opnemen via WhatsApp
+          </p>
+        </div>
+
+        <Button 
+          onClick={handleSave} 
+          disabled={isSaving}
+          className="w-full mt-4"
+        >
+          {isSaving ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Save className="w-4 h-4" />
+          )}
+          Opslaan
         </Button>
       </div>
 
