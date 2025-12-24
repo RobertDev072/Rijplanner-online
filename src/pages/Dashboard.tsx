@@ -6,6 +6,7 @@ import { BottomNav } from '@/components/BottomNav';
 import { LessonCard } from '@/components/LessonCard';
 import { CreditsBadge } from '@/components/CreditsBadge';
 import { InstallPWA } from '@/components/InstallPWA';
+import { UpdatePrompt } from '@/components/UpdatePrompt';
 import { Users, GraduationCap, Calendar, Clock, Building2, Sparkles, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
@@ -140,6 +141,7 @@ export default function Dashboard() {
 
   return (
     <div className="page-container">
+      <UpdatePrompt />
       <Header showLogo />
 
       {/* Greeting */}

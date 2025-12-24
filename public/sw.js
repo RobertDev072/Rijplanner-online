@@ -1,13 +1,38 @@
 // Service Worker for RijPlanner Push Notifications
+// Version: 1.0.0
+
+const CACHE_VERSION = 'v1';
+const CACHE_NAME = `rijplanner-${CACHE_VERSION}`;
 
 self.addEventListener('install', (event) => {
   console.log('Service Worker installing...');
-  self.skipWaiting();
+  // Don't skip waiting automatically - let the app control this
 });
 
 self.addEventListener('activate', (event) => {
   console.log('Service Worker activating...');
-  event.waitUntil(clients.claim());
+  event.waitUntil(
+    Promise.all([
+      // Clear old caches
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames
+            .filter((name) => name.startsWith('rijplanner-') && name !== CACHE_NAME)
+            .map((name) => caches.delete(name))
+        );
+      }),
+      // Take control of all clients
+      clients.claim(),
+    ])
+  );
+});
+
+// Listen for skip waiting message from the app
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    console.log('Received SKIP_WAITING message, activating new service worker...');
+    self.skipWaiting();
+  }
 });
 
 // Handle push notifications
