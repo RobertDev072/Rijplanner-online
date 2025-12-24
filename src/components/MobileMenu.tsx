@@ -13,7 +13,7 @@ export function MobileMenu() {
   const location = useLocation();
 
   const handleWhatsAppSupport = () => {
-    if (theme.whatsapp_number) {
+    if (theme.whatsapp_number && user?.name) {
       // Clean the number (remove spaces, dashes, etc.)
       const cleanNumber = theme.whatsapp_number.replace(/[\s\-\(\)]/g, "");
       // Add country code if not present
@@ -23,7 +23,10 @@ export function MobileMenu() {
           ? "31" + cleanNumber.substring(1)
           : cleanNumber;
 
-      window.open(`https://wa.me/${formattedNumber}?text=Hallo, ik heb een vraag.`, "_blank");
+      // Personaliseer het bericht met de volledige naam van de gebruiker (leerling)
+      const message = encodeURIComponent(`Hoi ${user.name}, ik heb een vraag.`);
+
+      window.open(`https://wa.me/${formattedNumber}?text=${message}`, "_blank");
     }
     setIsOpen(false);
   };
