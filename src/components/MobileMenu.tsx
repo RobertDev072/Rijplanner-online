@@ -23,8 +23,7 @@ export function MobileMenu() {
           ? "31" + cleanNumber.substring(1)
           : cleanNumber;
 
-      // Personaliseer het bericht met de volledige naam van de gebruiker (leerling)
-      const message = encodeURIComponent(`Hoi ${user.name}, ik heb een vraag.`);
+      const message = encodeURIComponent(`Hoi, ik ben ${user.name}. Ik heb een vraag.`);
 
       window.open(`https://wa.me/${formattedNumber}?text=${message}`, "_blank");
     }
