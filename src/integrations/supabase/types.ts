@@ -152,6 +152,7 @@ export type Database = {
           status: Database["public"]["Enums"]["lesson_status"]
           student_id: string
           tenant_id: string
+          vehicle_id: string | null
         }
         Insert: {
           created_at?: string
@@ -164,6 +165,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["lesson_status"]
           student_id: string
           tenant_id: string
+          vehicle_id?: string | null
         }
         Update: {
           created_at?: string
@@ -176,6 +178,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["lesson_status"]
           student_id?: string
           tenant_id?: string
+          vehicle_id?: string | null
         }
         Relationships: [
           {
@@ -197,6 +200,13 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
         ]
