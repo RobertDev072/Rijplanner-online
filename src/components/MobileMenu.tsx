@@ -136,11 +136,11 @@ export function MobileMenu() {
                   </motion.button>
                 ))}
 
-                {/* WhatsApp Support - Nu hier geplaatst, als laatste menu item */}
-                {theme.whatsapp_number && (
+                {/* WhatsApp Support - Only visible for students */}
+                {theme.whatsapp_number && user?.role === 'student' && (
                   <motion.button
                     onClick={handleWhatsAppSupport}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 transition-all mt-4" // mt-4 voor wat ruimte boven
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 transition-all mt-4"
                     whileHover={{ x: 4 }}
                     whileTap={{ scale: 0.98 }}
                   >
