@@ -9,6 +9,9 @@ import { Button } from '@/components/ui/button';
 import { CreditsBadge } from '@/components/CreditsBadge';
 import { ProfileEditor } from '@/components/ProfileEditor';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { toast } from '@/hooks/use-toast';
 import { 
   LogOut, 
   Shield, 
@@ -20,14 +23,17 @@ import {
   Edit2,
   Mail,
   Phone,
-  MapPin
+  MapPin,
+  BookOpen,
+  CheckCircle2
 } from 'lucide-react';
 
 export default function Profile() {
   const navigate = useNavigate();
   const { user, logout, refreshUser } = useAuth();
-  const { getLessonsForUser, getCreditsForStudent } = useData();
+  const { getLessonsForUser, getCreditsForStudent, updateUser } = useData();
   const [isEditing, setIsEditing] = useState(false);
+  const [isTogglingTheory, setIsTogglingTheory] = useState(false);
 
   if (!user) return null;
 
@@ -87,6 +93,33 @@ export default function Profile() {
   };
 
   const RoleIcon = getRoleIcon();
+
+  const handleTheoryToggle = async (checked: boolean) => {
+    setIsTogglingTheory(true);
+    try {
+      const success = await updateUser(user.id, { theory_passed: checked });
+      if (success) {
+        toast({
+          title: checked ? "Theorie gehaald!" : "Theorie status gewijzigd",
+          description: checked 
+            ? "Gefeliciteerd met het halen van je theorie-examen!" 
+            : "Je theorie status is bijgewerkt.",
+        });
+        if (refreshUser) {
+          await refreshUser();
+        }
+      }
+    } catch (error) {
+      console.error('Error updating theory status:', error);
+      toast({
+        title: "Fout",
+        description: "Kon de theorie status niet bijwerken.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTogglingTheory(false);
+    }
+  };
 
   return (
     <div className="page-container">
@@ -167,10 +200,33 @@ export default function Profile() {
               )}
 
               {user.role === 'student' && (
-                <div className="flex items-center justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground">Lescredits</span>
-                  <CreditsBadge credits={getCreditsForStudent(user.id)} />
-                </div>
+                <>
+                  <div className="flex items-center justify-between py-2 border-b border-border">
+                    <span className="text-muted-foreground">Lescredits</span>
+                    <CreditsBadge credits={getCreditsForStudent(user.id)} />
+                  </div>
+                  
+                  {/* Theory Toggle */}
+                  <div className="flex items-center justify-between py-3 border-b border-border">
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="w-4 h-4 text-muted-foreground" />
+                      <Label htmlFor="theory-toggle" className="text-muted-foreground cursor-pointer">
+                        Theorie gehaald
+                      </Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {user.theory_passed && (
+                        <CheckCircle2 className="w-4 h-4 text-success" />
+                      )}
+                      <Switch
+                        id="theory-toggle"
+                        checked={user.theory_passed || false}
+                        onCheckedChange={handleTheoryToggle}
+                        disabled={isTogglingTheory}
+                      />
+                    </div>
+                  </div>
+                </>
               )}
 
               {!user.email && !user.phone && !user.address && (

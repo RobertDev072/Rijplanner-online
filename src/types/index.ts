@@ -19,6 +19,8 @@ export interface User {
   email?: string | null;
   phone?: string | null;
   address?: string | null;
+  theory_passed?: boolean;
+  theory_passed_at?: string | null;
   created_at: string;
 }
 

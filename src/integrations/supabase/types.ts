@@ -304,6 +304,8 @@ export type Database = {
           pincode: string
           role: Database["public"]["Enums"]["user_role"]
           tenant_id: string | null
+          theory_passed: boolean
+          theory_passed_at: string | null
           username: string
         }
         Insert: {
@@ -317,6 +319,8 @@ export type Database = {
           pincode: string
           role?: Database["public"]["Enums"]["user_role"]
           tenant_id?: string | null
+          theory_passed?: boolean
+          theory_passed_at?: string | null
           username: string
         }
         Update: {
@@ -330,6 +334,8 @@ export type Database = {
           pincode?: string
           role?: Database["public"]["Enums"]["user_role"]
           tenant_id?: string | null
+          theory_passed?: boolean
+          theory_passed_at?: string | null
           username?: string
         }
         Relationships: [
