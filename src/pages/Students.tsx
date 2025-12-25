@@ -31,10 +31,13 @@ export default function Students() {
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [pincode, setPincode] = useState('');
+  const [filterNoTheory, setFilterNoTheory] = useState(false);
 
   if (!user || user.role !== 'instructor') return null;
 
-  const students = getStudents();
+  const allStudents = getStudents();
+  const students = filterNoTheory ? allStudents.filter(s => !s.theory_passed) : allStudents;
+  const noTheoryCount = allStudents.filter(s => !s.theory_passed).length;
 
   const handleResetPincode = async () => {
     if (!resetPincodeUser || newPincode.length !== 4) {
@@ -98,14 +101,25 @@ export default function Students() {
     <div className="page-container">
       <Header title="Mijn leerlingen" />
 
-      {/* Add Student Button */}
-      <Button
-        onClick={() => setShowAddForm(!showAddForm)}
-        variant={showAddForm ? 'secondary' : 'accent'}
-        className="w-full mb-4"
-      >
-        {showAddForm ? <><X className="w-4 h-4" />Annuleren</> : <><UserPlus className="w-4 h-4" />Leerling toevoegen</>}
-      </Button>
+      {/* Filter & Add Buttons */}
+      <div className="flex gap-2 mb-4">
+        <Button
+          onClick={() => setFilterNoTheory(!filterNoTheory)}
+          variant={filterNoTheory ? 'default' : 'outline'}
+          className="flex-1"
+          size="sm"
+        >
+          <BookOpen className="w-4 h-4" />
+          Geen theorie ({noTheoryCount})
+        </Button>
+        <Button
+          onClick={() => setShowAddForm(!showAddForm)}
+          variant={showAddForm ? 'secondary' : 'accent'}
+          size="sm"
+        >
+          {showAddForm ? <X className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+        </Button>
+      </div>
 
       {/* Add Form */}
       {showAddForm && (
