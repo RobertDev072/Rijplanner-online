@@ -59,6 +59,18 @@ export interface LessonCredits {
   updated_at: string;
 }
 
+export interface LessonFeedback {
+  id: string;
+  lesson_id: string;
+  tenant_id: string;
+  instructor_id: string;
+  student_id: string;
+  rating: number;
+  notes: string | null;
+  topics_practiced: string[] | null;
+  created_at: string;
+}
+
 export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;

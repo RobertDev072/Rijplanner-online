@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { User, Lesson, LessonCredits, LessonStatus, Vehicle } from '@/types';
+import { User, Lesson, LessonCredits, LessonStatus, Vehicle, LessonFeedback } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
 import { sendLessonNotification } from '@/utils/notifications';
@@ -12,6 +12,7 @@ interface DataContextType {
   lessons: Lesson[];
   credits: LessonCredits[];
   vehicles: Vehicle[];
+  feedback: LessonFeedback[];
   isLoading: boolean;
   getInstructors: () => User[];
   getStudents: () => User[];
@@ -19,6 +20,8 @@ interface DataContextType {
   getLessonsForUser: (userId: string, role: string) => Lesson[];
   getCreditsForStudent: (studentId: string) => number;
   getStudentsWithLowCredits: () => { student: User; credits: number }[];
+  getFeedbackForLesson: (lessonId: string) => LessonFeedback | undefined;
+  getFeedbackForStudent: (studentId: string) => LessonFeedback[];
   addUser: (user: Omit<User, 'id' | 'created_at'>) => Promise<boolean>;
   updateUser: (id: string, updates: Partial<User>) => Promise<boolean>;
   deleteUser: (id: string) => Promise<boolean>;
@@ -27,6 +30,7 @@ interface DataContextType {
   cancelLesson: (lessonId: string, refundCredits: boolean) => Promise<boolean>;
   updateCredits: (studentId: string, totalCredits: number) => Promise<boolean>;
   resetUserPincode: (userId: string, newPincode: string) => Promise<boolean>;
+  addFeedback: (feedback: Omit<LessonFeedback, 'id' | 'created_at'>) => Promise<boolean>;
   // Vehicle functions
   addVehicle: (vehicle: Omit<Vehicle, 'id' | 'created_at' | 'updated_at'>) => Promise<boolean>;
   updateVehicle: (id: string, updates: Partial<Vehicle>) => Promise<boolean>;
@@ -42,6 +46,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [credits, setCredits] = useState<LessonCredits[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [feedback, setFeedback] = useState<LessonFeedback[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
@@ -85,6 +90,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
         .eq('tenant_id', currentUser.tenant_id);
 
       if (vehiclesError) throw vehiclesError;
+
+      // Fetch feedback for the same tenant
+      const { data: feedbackData, error: feedbackError } = await supabase
+        .from('lesson_feedback')
+        .select('*')
+        .eq('tenant_id', currentUser.tenant_id);
+
+      if (feedbackError) throw feedbackError;
 
       const mappedUsers: User[] = (usersData || []).map(u => ({
         id: u.id,
@@ -175,10 +188,23 @@ export function DataProvider({ children }: { children: ReactNode }) {
         updated_at: v.updated_at,
       }));
 
+      const mappedFeedback: LessonFeedback[] = (feedbackData || []).map(f => ({
+        id: f.id,
+        lesson_id: f.lesson_id,
+        tenant_id: f.tenant_id,
+        instructor_id: f.instructor_id,
+        student_id: f.student_id,
+        rating: f.rating,
+        notes: f.notes,
+        topics_practiced: f.topics_practiced,
+        created_at: f.created_at,
+      }));
+
       setUsers(mappedUsers);
       setLessons(mappedLessons);
       setCredits(mappedCredits);
       setVehicles(mappedVehicles);
+      setFeedback(mappedFeedback);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -216,6 +242,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }))
       .filter(item => item.credits <= 3)
       .sort((a, b) => a.credits - b.credits);
+  };
+
+  // Feedback functions
+  const getFeedbackForLesson = (lessonId: string) => {
+    return feedback.find(f => f.lesson_id === lessonId);
+  };
+
+  const getFeedbackForStudent = (studentId: string) => {
+    return feedback.filter(f => f.student_id === studentId);
   };
 
   const addUser = async (user: Omit<User, 'id' | 'created_at'>): Promise<boolean> => {
@@ -548,6 +583,43 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const addFeedback = async (feedbackData: Omit<LessonFeedback, 'id' | 'created_at'>): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('lesson_feedback')
+        .insert({
+          lesson_id: feedbackData.lesson_id,
+          tenant_id: feedbackData.tenant_id,
+          instructor_id: feedbackData.instructor_id,
+          student_id: feedbackData.student_id,
+          rating: feedbackData.rating,
+          notes: feedbackData.notes,
+          topics_practiced: feedbackData.topics_practiced,
+        });
+
+      if (error) throw error;
+
+      // Send notification to student
+      const instructor = users.find(u => u.id === feedbackData.instructor_id);
+      const lesson = lessons.find(l => l.id === feedbackData.lesson_id);
+      if (instructor && lesson) {
+        const formattedDate = format(new Date(lesson.date), 'd MMMM', { locale: nl });
+        sendPushNotification(
+          [feedbackData.student_id],
+          '📝 Feedback ontvangen',
+          `${instructor.name} heeft feedback gegeven voor je les van ${formattedDate}`,
+          feedbackData.tenant_id
+        );
+      }
+
+      await fetchData();
+      return true;
+    } catch (error) {
+      console.error('Error adding feedback:', error);
+      return false;
+    }
+  };
+
   return (
     <DataContext.Provider
       value={{
@@ -555,6 +627,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         lessons,
         credits,
         vehicles,
+        feedback,
         isLoading,
         getInstructors,
         getStudents,
@@ -562,6 +635,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
         getLessonsForUser,
         getCreditsForStudent,
         getStudentsWithLowCredits,
+        getFeedbackForLesson,
+        getFeedbackForStudent,
         addUser,
         updateUser,
         deleteUser,
@@ -570,6 +645,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         cancelLesson,
         updateCredits,
         resetUserPincode,
+        addFeedback,
         addVehicle,
         updateVehicle,
         deleteVehicle,

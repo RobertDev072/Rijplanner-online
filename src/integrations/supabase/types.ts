@@ -59,6 +59,42 @@ export type Database = {
           },
         ]
       }
+      lesson_feedback: {
+        Row: {
+          created_at: string
+          id: string
+          instructor_id: string
+          lesson_id: string
+          notes: string | null
+          rating: number
+          student_id: string
+          tenant_id: string
+          topics_practiced: string[] | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          instructor_id: string
+          lesson_id: string
+          notes?: string | null
+          rating: number
+          student_id: string
+          tenant_id: string
+          topics_practiced?: string[] | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          instructor_id?: string
+          lesson_id?: string
+          notes?: string | null
+          rating?: number
+          student_id?: string
+          tenant_id?: string
+          topics_practiced?: string[] | null
+        }
+        Relationships: []
+      }
       lesson_progress: {
         Row: {
           created_at: string | null

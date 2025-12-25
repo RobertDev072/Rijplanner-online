@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Calendar, Clock, User, CheckCircle, XCircle, Download, Loader2, MapPin, AlertTriangle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Calendar, Clock, User, CheckCircle, XCircle, Download, Loader2, MapPin, AlertTriangle, MessageSquare, Star } from 'lucide-react';
 import { Lesson, LessonStatus } from '@/types';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,6 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { FeedbackForm } from './FeedbackForm';
 
 interface LessonCardProps {
   lesson: Lesson;
@@ -49,7 +50,7 @@ const STATUS_CONFIG = {
 };
 
 export function LessonCard({ lesson, showActions = false, onStatusChange }: LessonCardProps) {
-  const { getUserById, getCreditsForStudent, cancelLesson } = useData();
+  const { getUserById, getCreditsForStudent, cancelLesson, getFeedbackForLesson, refreshData } = useData();
   const { user } = useAuth();
   const instructor = getUserById(lesson.instructor_id);
   const student = getUserById(lesson.student_id);
@@ -57,6 +58,9 @@ export function LessonCard({ lesson, showActions = false, onStatusChange }: Less
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showRefundDialog, setShowRefundDialog] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+
+  const existingFeedback = getFeedbackForLesson(lesson.id);
 
   const statusConfig = STATUS_CONFIG[lesson.status];
 
@@ -297,6 +301,60 @@ END:VCALENDAR`;
         </Button>
       )}
 
+      {/* Completed lesson actions */}
+      {lesson.status === 'completed' && (
+        <div className="space-y-2 mt-2">
+          {/* Instructor: Give feedback button (only if not already given) */}
+          {user?.role === 'instructor' && !existingFeedback && (
+            <Button
+              size="sm"
+              className="w-full gap-2 bg-primary"
+              onClick={() => setShowFeedbackForm(true)}
+            >
+              <MessageSquare className="w-4 h-4" />
+              Feedback geven
+            </Button>
+          )}
+
+          {/* Show existing feedback for both roles */}
+          {existingFeedback && (
+            <div className="bg-muted/30 rounded-lg p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Feedback</span>
+                <div className="flex gap-0.5">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <Star
+                      key={star}
+                      className={cn(
+                        'w-3.5 h-3.5',
+                        star <= existingFeedback.rating
+                          ? 'fill-warning text-warning'
+                          : 'text-muted-foreground/30'
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
+              {existingFeedback.topics_practiced && existingFeedback.topics_practiced.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {existingFeedback.topics_practiced.map(topic => (
+                    <span
+                      key={topic}
+                      className="px-2 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent"
+                    >
+                      {topic}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {existingFeedback.notes && (
+                <p className="text-xs text-muted-foreground">{existingFeedback.notes}</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Cancel confirmation dialog */}
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <AlertDialogContent>
@@ -347,6 +405,20 @@ END:VCALENDAR`;
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Feedback form modal */}
+      <AnimatePresence>
+        {showFeedbackForm && (
+          <FeedbackForm
+            lesson={lesson}
+            onClose={() => setShowFeedbackForm(false)}
+            onSuccess={() => {
+              setShowFeedbackForm(false);
+              refreshData();
+            }}
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, MessageCircle, User, LogOut, Settings, Home, Calendar, Users, Car, BookOpen } from "lucide-react";
+import { Menu, X, MessageCircle, User, LogOut, Settings, Home, Calendar, Users, Car, BookOpen, FileText } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -46,6 +46,7 @@ export function MobileMenu() {
   const menuItems = [
     { icon: Home, label: "Dashboard", path: "/dashboard", roles: ["admin", "instructor", "student"] },
     { icon: Calendar, label: "Agenda", path: "/agenda", roles: ["admin", "instructor", "student"] },
+    { icon: FileText, label: "Mijn Feedback", path: "/feedback", roles: ["student"] },
     { icon: BookOpen, label: "Lessen", path: "/lessons", roles: ["admin", "instructor"] },
     { icon: Users, label: "Gebruikers", path: "/users", roles: ["admin"] },
     { icon: Car, label: "Voertuigen", path: "/vehicles", roles: ["admin"] },
