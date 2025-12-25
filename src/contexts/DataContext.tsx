@@ -17,6 +17,8 @@ interface DataContextType {
   getInstructors: () => User[];
   getStudents: () => User[];
   getUserById: (id: string) => User | undefined;
+  getVehicleById: (id: string) => Vehicle | undefined;
+  getVehicleForInstructor: (instructorId: string) => Vehicle | undefined;
   getLessonsForUser: (userId: string, role: string) => Lesson[];
   getCreditsForStudent: (studentId: string) => number;
   getStudentsWithLowCredits: () => { student: User; credits: number }[];
@@ -148,6 +150,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           duration: l.duration,
           status,
           remarks: l.remarks,
+          vehicle_id: l.vehicle_id,
           created_at: l.created_at,
         };
       });
@@ -219,6 +222,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const getInstructors = () => users.filter(u => u.role === 'instructor');
   const getStudents = () => users.filter(u => u.role === 'student');
   const getUserById = (id: string) => users.find(u => u.id === id);
+  const getVehicleById = (id: string) => vehicles.find(v => v.id === id);
+  const getVehicleForInstructor = (instructorId: string) => vehicles.find(v => v.instructor_id === instructorId);
 
   const getLessonsForUser = (userId: string, role: string) => {
     if (role === 'admin') return lessons;
@@ -344,6 +349,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           duration: lesson.duration,
           status: lesson.status,
           remarks: lesson.remarks,
+          vehicle_id: lesson.vehicle_id || null,
         });
 
       if (error) throw error;
@@ -632,6 +638,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
         getInstructors,
         getStudents,
         getUserById,
+        getVehicleById,
+        getVehicleForInstructor,
         getLessonsForUser,
         getCreditsForStudent,
         getStudentsWithLowCredits,

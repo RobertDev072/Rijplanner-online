@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Clock, User, CheckCircle, XCircle, Download, Loader2, MapPin, AlertTriangle, MessageSquare, Star } from 'lucide-react';
+import { Calendar, Clock, User, CheckCircle, XCircle, Download, Loader2, MapPin, AlertTriangle, MessageSquare, Star, Car } from 'lucide-react';
 import { Lesson, LessonStatus } from '@/types';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -50,10 +50,14 @@ const STATUS_CONFIG = {
 };
 
 export function LessonCard({ lesson, showActions = false, onStatusChange }: LessonCardProps) {
-  const { getUserById, getCreditsForStudent, cancelLesson, getFeedbackForLesson, refreshData } = useData();
+  const { getUserById, getCreditsForStudent, cancelLesson, getFeedbackForLesson, getVehicleById, getVehicleForInstructor, refreshData } = useData();
   const { user } = useAuth();
   const instructor = getUserById(lesson.instructor_id);
   const student = getUserById(lesson.student_id);
+  // Get vehicle - first try lesson's vehicle_id, then fall back to instructor's assigned vehicle
+  const vehicle = lesson.vehicle_id 
+    ? getVehicleById(lesson.vehicle_id) 
+    : getVehicleForInstructor(lesson.instructor_id);
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showRefundDialog, setShowRefundDialog] = useState(false);
@@ -190,19 +194,28 @@ END:VCALENDAR`;
         </div>
       </div>
 
-      <div className="flex gap-4 text-sm text-muted-foreground mb-3">
+      <div className="flex flex-wrap gap-2 text-sm text-muted-foreground mb-3">
         <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2">
           <Clock className="w-4 h-4 text-primary" />
-          <span className="font-medium">{lesson.start_time}</span>
+          <span className="font-medium">{lesson.start_time.slice(0, 5)}</span>
           <span className="text-xs">• {lesson.duration} min</span>
         </div>
-        <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 flex-1">
+        <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 flex-1 min-w-0">
           <User className="w-4 h-4 text-accent" />
           <span className="font-medium truncate">
             {user?.role === 'student' ? instructor?.name : student?.name}
           </span>
         </div>
       </div>
+
+      {/* Vehicle info - show for students on accepted/pending lessons */}
+      {vehicle && user?.role === 'student' && ['pending', 'accepted'].includes(lesson.status) && (
+        <div className="flex items-center gap-2 bg-primary/5 border border-primary/10 rounded-lg px-3 py-2 mb-3 text-sm">
+          <Car className="w-4 h-4 text-primary shrink-0" />
+          <span className="text-foreground font-medium">{vehicle.brand} {vehicle.model}</span>
+          <span className="text-muted-foreground font-mono text-xs">{vehicle.license_plate}</span>
+        </div>
+      )}
 
       {/* Remarks / Pickup location */}
       {lesson.remarks && (

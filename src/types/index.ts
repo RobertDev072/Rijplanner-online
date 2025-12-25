@@ -44,9 +44,11 @@ export interface Lesson {
   duration: number;
   status: LessonStatus;
   remarks?: string | null;
+  vehicle_id?: string | null;
   created_at: string;
   instructor?: User;
   student?: User;
+  vehicle?: Vehicle;
 }
 
 export interface LessonCredits {
