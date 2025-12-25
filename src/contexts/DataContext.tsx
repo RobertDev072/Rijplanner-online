@@ -100,18 +100,59 @@ export function DataProvider({ children }: { children: ReactNode }) {
         created_at: u.created_at,
       }));
 
-      const mappedLessons: Lesson[] = (lessonsData || []).map(l => ({
-        id: l.id,
-        tenant_id: l.tenant_id,
-        instructor_id: l.instructor_id,
-        student_id: l.student_id,
-        date: l.date,
-        start_time: l.start_time,
-        duration: l.duration,
-        status: l.status as LessonStatus,
-        remarks: l.remarks,
-        created_at: l.created_at,
-      }));
+      // Check for lessons that should be auto-completed (past accepted lessons)
+      const now = new Date();
+      const currentDate = now.toISOString().split('T')[0];
+      const currentTime = now.toTimeString().slice(0, 5);
+
+      const lessonsToComplete: string[] = [];
+      
+      const mappedLessons: Lesson[] = (lessonsData || []).map(l => {
+        let status = l.status as LessonStatus;
+        
+        // Auto-complete logic: if accepted and lesson has ended
+        if (status === 'accepted') {
+          const lessonDate = l.date;
+          const [hours, minutes] = l.start_time.split(':').map(Number);
+          const endMinutes = hours * 60 + minutes + l.duration;
+          const endHours = Math.floor(endMinutes / 60);
+          const endMins = endMinutes % 60;
+          const endTime = `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
+
+          if (lessonDate < currentDate || (lessonDate === currentDate && endTime <= currentTime)) {
+            status = 'completed';
+            lessonsToComplete.push(l.id);
+          }
+        }
+
+        return {
+          id: l.id,
+          tenant_id: l.tenant_id,
+          instructor_id: l.instructor_id,
+          student_id: l.student_id,
+          date: l.date,
+          start_time: l.start_time,
+          duration: l.duration,
+          status,
+          remarks: l.remarks,
+          created_at: l.created_at,
+        };
+      });
+
+      // Update lessons in database that should be completed (fire and forget)
+      if (lessonsToComplete.length > 0) {
+        (async () => {
+          try {
+            await supabase
+              .from('lessons')
+              .update({ status: 'completed' })
+              .in('id', lessonsToComplete);
+            console.log(`Auto-completed ${lessonsToComplete.length} lessons`);
+          } catch (err) {
+            console.error('Error auto-completing lessons:', err);
+          }
+        })();
+      }
 
       const mappedCredits: LessonCredits[] = (creditsData || []).map(c => ({
         id: c.id,
