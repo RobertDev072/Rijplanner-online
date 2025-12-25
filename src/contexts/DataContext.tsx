@@ -112,6 +112,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
         email: u.email,
         phone: u.phone,
         address: u.address,
+        theory_passed: (u as Record<string, unknown>).theory_passed as boolean | undefined,
+        theory_passed_at: (u as Record<string, unknown>).theory_passed_at as string | null | undefined,
         created_at: u.created_at,
       }));
 
@@ -305,6 +307,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (updates.email !== undefined) updateData.email = updates.email;
       if (updates.phone !== undefined) updateData.phone = updates.phone;
       if (updates.address !== undefined) updateData.address = updates.address;
+      if (updates.theory_passed !== undefined) {
+        updateData.theory_passed = updates.theory_passed;
+        updateData.theory_passed_at = updates.theory_passed ? new Date().toISOString() : null;
+      }
 
       const { error } = await supabase
         .from('users')

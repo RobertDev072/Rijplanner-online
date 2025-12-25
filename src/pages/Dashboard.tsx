@@ -162,13 +162,16 @@ export default function Dashboard() {
         <>
           {/* Low Credits Warning */}
           {getStudentsWithLowCredits().length > 0 && (
-            <div className="glass-card p-4 mb-6 border-l-4 border-warning bg-warning/5">
+            <div 
+              className="glass-card p-4 mb-6 border-l-4 border-warning bg-warning/5 cursor-pointer hover:bg-warning/10 transition-colors"
+              onClick={() => navigate('/credits')}
+            >
               <h3 className="font-semibold text-foreground flex items-center gap-2 mb-2">
                 <Sparkles className="w-4 h-4 text-warning" />
                 Lage credits waarschuwing
               </h3>
               <div className="space-y-2">
-                {getStudentsWithLowCredits().map(({ student, credits }) => (
+                {getStudentsWithLowCredits().slice(0, 3).map(({ student, credits }) => (
                   <div key={student.id} className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">{student.name}</span>
                     <span className={cn(
@@ -179,6 +182,11 @@ export default function Dashboard() {
                     </span>
                   </div>
                 ))}
+                {getStudentsWithLowCredits().length > 3 && (
+                  <p className="text-xs text-muted-foreground text-center pt-1">
+                    + {getStudentsWithLowCredits().length - 3} meer...
+                  </p>
+                )}
               </div>
             </div>
           )}

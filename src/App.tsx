@@ -22,6 +22,7 @@ import Settings from "./pages/Settings";
 import Students from "./pages/Students";
 import Vehicles from "./pages/Vehicles";
 import Feedback from "./pages/Feedback";
+import Credits from "./pages/Credits";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -134,6 +135,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Feedback />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/credits"
+        element={
+          <ProtectedRoute>
+            <Credits />
           </ProtectedRoute>
         }
       />
