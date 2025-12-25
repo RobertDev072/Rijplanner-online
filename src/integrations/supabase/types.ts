@@ -59,6 +59,51 @@ export type Database = {
           },
         ]
       }
+      lesson_progress: {
+        Row: {
+          created_at: string | null
+          id: string
+          lesson_id: string | null
+          notes: string | null
+          status: string | null
+          tenant_id: string | null
+          topic_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          lesson_id?: string | null
+          notes?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          topic_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          lesson_id?: string | null
+          notes?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          topic_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_progress_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lessons: {
         Row: {
           created_at: string
