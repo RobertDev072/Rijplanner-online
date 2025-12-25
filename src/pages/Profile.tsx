@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -9,9 +9,9 @@ import { Button } from '@/components/ui/button';
 import { CreditsBadge } from '@/components/CreditsBadge';
 import { ProfileEditor } from '@/components/ProfileEditor';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
+import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion';
 import { 
   LogOut, 
   Shield, 
@@ -94,16 +94,53 @@ export default function Profile() {
 
   const RoleIcon = getRoleIcon();
 
-  const handleTheoryToggle = async (checked: boolean) => {
+  // Swipe gesture for theory toggle
+  const swipeX = useMotionValue(0);
+  const swipeProgress = useTransform(swipeX, [0, 150], [0, 1]);
+  const backgroundColor = useTransform(
+    swipeProgress,
+    [0, 0.5, 1],
+    ['hsl(var(--muted))', 'hsl(var(--warning) / 0.5)', 'hsl(var(--success))']
+  );
+
+  const handleTheorySwipe = async (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    if (info.offset.x > 100 && !user.theory_passed && !isTogglingTheory) {
+      // Swiped right - mark theory as passed
+      setIsTogglingTheory(true);
+      try {
+        const success = await updateUser(user.id, { theory_passed: true });
+        if (success) {
+          toast({
+            title: "Theorie gehaald!",
+            description: "Gefeliciteerd met het halen van je theorie-examen!",
+          });
+          if (refreshUser) {
+            await refreshUser();
+          }
+        }
+      } catch (error) {
+        console.error('Error updating theory status:', error);
+        toast({
+          title: "Fout",
+          description: "Kon de theorie status niet bijwerken.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsTogglingTheory(false);
+      }
+    }
+  };
+
+  const handleTheoryToggleOff = async () => {
+    if (!user.theory_passed || isTogglingTheory) return;
+    
     setIsTogglingTheory(true);
     try {
-      const success = await updateUser(user.id, { theory_passed: checked });
+      const success = await updateUser(user.id, { theory_passed: false });
       if (success) {
         toast({
-          title: checked ? "Theorie gehaald!" : "Theorie status gewijzigd",
-          description: checked 
-            ? "Gefeliciteerd met het halen van je theorie-examen!" 
-            : "Je theorie status is bijgewerkt.",
+          title: "Theorie status gewijzigd",
+          description: "Je theorie status is bijgewerkt.",
         });
         if (refreshUser) {
           await refreshUser();
@@ -111,11 +148,6 @@ export default function Profile() {
       }
     } catch (error) {
       console.error('Error updating theory status:', error);
-      toast({
-        title: "Fout",
-        description: "Kon de theorie status niet bijwerken.",
-        variant: "destructive",
-      });
     } finally {
       setIsTogglingTheory(false);
     }
@@ -206,25 +238,55 @@ export default function Profile() {
                     <CreditsBadge credits={getCreditsForStudent(user.id)} />
                   </div>
                   
-                  {/* Theory Toggle */}
-                  <div className="flex items-center justify-between py-3 border-b border-border">
-                    <div className="flex items-center gap-2">
+                  {/* Theory Swipe Toggle */}
+                  <div className="py-3 border-b border-border">
+                    <div className="flex items-center gap-2 mb-3">
                       <BookOpen className="w-4 h-4 text-muted-foreground" />
-                      <Label htmlFor="theory-toggle" className="text-muted-foreground cursor-pointer">
-                        Theorie gehaald
+                      <Label className="text-muted-foreground">
+                        Theorie examen
                       </Label>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {user.theory_passed && (
-                        <CheckCircle2 className="w-4 h-4 text-success" />
-                      )}
-                      <Switch
-                        id="theory-toggle"
-                        checked={user.theory_passed || false}
-                        onCheckedChange={handleTheoryToggle}
-                        disabled={isTogglingTheory}
-                      />
-                    </div>
+                    
+                    {user.theory_passed ? (
+                      <div 
+                        className="flex items-center justify-between p-3 rounded-xl bg-success/10 border border-success/30 cursor-pointer"
+                        onClick={handleTheoryToggleOff}
+                      >
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="w-5 h-5 text-success" />
+                          <span className="font-medium text-success">Theorie gehaald!</span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">Tik om te wijzigen</span>
+                      </div>
+                    ) : (
+                      <div className="relative overflow-hidden rounded-xl border border-border bg-muted/30">
+                        <motion.div
+                          className="absolute inset-0 rounded-xl"
+                          style={{ backgroundColor }}
+                        />
+                        <motion.div
+                          drag="x"
+                          dragConstraints={{ left: 0, right: 150 }}
+                          dragElastic={0.1}
+                          onDragEnd={handleTheorySwipe}
+                          style={{ x: swipeX }}
+                          className="relative flex items-center gap-3 p-3 cursor-grab active:cursor-grabbing"
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                            <BookOpen className="w-5 h-5 text-primary" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-foreground text-sm">Swipe naar rechts</p>
+                            <p className="text-xs text-muted-foreground">als je je theorie hebt gehaald</p>
+                          </div>
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <span className="text-xs">→</span>
+                            <CheckCircle2 className="w-4 h-4" />
+                          </div>
+                        </motion.div>
+                      </div>
+                    )}
                   </div>
                 </>
               )}
