@@ -6,7 +6,7 @@ import { BottomNav } from '@/components/BottomNav';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CreditsBadge } from '@/components/CreditsBadge';
-import { GraduationCap, KeyRound, UserPlus, Trash2, X, Check, BookOpen, CheckCircle2 } from 'lucide-react';
+import { GraduationCap, KeyRound, UserPlus, Trash2, X, Check, BookOpen, CheckCircle2, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import {
@@ -32,12 +32,16 @@ export default function Students() {
   const [username, setUsername] = useState('');
   const [pincode, setPincode] = useState('');
   const [filterNoTheory, setFilterNoTheory] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   if (!user || user.role !== 'instructor') return null;
 
   const allStudents = getStudents();
-  const students = filterNoTheory ? allStudents.filter(s => !s.theory_passed) : allStudents;
   const noTheoryCount = allStudents.filter(s => !s.theory_passed).length;
+  
+  const students = allStudents
+    .filter(s => !filterNoTheory || !s.theory_passed)
+    .filter(s => !searchQuery || s.name.toLowerCase().includes(searchQuery.toLowerCase()) || s.username.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const handleResetPincode = async () => {
     if (!resetPincodeUser || newPincode.length !== 4) {
@@ -100,6 +104,17 @@ export default function Students() {
   return (
     <div className="page-container">
       <Header title="Mijn leerlingen" />
+
+      {/* Search */}
+      <div className="relative mb-3">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          placeholder="Zoek op naam..."
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          className="pl-9"
+        />
+      </div>
 
       {/* Filter & Add Buttons */}
       <div className="flex gap-2 mb-4">
