@@ -31,6 +31,12 @@ const STATUS_COLORS = {
     text: 'text-destructive',
     border: 'border-destructive/30',
   },
+  completed: {
+    bg: 'bg-primary',
+    light: 'bg-primary/20',
+    text: 'text-primary',
+    border: 'border-primary/30',
+  },
 };
 
 export default function Agenda() {

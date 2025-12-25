@@ -41,6 +41,11 @@ const STATUS_CONFIG = {
     className: 'status-cancelled',
     dotColor: 'bg-destructive',
   },
+  completed: {
+    label: 'Voltooid',
+    className: 'status-completed',
+    dotColor: 'bg-primary',
+  },
 };
 
 export function LessonCard({ lesson, showActions = false, onStatusChange }: LessonCardProps) {
