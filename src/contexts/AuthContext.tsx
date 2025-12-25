@@ -28,6 +28,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     email: data.email as string | null,
     phone: data.phone as string | null,
     address: data.address as string | null,
+    theory_passed: data.theory_passed as boolean | undefined,
+    theory_passed_at: data.theory_passed_at as string | null | undefined,
     created_at: data.created_at as string,
   });
 

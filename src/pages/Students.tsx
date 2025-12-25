@@ -6,7 +6,8 @@ import { BottomNav } from '@/components/BottomNav';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CreditsBadge } from '@/components/CreditsBadge';
-import { GraduationCap, KeyRound, UserPlus, Trash2, X, Check } from 'lucide-react';
+import { GraduationCap, KeyRound, UserPlus, Trash2, X, Check, BookOpen, CheckCircle2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -130,11 +131,23 @@ export default function Students() {
           <div key={student.id} className="glass-card rounded-xl p-4 animate-slide-up">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-                  <GraduationCap className="w-5 h-5 text-accent" />
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${student.theory_passed ? 'bg-success/10' : 'bg-accent/10'}`}>
+                  {student.theory_passed ? (
+                    <CheckCircle2 className="w-5 h-5 text-success" />
+                  ) : (
+                    <GraduationCap className="w-5 h-5 text-accent" />
+                  )}
                 </div>
                 <div>
-                  <p className="font-semibold text-foreground">{student.name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-foreground">{student.name}</p>
+                    {student.theory_passed && (
+                      <Badge variant="outline" className="text-xs bg-success/10 text-success border-success/30 px-1.5 py-0">
+                        <BookOpen className="w-3 h-3 mr-0.5" />
+                        Theorie
+                      </Badge>
+                    )}
+                  </div>
                   <p className="text-sm text-muted-foreground">@{student.username}</p>
                 </div>
               </div>
