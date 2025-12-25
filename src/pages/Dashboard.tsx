@@ -20,18 +20,14 @@ import {
   checkPushNotificationSupport 
 } from '@/utils/pushNotifications';
 
-function StatCard({ icon: Icon, label, value, color, delay = 0 }: { 
+function StatCard({ icon: Icon, label, value, color }: { 
   icon: React.ElementType; 
   label: string; 
   value: string | number;
   color: string;
-  delay?: number;
 }) {
   return (
-    <div 
-      className="glass-card p-4 animate-slide-up"
-      style={{ animationDelay: `${delay}ms` }}
-    >
+    <div className="glass-card p-4">
       <div className="flex items-center gap-3">
         <div className={cn("stat-icon", color)}>
           <Icon className="w-5 h-5 text-white" />
@@ -88,7 +84,7 @@ export default function Dashboard() {
       <div className="page-container">
         <Header showLogo />
         
-        <div className="mb-8 animate-slide-up">
+        <div className="mb-8">
           <p className="text-muted-foreground text-sm font-medium mb-1">{getGreeting()}</p>
           <h2 className="text-2xl font-bold text-foreground">
             {user.name.split(' ')[0]} 👋
@@ -96,19 +92,18 @@ export default function Dashboard() {
         </div>
 
         <div 
-          className="glass-card p-6 cursor-pointer group animate-slide-up"
-          style={{ animationDelay: '100ms' }}
+          className="glass-card p-6 cursor-pointer group"
           onClick={() => navigate('/tenants')}
         >
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-200">
               <Building2 className="w-7 h-7 text-white" />
             </div>
             <div className="flex-1">
               <h3 className="font-bold text-foreground text-lg">Rijscholen beheren</h3>
               <p className="text-sm text-muted-foreground">Bekijk en beheer alle rijscholen</p>
             </div>
-            <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+            <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
           </div>
         </div>
 
@@ -147,7 +142,7 @@ export default function Dashboard() {
       <Header showLogo />
 
       {/* Greeting */}
-      <div className="mb-6 animate-slide-up">
+      <div className="mb-6">
         <p className="text-muted-foreground text-sm font-medium mb-1">{getGreeting()}</p>
         <h2 className="text-2xl font-bold text-foreground">
           {user.name.split(' ')[0]} 👋
@@ -167,7 +162,7 @@ export default function Dashboard() {
         <>
           {/* Low Credits Warning */}
           {getStudentsWithLowCredits().length > 0 && (
-            <div className="glass-card p-4 mb-6 border-l-4 border-warning bg-warning/5 animate-slide-up">
+            <div className="glass-card p-4 mb-6 border-l-4 border-warning bg-warning/5">
               <h3 className="font-semibold text-foreground flex items-center gap-2 mb-2">
                 <Sparkles className="w-4 h-4 text-warning" />
                 Lage credits waarschuwing
@@ -194,28 +189,24 @@ export default function Dashboard() {
               label="Instructeurs"
               value={getInstructors().length}
               color="bg-gradient-to-br from-primary to-primary/70"
-              delay={50}
             />
             <StatCard
               icon={GraduationCap}
               label="Leerlingen"
               value={getStudents().length}
               color="bg-gradient-to-br from-accent to-accent/70"
-              delay={100}
             />
             <StatCard
               icon={Calendar}
               label="Geplande lessen"
               value={upcomingLessons.length}
               color="bg-gradient-to-br from-success to-success/70"
-              delay={150}
             />
             <StatCard
               icon={Clock}
               label="In afwachting"
               value={pendingLessons.length}
               color="bg-gradient-to-br from-warning to-warning/70"
-              delay={200}
             />
           </div>
         </>
@@ -223,10 +214,7 @@ export default function Dashboard() {
 
       {/* Student Credits */}
       {user.role === 'student' && (
-        <div 
-          className="glass-card p-5 mb-6 animate-slide-up bg-gradient-to-br from-primary/5 to-transparent"
-          style={{ animationDelay: '50ms' }}
-        >
+        <div className="glass-card p-5 mb-6 bg-gradient-to-br from-primary/5 to-transparent">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
@@ -255,8 +243,8 @@ export default function Dashboard() {
             </span>
           </h3>
           <div className="space-y-3">
-            {pendingLessons.map((lesson, index) => (
-              <div key={lesson.id} style={{ animationDelay: `${(index + 1) * 50}ms` }}>
+            {pendingLessons.map((lesson) => (
+              <div key={lesson.id}>
                 <LessonCard
                   lesson={lesson}
                   showActions
@@ -275,7 +263,7 @@ export default function Dashboard() {
           {user.role === 'admin' ? 'Alle geplande lessen' : 'Komende lessen'}
         </h3>
         {upcomingLessons.length === 0 ? (
-          <div className="glass-card p-8 text-center animate-slide-up">
+          <div className="glass-card p-8 text-center">
             <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-4">
               <Calendar className="w-8 h-8 text-muted-foreground" />
             </div>
@@ -284,12 +272,8 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="space-y-3">
-            {upcomingLessons.slice(0, 5).map((lesson, index) => (
-              <div 
-                key={lesson.id} 
-                className="animate-slide-up"
-                style={{ animationDelay: `${(index + 1) * 50}ms` }}
-              >
+            {upcomingLessons.slice(0, 5).map((lesson) => (
+              <div key={lesson.id}>
                 <LessonCard lesson={lesson} />
               </div>
             ))}

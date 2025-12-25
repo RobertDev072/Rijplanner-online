@@ -59,17 +59,12 @@ export function MobileMenu() {
   return (
     <>
       {/* Floating Menu Button */}
-      <motion.button
+      <button
         onClick={() => setIsOpen(true)}
-        className="fixed top-4 right-4 z-40 w-12 h-12 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.2 }}
+        className="fixed top-4 right-4 z-50 w-12 h-12 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center transition-transform duration-150 active:scale-95 hover:bg-primary/90"
       >
         <Menu className="w-5 h-5" />
-      </motion.button>
+      </button>
 
       {/* Menu Overlay */}
       <AnimatePresence>
@@ -80,18 +75,18 @@ export function MobileMenu() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+              transition={{ duration: 0.15 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]"
               onClick={() => setIsOpen(false)}
             />
 
             {/* Menu Panel */}
             <motion.div
-              initial={{ x: "100%", opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: "100%", opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed right-0 top-0 bottom-0 w-[280px] bg-background/95 backdrop-blur-xl z-50 shadow-2xl"
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "tween", duration: 0.2, ease: "easeOut" }}
+              className="fixed right-0 top-0 bottom-0 w-[280px] bg-background backdrop-blur-xl z-[60] shadow-2xl"
             >
               {/* Header */}
               <div className="p-5 border-b border-border/50">

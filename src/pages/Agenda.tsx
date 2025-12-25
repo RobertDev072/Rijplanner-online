@@ -10,7 +10,6 @@ import { ChevronLeft, ChevronRight, Calendar, Clock, CheckCircle } from 'lucide-
 import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
 
 const STATUS_COLORS = {
   pending: {
@@ -124,12 +123,11 @@ export default function Agenda() {
             const hasLessons = statuses.pending + statuses.accepted > 0;
 
             return (
-              <motion.button
+              <button
                 key={day.toISOString()}
                 onClick={() => setSelectedDate(day)}
-                whileTap={{ scale: 0.95 }}
                 className={cn(
-                  "flex flex-col items-center py-2 px-1 rounded-xl transition-all duration-300 relative",
+                  "flex flex-col items-center py-2 px-1 rounded-xl transition-colors duration-200 relative touch-manipulation active:scale-95",
                   isSelected
                     ? "bg-primary text-primary-foreground shadow-lg"
                     : isToday
@@ -164,7 +162,7 @@ export default function Agenda() {
                 {isToday && !isSelected && (
                   <div className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-primary" />
                 )}
-              </motion.button>
+              </button>
             );
           })}
         </div>
@@ -217,44 +215,31 @@ export default function Agenda() {
       </div>
 
       {/* Day Lessons */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={selectedDateStr}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.2 }}
-        >
-          {dayLessons.length === 0 ? (
-            <div className="glass-card rounded-2xl p-8 text-center">
-              <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-4">
-                <Calendar className="w-8 h-8 text-muted-foreground" />
+      <div key={selectedDateStr}>
+        {dayLessons.length === 0 ? (
+          <div className="glass-card rounded-2xl p-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-4">
+              <Calendar className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h4 className="font-semibold text-foreground mb-1">Geen lessen</h4>
+            <p className="text-sm text-muted-foreground">
+              Er zijn geen lessen gepland op deze dag
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {dayLessons.map((lesson) => (
+              <div key={lesson.id}>
+                <LessonCard
+                  lesson={lesson}
+                  showActions={user.role === 'student'}
+                  onStatusChange={updateLessonStatus}
+                />
               </div>
-              <h4 className="font-semibold text-foreground mb-1">Geen lessen</h4>
-              <p className="text-sm text-muted-foreground">
-                Er zijn geen lessen gepland op deze dag
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {dayLessons.map((lesson, index) => (
-                <motion.div
-                  key={lesson.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <LessonCard
-                    lesson={lesson}
-                    showActions={user.role === 'student'}
-                    onStatusChange={updateLessonStatus}
-                  />
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
+            ))}
+          </div>
+        )}
+      </div>
 
       <BottomNav />
     </div>

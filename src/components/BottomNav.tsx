@@ -44,28 +44,20 @@ export function BottomNav() {
               key={item.path}
               onClick={() => navigate(item.path)}
               className={cn(
-                "flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-all duration-300 min-w-[56px] touch-manipulation active:scale-95",
+                "flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-colors duration-200 min-w-[56px] touch-manipulation",
                 isActive
                   ? "text-primary"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
               <div className={cn(
-                "relative p-2.5 rounded-2xl transition-all duration-300",
-                isActive && "bg-primary/10 shadow-sm"
+                "relative p-2.5 rounded-2xl transition-colors duration-200",
+                isActive && "bg-primary/10"
               )}>
-                <Icon
-                  className={cn(
-                    "w-5 h-5 transition-all duration-300",
-                    isActive && "scale-110"
-                  )}
-                />
-                {isActive && (
-                  <div className="absolute inset-0 rounded-2xl bg-primary/15 animate-pulse-soft" />
-                )}
+                <Icon className="w-5 h-5" />
               </div>
               <span className={cn(
-                "text-[10px] font-medium transition-colors",
+                "text-[10px] font-medium",
                 isActive ? "text-primary" : "text-muted-foreground"
               )}>
                 {item.label}
