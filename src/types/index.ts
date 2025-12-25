@@ -1,6 +1,6 @@
 export type UserRole = 'admin' | 'instructor' | 'student' | 'superadmin';
 
-export type LessonStatus = 'pending' | 'accepted' | 'cancelled';
+export type LessonStatus = 'pending' | 'accepted' | 'cancelled' | 'completed';
 
 export interface Tenant {
   id: string;

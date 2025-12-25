@@ -345,7 +345,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      lesson_status: "pending" | "accepted" | "cancelled"
+      lesson_status: "pending" | "accepted" | "cancelled" | "completed"
       user_role: "admin" | "instructor" | "student" | "superadmin"
     }
     CompositeTypes: {
@@ -474,7 +474,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      lesson_status: ["pending", "accepted", "cancelled"],
+      lesson_status: ["pending", "accepted", "cancelled", "completed"],
       user_role: ["admin", "instructor", "student", "superadmin"],
     },
   },
