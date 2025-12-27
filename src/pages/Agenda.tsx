@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { Header } from '@/components/Header';
@@ -6,10 +6,14 @@ import { BottomTabNav } from '@/components/BottomTabNav';
 import { MobileMenu } from '@/components/MobileMenu';
 import { LessonCard } from '@/components/LessonCard';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Calendar, Clock, CheckCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Clock, CheckCircle, RefreshCw } from 'lucide-react';
 import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion';
+import { toast } from 'sonner';
+
+const PULL_THRESHOLD = 80;
 
 const STATUS_COLORS = {
   pending: {
@@ -40,8 +44,43 @@ const STATUS_COLORS = {
 
 export default function Agenda() {
   const { user } = useAuth();
-  const { getLessonsForUser, updateLessonStatus } = useData();
+  const { getLessonsForUser, updateLessonStatus, refreshData } = useData();
   const [selectedDate, setSelectedDate] = useState(new Date());
+
+  // Pull to refresh state
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const pullY = useMotionValue(0);
+  const pullRotation = useTransform(pullY, [0, PULL_THRESHOLD], [0, 180]);
+  const pullScale = useTransform(pullY, [0, PULL_THRESHOLD / 2, PULL_THRESHOLD], [0.5, 0.8, 1]);
+  const pullOpacity = useTransform(pullY, [0, 30, PULL_THRESHOLD], [0, 0.5, 1]);
+
+  const handlePullRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshData();
+      toast.success('Agenda vernieuwd!');
+    } catch (error) {
+      toast.error('Kon agenda niet vernieuwen');
+    } finally {
+      setIsRefreshing(false);
+      pullY.set(0);
+    }
+  }, [refreshData, pullY]);
+
+  const handleDrag = useCallback((event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    if (isRefreshing) return;
+    if (info.offset.y > 0) {
+      pullY.set(Math.min(info.offset.y * 0.5, 120));
+    }
+  }, [isRefreshing, pullY]);
+
+  const handleDragEnd = useCallback((event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    if (pullY.get() >= PULL_THRESHOLD && !isRefreshing) {
+      handlePullRefresh();
+    } else {
+      pullY.set(0);
+    }
+  }, [pullY, isRefreshing, handlePullRefresh]);
 
   if (!user) return null;
 
@@ -81,9 +120,43 @@ export default function Agenda() {
   const acceptedCount = dayLessons.filter(l => l.status === 'accepted').length;
 
   return (
-    <div className="page-container">
-      <MobileMenu />
-      <Header title="Agenda" />
+    <div className="page-container relative">
+      {/* Pull to refresh indicator */}
+      <motion.div
+        className="absolute left-1/2 -translate-x-1/2 z-20 flex flex-col items-center"
+        style={{ 
+          y: useTransform(pullY, [0, 120], [-60, 20]),
+          opacity: pullOpacity,
+          scale: pullScale,
+        }}
+      >
+        <motion.div
+          className={cn(
+            "w-10 h-10 rounded-full flex items-center justify-center shadow-lg",
+            isRefreshing ? "bg-primary text-primary-foreground" : "bg-card border border-border"
+          )}
+          style={{ rotate: isRefreshing ? undefined : pullRotation }}
+          animate={isRefreshing ? { rotate: 360 } : undefined}
+          transition={isRefreshing ? { duration: 1, repeat: Infinity, ease: 'linear' } : undefined}
+        >
+          <RefreshCw className="w-5 h-5" />
+        </motion.div>
+        <p className="text-xs text-muted-foreground mt-2 font-medium">
+          {isRefreshing ? 'Vernieuwen...' : 'Loslaten om te vernieuwen'}
+        </p>
+      </motion.div>
+
+      <motion.div
+        drag="y"
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={0.3}
+        onDrag={handleDrag}
+        onDragEnd={handleDragEnd}
+        style={{ y: isRefreshing ? 60 : pullY }}
+        className="touch-pan-y"
+      >
+        <MobileMenu />
+        <Header title="Agenda" />
 
       {/* Week Navigation */}
       <div className="glass-card rounded-2xl p-4 mb-4">
@@ -240,6 +313,7 @@ export default function Agenda() {
           </div>
         )}
       </div>
+      </motion.div>
 
       <BottomTabNav />
     </div>

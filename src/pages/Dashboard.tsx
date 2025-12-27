@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { Header } from '@/components/Header';
@@ -9,18 +9,21 @@ import { CreditsBadge } from '@/components/CreditsBadge';
 import { InstallPWA } from '@/components/InstallPWA';
 import { UpdatePrompt } from '@/components/UpdatePrompt';
 import { PageSkeleton } from '@/components/PageSkeleton';
-import { Users, GraduationCap, Calendar, Clock, Building2, Sparkles, ArrowRight } from 'lucide-react';
+import { Users, GraduationCap, Calendar, Clock, Building2, Sparkles, ArrowRight, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
+import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion';
+import { toast } from 'sonner';
 import {
   registerServiceWorker, 
   subscribeToPushNotifications, 
   requestPushPermission,
   checkPushNotificationSupport 
 } from '@/utils/pushNotifications';
+
+const PULL_THRESHOLD = 80;
 
 function StatCard({ icon: Icon, label, value, color }: { 
   icon: React.ElementType; 
@@ -45,8 +48,44 @@ function StatCard({ icon: Icon, label, value, color }: {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { getInstructors, getStudents, getLessonsForUser, getCreditsForStudent, getStudentsWithLowCredits, updateLessonStatus, isLoading } = useData();
+  const { getInstructors, getStudents, getLessonsForUser, getCreditsForStudent, getStudentsWithLowCredits, updateLessonStatus, isLoading, refreshData } = useData();
   const navigate = useNavigate();
+  
+  // Pull to refresh state
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const pullY = useMotionValue(0);
+  const pullProgress = useTransform(pullY, [0, PULL_THRESHOLD], [0, 1]);
+  const pullRotation = useTransform(pullY, [0, PULL_THRESHOLD], [0, 180]);
+  const pullScale = useTransform(pullY, [0, PULL_THRESHOLD / 2, PULL_THRESHOLD], [0.5, 0.8, 1]);
+  const pullOpacity = useTransform(pullY, [0, 30, PULL_THRESHOLD], [0, 0.5, 1]);
+
+  const handlePullRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshData();
+      toast.success('Data vernieuwd!');
+    } catch (error) {
+      toast.error('Kon data niet vernieuwen');
+    } finally {
+      setIsRefreshing(false);
+      pullY.set(0);
+    }
+  }, [refreshData, pullY]);
+
+  const handleDrag = useCallback((event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    if (isRefreshing) return;
+    if (info.offset.y > 0) {
+      pullY.set(Math.min(info.offset.y * 0.5, 120));
+    }
+  }, [isRefreshing, pullY]);
+
+  const handleDragEnd = useCallback((event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    if (pullY.get() >= PULL_THRESHOLD && !isRefreshing) {
+      handlePullRefresh();
+    } else {
+      pullY.set(0);
+    }
+  }, [pullY, isRefreshing, handlePullRefresh]);
 
   // Register service worker and subscribe to push notifications
   useEffect(() => {
@@ -139,10 +178,44 @@ export default function Dashboard() {
   const pendingLessons = lessons.filter(l => l.status === 'pending');
 
   return (
-    <div className="page-container">
-      <MobileMenu />
-      <UpdatePrompt />
-      <Header showLogo />
+    <div className="page-container relative">
+      {/* Pull to refresh indicator */}
+      <motion.div
+        className="absolute left-1/2 -translate-x-1/2 z-20 flex flex-col items-center"
+        style={{ 
+          y: useTransform(pullY, [0, 120], [-60, 20]),
+          opacity: pullOpacity,
+          scale: pullScale,
+        }}
+      >
+        <motion.div
+          className={cn(
+            "w-10 h-10 rounded-full flex items-center justify-center shadow-lg",
+            isRefreshing ? "bg-primary text-primary-foreground" : "bg-card border border-border"
+          )}
+          style={{ rotate: isRefreshing ? undefined : pullRotation }}
+          animate={isRefreshing ? { rotate: 360 } : undefined}
+          transition={isRefreshing ? { duration: 1, repeat: Infinity, ease: 'linear' } : undefined}
+        >
+          <RefreshCw className="w-5 h-5" />
+        </motion.div>
+        <p className="text-xs text-muted-foreground mt-2 font-medium">
+          {isRefreshing ? 'Vernieuwen...' : 'Loslaten om te vernieuwen'}
+        </p>
+      </motion.div>
+
+      <motion.div
+        drag="y"
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={0.3}
+        onDrag={handleDrag}
+        onDragEnd={handleDragEnd}
+        style={{ y: isRefreshing ? 60 : pullY }}
+        className="touch-pan-y"
+      >
+        <MobileMenu />
+        <UpdatePrompt />
+        <Header showLogo />
 
       {/* Greeting */}
       <motion.div
@@ -300,6 +373,7 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+      </motion.div>
 
       <BottomTabNav />
     </div>
