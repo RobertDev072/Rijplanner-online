@@ -51,28 +51,28 @@ export default function Schedule() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState<'student' | 'details'>('student');
 
-  if (!user || user.role !== 'instructor') return null;
-
-  const students = getStudents();
-  const studentCredits = selectedStudent ? getCreditsForStudent(selectedStudent) : 0;
-  const selectedStudentData = students.find(s => s.id === selectedStudent);
+  // Get instructor's assigned vehicle - moved before early return
+  const instructorVehicle = user?.role === 'instructor' ? getVehicleForInstructor(user.id) : null;
   
-  // Get instructor's assigned vehicle
-  const instructorVehicle = getVehicleForInstructor(user.id);
+  // Get available vehicles for this instructor
+  const availableVehicles = user?.role === 'instructor' 
+    ? vehicles.filter(v => !v.instructor_id || v.instructor_id === user.id)
+    : [];
   
-  // Get available vehicles for this instructor (their assigned vehicle + unassigned ones)
-  const availableVehicles = vehicles.filter(v => 
-    !v.instructor_id || v.instructor_id === user.id
-  );
-  
-  // Auto-select instructor's vehicle if available
-  React.useEffect(() => {
+  // Auto-select instructor's vehicle if available - hooks must be before early returns
+  useEffect(() => {
     if (instructorVehicle && !selectedVehicleId) {
       setSelectedVehicleId(instructorVehicle.id);
     } else if (availableVehicles.length === 1 && !selectedVehicleId) {
       setSelectedVehicleId(availableVehicles[0].id);
     }
-  }, [instructorVehicle, availableVehicles, selectedVehicleId]);
+  }, [instructorVehicle, availableVehicles.length, selectedVehicleId]);
+
+  if (!user || user.role !== 'instructor') return null;
+
+  const students = getStudents();
+  const studentCredits = selectedStudent ? getCreditsForStudent(selectedStudent) : 0;
+  const selectedStudentData = students.find(s => s.id === selectedStudent);
 
   // Auto-advance to details when student is selected
   const handleStudentSelect = (studentId: string) => {
