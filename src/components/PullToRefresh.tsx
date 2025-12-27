@@ -92,20 +92,20 @@ export function PullToRefresh({ children, onRefresh, className = '' }: PullToRef
         </motion.div>
         <motion.p
           className="text-xs text-muted-foreground mt-2 font-medium"
-          style={{ opacity: useTransform(y, [PULL_THRESHOLD * 0.5, PULL_THRESHOLD], [0, 1]) }}
+          style={{ opacity: useTransform(y, [20, PULL_THRESHOLD], [0, 1]) }}
         >
-          {isRefreshing ? 'Vernieuwen...' : y.get() >= PULL_THRESHOLD ? 'Loslaten om te vernieuwen' : 'Trek naar beneden'}
+          {isRefreshing ? 'Vernieuwen...' : 'Trek naar beneden'}
         </motion.p>
       </motion.div>
 
       {/* Content */}
       <motion.div
         ref={containerRef}
-        className="h-full overflow-y-auto overflow-x-hidden touch-pan-y"
+        className="min-h-screen overflow-y-auto overflow-x-hidden touch-pan-y"
         style={{ y: isPulling || isRefreshing ? y : 0 }}
         drag="y"
         dragConstraints={{ top: 0, bottom: 0 }}
-        dragElastic={0}
+        dragElastic={0.3}
         onDragStart={handleDragStart}
         onDrag={handleDrag}
         onDragEnd={handleDragEnd}

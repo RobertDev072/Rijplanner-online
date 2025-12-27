@@ -1,6 +1,7 @@
-import React, { useEffect, useCallback, useState } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/Header';
 import { BottomTabNav } from '@/components/BottomTabNav';
 import { MobileMenu } from '@/components/MobileMenu';
@@ -9,22 +10,21 @@ import { CreditsBadge } from '@/components/CreditsBadge';
 import { InstallPWA } from '@/components/InstallPWA';
 import { UpdatePrompt } from '@/components/UpdatePrompt';
 import { PageSkeleton } from '@/components/PageSkeleton';
-import { Users, GraduationCap, Calendar, Clock, Building2, Sparkles, ArrowRight, RefreshCw } from 'lucide-react';
+import { PullToRefresh } from '@/components/PullToRefresh';
+import { Users, GraduationCap, Calendar, Clock, Building2, Sparkles, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { hapticNotification, hapticImpact } from '@/utils/capacitor';
 import {
-  registerServiceWorker, 
-  subscribeToPushNotifications, 
+  registerServiceWorker,
+  subscribeToPushNotifications,
   requestPushPermission,
-  checkPushNotificationSupport 
+  checkPushNotificationSupport
 } from '@/utils/pushNotifications';
-
-const PULL_THRESHOLD = 80;
 
 function StatCard({ icon: Icon, label, value, color }: { 
   icon: React.ElementType; 
@@ -49,68 +49,57 @@ function StatCard({ icon: Icon, label, value, color }: {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { getInstructors, getStudents, getLessonsForUser, getCreditsForStudent, getStudentsWithLowCredits, updateLessonStatus, isLoading, refreshData } = useData();
+  const {
+    getInstructors,
+    getStudents,
+    getLessonsForUser,
+    getCreditsForStudent,
+    getStudentsWithLowCredits,
+    updateLessonStatus,
+    isLoading,
+    refreshData,
+  } = useData();
   const navigate = useNavigate();
-  
-  // Pull to refresh state
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const pullY = useMotionValue(0);
-  const pullProgress = useTransform(pullY, [0, PULL_THRESHOLD], [0, 1]);
-  const pullRotation = useTransform(pullY, [0, PULL_THRESHOLD], [0, 180]);
-  const pullScale = useTransform(pullY, [0, PULL_THRESHOLD / 2, PULL_THRESHOLD], [0.5, 0.8, 1]);
-  const pullOpacity = useTransform(pullY, [0, 30, PULL_THRESHOLD], [0, 0.5, 1]);
 
   const handlePullRefresh = useCallback(async () => {
-    setIsRefreshing(true);
     hapticImpact('medium');
     try {
       await refreshData();
       hapticNotification('success');
       toast.success('Data vernieuwd!');
-    } catch (error) {
+    } catch {
       hapticNotification('error');
       toast.error('Kon data niet vernieuwen');
-    } finally {
-      setIsRefreshing(false);
-      pullY.set(0);
     }
-  }, [refreshData, pullY]);
-
-  const handleDrag = useCallback((event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    if (isRefreshing) return;
-    if (info.offset.y > 0) {
-      pullY.set(Math.min(info.offset.y * 0.5, 120));
-    }
-  }, [isRefreshing, pullY]);
-
-  const handleDragEnd = useCallback((event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    if (pullY.get() >= PULL_THRESHOLD && !isRefreshing) {
-      handlePullRefresh();
-    } else {
-      pullY.set(0);
-    }
-  }, [pullY, isRefreshing, handlePullRefresh]);
+  }, [refreshData]);
 
   // Register service worker and subscribe to push notifications
   useEffect(() => {
     const setupPushNotifications = async () => {
-      if (!user || !checkPushNotificationSupport()) return;
-      
-      // Register service worker
-      await registerServiceWorker();
-      
-      // Request permission
-      const granted = await requestPushPermission();
-      if (!granted) return;
-      
-      // Get VAPID public key
-      const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-      if (!vapidPublicKey || !user.tenant_id) return;
-      
-      // Subscribe to push notifications
-      await subscribeToPushNotifications(user.id, user.tenant_id, vapidPublicKey);
+      try {
+        if (!user || !user.tenant_id || !checkPushNotificationSupport()) return;
+
+        // Register service worker
+        await registerServiceWorker();
+
+        // Request permission
+        const granted = await requestPushPermission();
+        if (!granted) return;
+
+        // Fetch VAPID public key from server (do not use VITE_* here)
+        const { data, error } = await supabase.functions.invoke('get-vapid-public-key');
+        if (error) return;
+
+        const vapidPublicKey = (data as { publicKey?: string | null } | null)?.publicKey ?? null;
+        if (!vapidPublicKey) return;
+
+        await subscribeToPushNotifications(user.id, user.tenant_id, vapidPublicKey);
+      } catch {
+        // Never crash the dashboard because of push setup
+        return;
+      }
     };
-    
+
     setupPushNotifications();
   }, [user]);
 
@@ -182,44 +171,10 @@ export default function Dashboard() {
   const pendingLessons = lessons.filter(l => l.status === 'pending');
 
   return (
-    <div className="page-container relative">
-      {/* Pull to refresh indicator */}
-      <motion.div
-        className="absolute left-1/2 -translate-x-1/2 z-20 flex flex-col items-center"
-        style={{ 
-          y: useTransform(pullY, [0, 120], [-60, 20]),
-          opacity: pullOpacity,
-          scale: pullScale,
-        }}
-      >
-        <motion.div
-          className={cn(
-            "w-10 h-10 rounded-full flex items-center justify-center shadow-lg",
-            isRefreshing ? "bg-primary text-primary-foreground" : "bg-card border border-border"
-          )}
-          style={{ rotate: isRefreshing ? undefined : pullRotation }}
-          animate={isRefreshing ? { rotate: 360 } : undefined}
-          transition={isRefreshing ? { duration: 1, repeat: Infinity, ease: 'linear' } : undefined}
-        >
-          <RefreshCw className="w-5 h-5" />
-        </motion.div>
-        <p className="text-xs text-muted-foreground mt-2 font-medium">
-          {isRefreshing ? 'Vernieuwen...' : 'Loslaten om te vernieuwen'}
-        </p>
-      </motion.div>
-
-      <motion.div
-        drag="y"
-        dragConstraints={{ top: 0, bottom: 0 }}
-        dragElastic={0.3}
-        onDrag={handleDrag}
-        onDragEnd={handleDragEnd}
-        style={{ y: isRefreshing ? 60 : pullY }}
-        className="touch-pan-y"
-      >
-        <MobileMenu />
-        <UpdatePrompt />
-        <Header showLogo />
+    <PullToRefresh onRefresh={handlePullRefresh} className="page-container">
+      <MobileMenu />
+      <UpdatePrompt />
+      <Header showLogo />
 
       {/* Greeting */}
       <motion.div
@@ -251,7 +206,7 @@ export default function Dashboard() {
         <>
           {/* Low Credits Warning */}
           {getStudentsWithLowCredits().length > 0 && (
-            <div 
+            <div
               className="glass-card p-4 mb-6 border-l-4 border-warning bg-warning/5 cursor-pointer hover:bg-warning/10 transition-colors"
               onClick={() => navigate('/credits')}
             >
@@ -263,10 +218,12 @@ export default function Dashboard() {
                 {getStudentsWithLowCredits().slice(0, 3).map(({ student, credits }) => (
                   <div key={student.id} className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">{student.name}</span>
-                    <span className={cn(
-                      "font-medium px-2 py-0.5 rounded-full text-xs",
-                      credits === 0 ? "bg-destructive/10 text-destructive" : "bg-warning/10 text-warning"
-                    )}>
+                    <span
+                      className={cn(
+                        "font-medium px-2 py-0.5 rounded-full text-xs",
+                        credits === 0 ? "bg-destructive/10 text-destructive" : "bg-warning/10 text-warning"
+                      )}
+                    >
                       {credits} credits
                     </span>
                   </div>
@@ -319,9 +276,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground font-medium">Jouw lescredits</p>
-                <p className="text-xs text-muted-foreground">
-                  Beschikbaar voor lessen
-                </p>
+                <p className="text-xs text-muted-foreground">Beschikbaar voor lessen</p>
               </div>
             </div>
             <CreditsBadge credits={getCreditsForStudent(user.id)} size="lg" />
@@ -342,11 +297,7 @@ export default function Dashboard() {
           <div className="space-y-3">
             {pendingLessons.map((lesson) => (
               <div key={lesson.id}>
-                <LessonCard
-                  lesson={lesson}
-                  showActions
-                  onStatusChange={updateLessonStatus}
-                />
+                <LessonCard lesson={lesson} showActions onStatusChange={updateLessonStatus} />
               </div>
             ))}
           </div>
@@ -377,9 +328,8 @@ export default function Dashboard() {
           </div>
         )}
       </div>
-      </motion.div>
 
       <BottomTabNav />
-    </div>
+    </PullToRefresh>
   );
 }

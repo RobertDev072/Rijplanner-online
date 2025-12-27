@@ -155,7 +155,12 @@ export async function requestPushPermission(): Promise<boolean> {
   if (!('Notification' in window)) {
     return false;
   }
-  
-  const permission = await Notification.requestPermission();
-  return permission === 'granted';
+
+  try {
+    const permission = await Notification.requestPermission();
+    return permission === 'granted';
+  } catch {
+    // Some browsers/environments can throw (e.g. insecure context)
+    return false;
+  }
 }
