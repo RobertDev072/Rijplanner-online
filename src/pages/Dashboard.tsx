@@ -16,6 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion';
 import { toast } from 'sonner';
+import { hapticNotification, hapticImpact } from '@/utils/capacitor';
 import {
   registerServiceWorker, 
   subscribeToPushNotifications, 
@@ -61,10 +62,13 @@ export default function Dashboard() {
 
   const handlePullRefresh = useCallback(async () => {
     setIsRefreshing(true);
+    hapticImpact('medium');
     try {
       await refreshData();
+      hapticNotification('success');
       toast.success('Data vernieuwd!');
     } catch (error) {
+      hapticNotification('error');
       toast.error('Kon data niet vernieuwen');
     } finally {
       setIsRefreshing(false);
