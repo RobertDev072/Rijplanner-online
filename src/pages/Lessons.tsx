@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useData } from "@/contexts/DataContext";
 import { Header } from "@/components/Header";
-import { BottomNav } from "@/components/BottomNav";
+import { BottomTabNav } from "@/components/BottomTabNav";
 import { MobileMenu } from "@/components/MobileMenu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -584,7 +584,7 @@ export default function Lessons() {
         </DialogContent>
       </Dialog>
 
-      <BottomNav />
+      <BottomTabNav />
     </div>
   );
 }

@@ -313,7 +313,7 @@ export default function Users() {
           </AlertDialogContent>
         </AlertDialog>
 
-        <BottomNav />
+        <BottomTabNav />
       </div>
     );
   }
@@ -591,7 +591,7 @@ export default function Users() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <BottomNav />
+      <BottomTabNav />
     </div>
   );
 }

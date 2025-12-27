@@ -305,7 +305,7 @@ export default function Vehicles() {
         )}
       </div>
 
-      <BottomNav />
+      <BottomTabNav />
     </div>
   );
 }

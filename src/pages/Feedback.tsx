@@ -366,7 +366,7 @@ export default function Feedback() {
         </motion.div>
       </motion.div>
 
-      <BottomNav />
+      <BottomTabNav />
     </div>
   );
 }
