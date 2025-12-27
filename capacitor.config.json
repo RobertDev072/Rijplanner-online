@@ -1,0 +1,25 @@
+{
+  "appId": "app.lovable.3d448cf5e5de4a4b97bdd212b0a5db1c",
+  "appName": "RijPlanner",
+  "webDir": "dist",
+  "server": {
+    "url": "https://3d448cf5-e5de-4a4b-97bd-d212b0a5db1c.lovableproject.com?forceHideBadge=true",
+    "cleartext": true
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "launchAutoHide": true,
+      "backgroundColor": "#1e293b",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false,
+      "splashFullScreen": true,
+      "splashImmersive": true
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#1e293b"
+    }
+  }
+}

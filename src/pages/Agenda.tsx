@@ -12,6 +12,7 @@ import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion';
 import { toast } from 'sonner';
+import { hapticNotification, hapticImpact } from '@/utils/capacitor';
 
 const PULL_THRESHOLD = 80;
 
@@ -56,10 +57,13 @@ export default function Agenda() {
 
   const handlePullRefresh = useCallback(async () => {
     setIsRefreshing(true);
+    hapticImpact('medium');
     try {
       await refreshData();
+      hapticNotification('success');
       toast.success('Agenda vernieuwd!');
     } catch (error) {
+      hapticNotification('error');
       toast.error('Kon agenda niet vernieuwen');
     } finally {
       setIsRefreshing(false);

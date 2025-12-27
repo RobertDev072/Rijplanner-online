@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Home, Calendar, User, LogOut, Users, Plus, Settings, Building2, BookOpen, Car } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import { hapticImpact, hapticSelection } from '@/utils/capacitor';
 
 interface TabItem {
   icon: React.ElementType;
@@ -35,8 +36,14 @@ export function BottomTabNav() {
   const visibleTabs = TAB_ITEMS.filter(item => item.roles.includes(user.role));
 
   const handleLogout = () => {
+    hapticImpact('heavy');
     logout();
     navigate('/login');
+  };
+
+  const handleTabClick = (path: string) => {
+    hapticSelection();
+    navigate(path);
   };
 
   return (
@@ -49,7 +56,7 @@ export function BottomTabNav() {
           return (
             <button
               key={tab.path}
-              onClick={() => navigate(tab.path)}
+              onClick={() => handleTabClick(tab.path)}
               className={cn(
                 "tab-button",
                 isActive && "tab-active"
