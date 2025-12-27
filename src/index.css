@@ -444,4 +444,17 @@
       transform: translateX(100%);
     }
   }
+
+  /* Swipe page indicator */
+  .swipe-indicator {
+    @apply fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-3 py-1.5 bg-card/90 backdrop-blur-lg rounded-full border border-border/40 shadow-soft;
+  }
+
+  .swipe-dot {
+    @apply w-2 h-2 rounded-full bg-muted-foreground/30 transition-all duration-300;
+  }
+
+  .swipe-dot-active {
+    @apply w-6 bg-primary;
+  }
 }

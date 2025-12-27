@@ -84,7 +84,7 @@ export default function Settings() {
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
-        <BottomNav />
+        <BottomTabNav />
       </div>
     );
   }
@@ -271,7 +271,7 @@ export default function Settings() {
         </div>
       </div>
 
-      <BottomNav />
+      <BottomTabNav />
     </div>
   );
 }

@@ -218,7 +218,7 @@ export default function Students() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <BottomNav />
+      <BottomTabNav />
     </div>
   );
 }

@@ -406,7 +406,7 @@ export default function Tenants() {
         </div>
       </div>
 
-      <BottomNav />
+      <BottomTabNav />
     </div>
   );
 }

@@ -10,6 +10,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { SplashScreen } from "@/components/SplashScreen";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { LoadingScreen } from "@/components/LoadingScreen";
+import { SwipeablePages } from "@/components/SwipeablePages";
 import { AnimatePresence, motion } from "framer-motion";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -208,7 +209,9 @@ function AppWithSplash() {
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AppRoutes />
+        <SwipeablePages>
+          <AppRoutes />
+        </SwipeablePages>
       </BrowserRouter>
     </>
   );

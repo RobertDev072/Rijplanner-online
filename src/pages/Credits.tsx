@@ -252,7 +252,7 @@ export default function Credits() {
         </Card>
       </div>
 
-      <BottomNav />
+      <BottomTabNav />
     </div>
   );
 }

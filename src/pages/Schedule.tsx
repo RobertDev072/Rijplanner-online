@@ -375,7 +375,7 @@ export default function Schedule() {
         </AnimatePresence>
       </form>
 
-      <BottomNav />
+      <BottomTabNav />
     </div>
   );
 }
