@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -30,7 +31,7 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Simple fade transition - no spring physics for better performance
+// Simple fade transition
 function AnimatedPage({ children }: { children: React.ReactNode }) {
   return (
     <div className="w-full h-full animate-fade-in">
@@ -169,21 +170,37 @@ function AppWithSplash() {
     return () => clearTimeout(timer);
   }, []);
 
-  if (showSplash) {
-    return <SplashScreen />;
-  }
-
   return (
-    <>
-      <OfflineIndicator />
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <SwipeablePages>
-          <AppRoutes />
-        </SwipeablePages>
-      </BrowserRouter>
-    </>
+    <AnimatePresence mode="wait">
+      {showSplash ? (
+        <motion.div
+          key="splash"
+          initial={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="fixed inset-0 z-[100]"
+        >
+          <SplashScreen />
+        </motion.div>
+      ) : (
+        <motion.div
+          key="app"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="w-full h-full"
+        >
+          <OfflineIndicator />
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <SwipeablePages>
+              <AppRoutes />
+            </SwipeablePages>
+          </BrowserRouter>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
