@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { Header } from '@/components/Header';
-import { BottomNav } from '@/components/BottomNav';
+import { BottomTabNav } from '@/components/BottomTabNav';
 import { MobileMenu } from '@/components/MobileMenu';
 import { LessonCard } from '@/components/LessonCard';
 import { Button } from '@/components/ui/button';
@@ -241,7 +241,7 @@ export default function Agenda() {
         )}
       </div>
 
-      <BottomNav />
+      <BottomTabNav />
     </div>
   );
 }

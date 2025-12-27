@@ -143,18 +143,101 @@
 }
 
 @layer components {
+  /* Mobile App Container */
+  .mobile-app-container {
+    @apply min-h-screen bg-background flex flex-col;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    position: fixed;
+    inset: 0;
+  }
+
+  .mobile-page-content {
+    @apply flex-1 overflow-y-auto overflow-x-hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+
+  .page-inner {
+    @apply px-5 pt-4 pb-32 max-w-lg mx-auto;
+  }
+
+  @media (min-width: 768px) {
+    .page-inner {
+      @apply max-w-2xl px-6 pt-6 pb-28;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .page-inner {
+      @apply max-w-4xl px-8;
+    }
+  }
+
+  /* Bottom Tab Navigation */
+  .bottom-tab-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-xl border-t border-border/40 shadow-elevated z-50;
+    padding-bottom: max(env(safe-area-inset-bottom), 0.25rem);
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+  }
+
+  .tab-container {
+    @apply flex items-center justify-around px-2 py-1.5;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .tab-button {
+    @apply flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all duration-200 touch-manipulation;
+    min-width: 52px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .tab-button:active {
+    @apply scale-95;
+  }
+
+  .tab-icon-container {
+    @apply relative w-10 h-10 flex items-center justify-center rounded-xl;
+  }
+
+  .tab-indicator {
+    @apply absolute inset-0 bg-primary/10 rounded-xl;
+  }
+
+  .tab-icon {
+    @apply w-5 h-5 relative z-10 transition-colors duration-200;
+  }
+
+  .tab-label {
+    @apply text-[10px] font-medium transition-colors duration-200;
+  }
+
+  .tab-active .tab-icon-container {
+    @apply scale-105;
+  }
+
+  .tab-logout {
+    @apply opacity-80;
+  }
+
+  .tab-logout:hover {
+    @apply opacity-100;
+  }
+
   /* Modern glass card with native app feel */
   .glass-card {
-    @apply bg-card border border-border/40 shadow-[var(--shadow-card)] rounded-3xl transition-all duration-300 backdrop-blur-sm;
+    @apply bg-card border border-border/40 shadow-card rounded-3xl transition-all duration-300 backdrop-blur-sm;
   }
 
   .glass-card:hover {
-    @apply shadow-[var(--shadow-card-hover)] border-border/60;
+    @apply shadow-card-hover border-border/60;
   }
 
   /* Native-style surface card */
   .surface-card {
-    @apply bg-card/80 backdrop-blur-xl border border-border/30 shadow-[var(--shadow-sm)] rounded-3xl;
+    @apply bg-card/80 backdrop-blur-xl border border-border/30 shadow-soft rounded-3xl;
   }
 
   /* Status badges with softer appearance */
@@ -174,9 +257,9 @@
     @apply bg-primary/10 text-primary border border-primary/20 rounded-full;
   }
 
-  /* Modern bottom navigation */
+  /* Legacy mobile-nav for compatibility */
   .mobile-nav {
-    @apply fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-xl border-t border-border/40 shadow-[var(--shadow-lg)] z-40 safe-area-bottom;
+    @apply fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-xl border-t border-border/40 shadow-elevated z-40 safe-area-bottom;
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
   }
@@ -210,7 +293,7 @@
 
   /* Modern button with glow effect */
   .btn-primary-glow {
-    @apply relative overflow-hidden shadow-[var(--shadow-button)];
+    @apply relative overflow-hidden shadow-button;
   }
 
   .btn-primary-glow::before {
@@ -225,7 +308,7 @@
   }
 
   .stat-icon {
-    @apply w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-[var(--shadow-sm)];
+    @apply w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-soft;
   }
 
   /* Modern floating badge */
@@ -241,6 +324,30 @@
   /* Touch-friendly tap highlight */
   .tap-highlight {
     @apply transition-all duration-150 active:scale-[0.97] active:opacity-80;
+  }
+
+  /* Prevent accidental scroll */
+  .touch-pan-y {
+    touch-action: pan-y;
+  }
+
+  .touch-pan-x {
+    touch-action: pan-x;
+  }
+
+  .touch-none {
+    touch-action: none;
+  }
+
+  /* Smooth scrolling */
+  .smooth-scroll {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Pull to refresh indicator */
+  .pull-indicator {
+    @apply absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full flex items-center justify-center p-4;
   }
 }
 

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { Header } from '@/components/Header';
-import { BottomNav } from '@/components/BottomNav';
+import { BottomTabNav } from '@/components/BottomTabNav';
 import { MobileMenu } from '@/components/MobileMenu';
 import { Button } from '@/components/ui/button';
 import { CreditsBadge } from '@/components/CreditsBadge';
@@ -328,7 +328,7 @@ export default function Profile() {
         </>
       )}
 
-      <BottomNav />
+      <BottomTabNav />
     </div>
   );
 }
