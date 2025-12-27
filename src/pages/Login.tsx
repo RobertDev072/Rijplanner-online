@@ -365,58 +365,44 @@ export default function Login() {
           </p>
         </motion.div>
 
-        {/* Biometric Quick Login - Show if available (registered or not) */}
-        {biometricAvailable && (
+        {/* Biometric Quick Login - Only show if registered */}
+        {biometricAvailable && biometricRegistered && (
           <motion.div
-            className="mb-5"
+            className="mb-6"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            {biometricRegistered ? (
-              // Show Face ID login button if registered
-              <motion.button
-                onClick={handleBiometricLogin}
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary/10 to-accent/10 border-2 border-primary/20 flex flex-col items-center gap-2 hover:border-primary/40 transition-all"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                disabled={isBiometricScanning}
+            <motion.button
+              onClick={handleBiometricLogin}
+              className="w-full py-5 rounded-3xl bg-gradient-to-br from-primary/10 via-accent/5 to-primary/10 border-2 border-primary/20 flex flex-col items-center gap-3 active:scale-[0.98] active:bg-primary/20 transition-all"
+              whileTap={{ scale: 0.97 }}
+              disabled={isBiometricScanning}
+            >
+              <motion.div
+                className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/30"
+                animate={{
+                  boxShadow: [
+                    '0 8px 25px hsl(var(--primary) / 0.25)',
+                    '0 12px 35px hsl(var(--primary) / 0.4)',
+                    '0 8px 25px hsl(var(--primary) / 0.25)',
+                  ],
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
               >
-                <motion.div
-                  className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center"
-                  animate={{
-                    boxShadow: [
-                      '0 0 0 0 hsl(var(--primary) / 0)',
-                      '0 0 0 8px hsl(var(--primary) / 0.1)',
-                      '0 0 0 0 hsl(var(--primary) / 0)',
-                    ],
-                  }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                >
-                  <Scan className="w-7 h-7 text-primary" />
-                </motion.div>
-                <div className="text-center">
-                  <p className="font-semibold text-foreground text-sm">Face ID / Touch ID</p>
-                  <p className="text-xs text-muted-foreground">Tik om snel in te loggen</p>
-                </div>
-              </motion.button>
-            ) : (
-              // Show hint that Face ID will be available after login
-              <div className="text-center py-3 px-4 rounded-xl bg-muted/50 border border-border">
-                <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                  <Fingerprint className="w-4 h-4" />
-                  <span className="text-xs">Face ID / Touch ID beschikbaar na eerste login</span>
-                </div>
+                <Fingerprint className="w-8 h-8 text-primary-foreground" />
+              </motion.div>
+              <div className="text-center">
+                <p className="font-bold text-foreground">Inloggen met biometrie</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Face ID of Touch ID</p>
               </div>
-            )}
+            </motion.button>
             
-            {biometricRegistered && (
-              <div className="flex items-center gap-3 my-4">
-                <div className="flex-1 h-px bg-border" />
-                <span className="text-xs text-muted-foreground">of</span>
-                <div className="flex-1 h-px bg-border" />
-              </div>
-            )}
+            <div className="flex items-center gap-3 my-5">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs text-muted-foreground font-medium">of met pincode</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
           </motion.div>
         )}
 

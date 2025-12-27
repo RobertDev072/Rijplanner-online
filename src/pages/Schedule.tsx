@@ -259,8 +259,12 @@ export default function Schedule() {
                     value={date}
                     onChange={e => setDate(e.target.value)}
                     min={today}
-                    className="h-14 text-base rounded-2xl bg-muted/50 border-0 focus:bg-card focus:ring-2 focus:ring-primary/20"
+                    placeholder="Selecteer datum"
+                    className="h-14 text-base"
                   />
+                  {!date && (
+                    <p className="text-xs text-muted-foreground">Kies een datum voor de les</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -272,8 +276,12 @@ export default function Schedule() {
                     type="time"
                     value={time}
                     onChange={e => setTime(e.target.value)}
-                    className="h-14 text-base rounded-2xl bg-muted/50 border-0 focus:bg-card focus:ring-2 focus:ring-primary/20"
+                    placeholder="Bijv. 09:00"
+                    className="h-14 text-base"
                   />
+                  {!time && (
+                    <p className="text-xs text-muted-foreground">Kies een starttijd</p>
+                  )}
                 </div>
               </motion.div>
 
@@ -336,14 +344,14 @@ export default function Schedule() {
                 <label className="text-sm font-medium text-foreground flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-primary" />
                   Ophaallocatie / Opmerking
-                  <span className="text-muted-foreground font-normal">(optioneel)</span>
+                  <span className="text-muted-foreground font-normal text-xs">(optioneel)</span>
                 </label>
                 <Textarea
                   value={remarks}
                   onChange={e => setRemarks(e.target.value)}
-                  placeholder="Bijv. Ophalen bij station, of andere opmerkingen..."
-                  className="resize-none rounded-2xl bg-muted/50 border-0 focus:bg-card focus:ring-2 focus:ring-primary/20 min-h-[100px]"
-                  rows={3}
+                  placeholder="Waar moet de leerling worden opgehaald? Bijv:&#10;• Thuis: Hoofdstraat 123&#10;• Station Centraal&#10;• School (naam)"
+                  className="resize-none rounded-2xl bg-muted/50 border-2 border-transparent focus:bg-card focus:border-primary/30 min-h-[120px]"
+                  rows={4}
                 />
               </motion.div>
 
