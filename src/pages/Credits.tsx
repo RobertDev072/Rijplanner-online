@@ -2,7 +2,7 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { Header } from '@/components/Header';
-import { BottomNav } from '@/components/BottomNav';
+import { BottomTabNav } from '@/components/BottomTabNav';
 import { MobileMenu } from '@/components/MobileMenu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';

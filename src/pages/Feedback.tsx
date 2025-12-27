@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { Header } from '@/components/Header';
-import { BottomNav } from '@/components/BottomNav';
+import { BottomTabNav } from '@/components/BottomTabNav';
 import { FeedbackCard } from '@/components/FeedbackCard';
 import { MobileMenu } from '@/components/MobileMenu';
 import { FileText, TrendingUp, Star, Filter, Search, X, ChevronDown, Sparkles } from 'lucide-react';

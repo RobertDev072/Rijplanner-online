@@ -2,18 +2,20 @@ import React, { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { Header } from '@/components/Header';
-import { BottomNav } from '@/components/BottomNav';
+import { BottomTabNav } from '@/components/BottomTabNav';
 import { MobileMenu } from '@/components/MobileMenu';
 import { LessonCard } from '@/components/LessonCard';
 import { CreditsBadge } from '@/components/CreditsBadge';
 import { InstallPWA } from '@/components/InstallPWA';
 import { UpdatePrompt } from '@/components/UpdatePrompt';
+import { PageSkeleton } from '@/components/PageSkeleton';
 import { Users, GraduationCap, Calendar, Clock, Building2, Sparkles, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { 
+import { motion } from 'framer-motion';
+import {
   registerServiceWorker, 
   subscribeToPushNotifications, 
   requestPushPermission,
@@ -84,15 +86,22 @@ export default function Dashboard() {
       <div className="page-container">
         <Header showLogo />
         
-        <div className="mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
           <p className="text-muted-foreground text-sm font-medium mb-1">{getGreeting()}</p>
           <h2 className="text-2xl font-bold text-foreground">
             {user.name.split(' ')[0]} 👋
           </h2>
-        </div>
+        </motion.div>
 
-        <div 
-          className="glass-card p-6 cursor-pointer group"
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="glass-card p-6 cursor-pointer group tap-highlight"
           onClick={() => navigate('/tenants')}
         >
           <div className="flex items-center gap-4">
@@ -105,9 +114,9 @@ export default function Dashboard() {
             </div>
             <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
           </div>
-        </div>
+        </motion.div>
 
-        <BottomNav />
+        <BottomTabNav />
       </div>
     );
   }
@@ -116,14 +125,8 @@ export default function Dashboard() {
     return (
       <div className="page-container">
         <Header showLogo />
-        <div className="flex flex-col items-center justify-center py-20 gap-4">
-          <div className="relative">
-            <div className="w-16 h-16 rounded-full border-4 border-muted" />
-            <div className="absolute inset-0 w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-          </div>
-          <p className="text-muted-foreground">Laden...</p>
-        </div>
-        <BottomNav />
+        <PageSkeleton type="dashboard" />
+        <BottomTabNav />
       </div>
     );
   }
@@ -142,7 +145,11 @@ export default function Dashboard() {
       <Header showLogo />
 
       {/* Greeting */}
-      <div className="mb-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-6"
+      >
         <p className="text-muted-foreground text-sm font-medium mb-1">{getGreeting()}</p>
         <h2 className="text-2xl font-bold text-foreground">
           {user.name.split(' ')[0]} 👋
@@ -150,12 +157,17 @@ export default function Dashboard() {
         <p className="text-sm text-muted-foreground mt-1">
           {format(new Date(), "EEEE d MMMM", { locale: nl })}
         </p>
-      </div>
+      </motion.div>
 
       {/* PWA Install Prompt */}
-      <div className="mb-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="mb-6"
+      >
         <InstallPWA />
-      </div>
+      </motion.div>
 
       {/* Admin Stats */}
       {user.role === 'admin' && (
@@ -289,7 +301,7 @@ export default function Dashboard() {
         )}
       </div>
 
-      <BottomNav />
+      <BottomTabNav />
     </div>
   );
 }

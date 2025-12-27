@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Header } from '@/components/Header';
-import { BottomNav } from '@/components/BottomNav';
+import { BottomTabNav } from '@/components/BottomTabNav';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
