@@ -134,11 +134,27 @@
 @layer base {
   * {
     @apply border-border;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overscroll-behavior: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Allow text selection in inputs and textareas */
+  input, textarea {
+    user-select: text;
+    -webkit-user-select: text;
   }
 }
 
@@ -456,5 +472,62 @@
 
   .swipe-dot-active {
     @apply w-6 bg-primary;
+  }
+
+  /* Native app interactions */
+  .pressable {
+    @apply transition-all duration-150 active:scale-[0.96] active:opacity-80;
+  }
+
+  .pressable-soft {
+    @apply transition-all duration-100 active:scale-[0.98] active:opacity-90;
+  }
+
+  /* iOS-style blur backgrounds */
+  .blur-bg {
+    @apply backdrop-blur-xl bg-background/80;
+  }
+
+  .blur-card {
+    @apply backdrop-blur-xl bg-card/90 border border-border/30;
+  }
+
+  /* Native modal/sheet styles */
+  .native-sheet {
+    @apply bg-card rounded-t-3xl shadow-xl;
+    border-top-left-radius: 1.5rem;
+    border-top-right-radius: 1.5rem;
+  }
+
+  .sheet-handle {
+    @apply w-10 h-1 bg-muted-foreground/20 rounded-full mx-auto mt-3 mb-2;
+  }
+
+  /* Smooth scrolling container */
+  .scroll-container {
+    @apply overflow-y-auto overflow-x-hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    scroll-behavior: smooth;
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .scroll-hidden::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .scroll-hidden {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Status bar safe area */
+  .safe-top {
+    padding-top: max(env(safe-area-inset-top), 1rem);
+  }
+
+  /* Native selection highlight */
+  .selection-primary::selection {
+    @apply bg-primary/20 text-primary;
   }
 }
