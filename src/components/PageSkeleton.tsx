@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface PageSkeletonProps {
@@ -7,31 +6,10 @@ interface PageSkeletonProps {
 }
 
 export function PageSkeleton({ type = 'dashboard' }: PageSkeletonProps) {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
-  };
-
   if (type === 'profile') {
     return (
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="space-y-6"
-      >
-        {/* Profile header skeleton */}
-        <motion.div variants={itemVariants} className="glass-card p-6">
+      <div className="space-y-6 animate-fade-in">
+        <div className="glass-card p-6">
           <div className="flex items-center gap-4 mb-6">
             <Skeleton className="w-16 h-16 rounded-full" />
             <div className="space-y-2">
@@ -47,25 +25,16 @@ export function PageSkeleton({ type = 'dashboard' }: PageSkeletonProps) {
               </div>
             ))}
           </div>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
     );
   }
 
   if (type === 'list') {
     return (
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="space-y-3"
-      >
+      <div className="space-y-3 animate-fade-in">
         {[1, 2, 3, 4, 5].map((i) => (
-          <motion.div
-            key={i}
-            variants={itemVariants}
-            className="glass-card p-4"
-          >
+          <div key={i} className="glass-card p-4">
             <div className="flex items-center gap-4">
               <Skeleton className="w-12 h-12 rounded-xl" />
               <div className="flex-1 space-y-2">
@@ -74,50 +43,36 @@ export function PageSkeleton({ type = 'dashboard' }: PageSkeletonProps) {
               </div>
               <Skeleton className="w-16 h-6 rounded-full" />
             </div>
-          </motion.div>
+          </div>
         ))}
-      </motion.div>
+      </div>
     );
   }
 
   if (type === 'form') {
     return (
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="space-y-4"
-      >
+      <div className="space-y-4 animate-fade-in">
         {[1, 2, 3, 4].map((i) => (
-          <motion.div key={i} variants={itemVariants} className="space-y-2">
+          <div key={i} className="space-y-2">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-12 w-full rounded-xl" />
-          </motion.div>
+          </div>
         ))}
-        <motion.div variants={itemVariants}>
-          <Skeleton className="h-12 w-full rounded-xl" />
-        </motion.div>
-      </motion.div>
+        <Skeleton className="h-12 w-full rounded-xl" />
+      </div>
     );
   }
 
   // Dashboard type
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="space-y-6"
-    >
-      {/* Greeting skeleton */}
-      <motion.div variants={itemVariants} className="space-y-2">
+    <div className="space-y-6 animate-fade-in">
+      <div className="space-y-2">
         <Skeleton className="h-4 w-24" />
         <Skeleton className="h-8 w-40" />
         <Skeleton className="h-4 w-32" />
-      </motion.div>
+      </div>
 
-      {/* Stats grid skeleton */}
-      <motion.div variants={itemVariants} className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="glass-card p-4">
             <div className="flex items-center gap-3">
@@ -129,15 +84,11 @@ export function PageSkeleton({ type = 'dashboard' }: PageSkeletonProps) {
             </div>
           </div>
         ))}
-      </motion.div>
+      </div>
 
-      {/* Section title skeleton */}
-      <motion.div variants={itemVariants}>
-        <Skeleton className="h-5 w-32 mb-3" />
-      </motion.div>
+      <Skeleton className="h-5 w-32" />
 
-      {/* Cards skeleton */}
-      <motion.div variants={itemVariants} className="space-y-3">
+      <div className="space-y-3">
         {[1, 2, 3].map((i) => (
           <div key={i} className="glass-card p-4">
             <div className="flex items-center gap-4">
@@ -149,7 +100,7 @@ export function PageSkeleton({ type = 'dashboard' }: PageSkeletonProps) {
             </div>
           </div>
         ))}
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }

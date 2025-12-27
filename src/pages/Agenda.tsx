@@ -5,16 +5,14 @@ import { Header } from '@/components/Header';
 import { BottomTabNav } from '@/components/BottomTabNav';
 import { MobileMenu } from '@/components/MobileMenu';
 import { LessonCard } from '@/components/LessonCard';
+import { PullToRefresh } from '@/components/PullToRefresh';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Calendar, Clock, CheckCircle, RefreshCw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Clock, CheckCircle } from 'lucide-react';
 import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion';
 import { toast } from 'sonner';
 import { hapticNotification, hapticImpact } from '@/utils/capacitor';
-
-const PULL_THRESHOLD = 80;
 
 const STATUS_COLORS = {
   pending: {
@@ -48,43 +46,17 @@ export default function Agenda() {
   const { getLessonsForUser, updateLessonStatus, refreshData } = useData();
   const [selectedDate, setSelectedDate] = useState(new Date());
 
-  // Pull to refresh state
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const pullY = useMotionValue(0);
-  const pullRotation = useTransform(pullY, [0, PULL_THRESHOLD], [0, 180]);
-  const pullScale = useTransform(pullY, [0, PULL_THRESHOLD / 2, PULL_THRESHOLD], [0.5, 0.8, 1]);
-  const pullOpacity = useTransform(pullY, [0, 30, PULL_THRESHOLD], [0, 0.5, 1]);
-
   const handlePullRefresh = useCallback(async () => {
-    setIsRefreshing(true);
     hapticImpact('medium');
     try {
       await refreshData();
       hapticNotification('success');
       toast.success('Agenda vernieuwd!');
-    } catch (error) {
+    } catch {
       hapticNotification('error');
       toast.error('Kon agenda niet vernieuwen');
-    } finally {
-      setIsRefreshing(false);
-      pullY.set(0);
     }
-  }, [refreshData, pullY]);
-
-  const handleDrag = useCallback((event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    if (isRefreshing) return;
-    if (info.offset.y > 0) {
-      pullY.set(Math.min(info.offset.y * 0.5, 120));
-    }
-  }, [isRefreshing, pullY]);
-
-  const handleDragEnd = useCallback((event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    if (pullY.get() >= PULL_THRESHOLD && !isRefreshing) {
-      handlePullRefresh();
-    } else {
-      pullY.set(0);
-    }
-  }, [pullY, isRefreshing, handlePullRefresh]);
+  }, [refreshData]);
 
   if (!user) return null;
 
@@ -124,66 +96,28 @@ export default function Agenda() {
   const acceptedCount = dayLessons.filter(l => l.status === 'accepted').length;
 
   return (
-    <div className="page-container relative">
-      {/* Pull to refresh indicator */}
-      <motion.div
-        className="absolute left-1/2 -translate-x-1/2 z-20 flex flex-col items-center"
-        style={{ 
-          y: useTransform(pullY, [0, 120], [-60, 20]),
-          opacity: pullOpacity,
-          scale: pullScale,
-        }}
-      >
-        <motion.div
-          className={cn(
-            "w-10 h-10 rounded-full flex items-center justify-center shadow-lg",
-            isRefreshing ? "bg-primary text-primary-foreground" : "bg-card border border-border"
-          )}
-          style={{ rotate: isRefreshing ? undefined : pullRotation }}
-          animate={isRefreshing ? { rotate: 360 } : undefined}
-          transition={isRefreshing ? { duration: 1, repeat: Infinity, ease: 'linear' } : undefined}
-        >
-          <RefreshCw className="w-5 h-5" />
-        </motion.div>
-        <p className="text-xs text-muted-foreground mt-2 font-medium">
-          {isRefreshing ? 'Vernieuwen...' : 'Loslaten om te vernieuwen'}
-        </p>
-      </motion.div>
-
-      <motion.div
-        drag="y"
-        dragConstraints={{ top: 0, bottom: 0 }}
-        dragElastic={0.3}
-        onDrag={handleDrag}
-        onDragEnd={handleDragEnd}
-        style={{ y: isRefreshing ? 60 : pullY }}
-        className="touch-pan-y"
-      >
-        <MobileMenu />
-        <Header title="Agenda" />
+    <PullToRefresh onRefresh={handlePullRefresh} className="page-container">
+      <MobileMenu />
+      <Header title="Agenda" />
 
       {/* Week Navigation */}
       <div className="glass-card rounded-2xl p-4 mb-4">
         <div className="flex items-center justify-between mb-4">
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => navigateWeek('prev')}
             className="rounded-xl"
           >
             <ChevronLeft className="w-5 h-5" />
           </Button>
           <div className="text-center">
-            <span className="font-bold text-lg">
-              {format(weekStart, 'MMMM', { locale: nl })}
-            </span>
-            <span className="text-muted-foreground ml-2">
-              {format(weekStart, 'yyyy')}
-            </span>
+            <span className="font-bold text-lg">{format(weekStart, 'MMMM', { locale: nl })}</span>
+            <span className="text-muted-foreground ml-2">{format(weekStart, 'yyyy')}</span>
           </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => navigateWeek('next')}
             className="rounded-xl"
           >
@@ -208,29 +142,33 @@ export default function Agenda() {
                   isSelected
                     ? "bg-primary text-primary-foreground shadow-lg"
                     : isToday
-                    ? "bg-primary/10 text-primary"
-                    : "hover:bg-muted"
+                      ? "bg-primary/10 text-primary"
+                      : "hover:bg-muted"
                 )}
               >
                 <span className="text-[10px] font-medium uppercase opacity-70">
                   {format(day, 'EEE', { locale: nl })}
                 </span>
                 <span className="text-lg font-bold">{format(day, 'd')}</span>
-                
+
                 {/* Status dots */}
                 {hasLessons && (
                   <div className="flex gap-0.5 mt-1">
                     {statuses.accepted > 0 && (
-                      <div className={cn(
-                        "w-1.5 h-1.5 rounded-full",
-                        isSelected ? "bg-primary-foreground" : STATUS_COLORS.accepted.bg
-                      )} />
+                      <div
+                        className={cn(
+                          "w-1.5 h-1.5 rounded-full",
+                          isSelected ? "bg-primary-foreground" : STATUS_COLORS.accepted.bg
+                        )}
+                      />
                     )}
                     {statuses.pending > 0 && (
-                      <div className={cn(
-                        "w-1.5 h-1.5 rounded-full",
-                        isSelected ? "bg-primary-foreground/70" : STATUS_COLORS.pending.bg
-                      )} />
+                      <div
+                        className={cn(
+                          "w-1.5 h-1.5 rounded-full",
+                          isSelected ? "bg-primary-foreground/70" : STATUS_COLORS.pending.bg
+                        )}
+                      />
                     )}
                   </div>
                 )}
@@ -265,24 +203,30 @@ export default function Agenda() {
             {format(selectedDate, "EEEE d MMMM", { locale: nl })}
           </h3>
         </div>
-        
+
         {/* Day summary badges */}
         {dayLessons.length > 0 && (
           <div className="flex gap-2 mt-3">
             {acceptedCount > 0 && (
-              <div className={cn(
-                "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
-                STATUS_COLORS.accepted.light, STATUS_COLORS.accepted.text
-              )}>
+              <div
+                className={cn(
+                  "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
+                  STATUS_COLORS.accepted.light,
+                  STATUS_COLORS.accepted.text
+                )}
+              >
                 <CheckCircle className="w-3 h-3" />
                 {acceptedCount} bevestigd
               </div>
             )}
             {pendingCount > 0 && (
-              <div className={cn(
-                "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
-                STATUS_COLORS.pending.light, STATUS_COLORS.pending.text
-              )}>
+              <div
+                className={cn(
+                  "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
+                  STATUS_COLORS.pending.light,
+                  STATUS_COLORS.pending.text
+                )}
+              >
                 <Clock className="w-3 h-3" />
                 {pendingCount} wachtend
               </div>
@@ -299,27 +243,20 @@ export default function Agenda() {
               <Calendar className="w-8 h-8 text-muted-foreground" />
             </div>
             <h4 className="font-semibold text-foreground mb-1">Geen lessen</h4>
-            <p className="text-sm text-muted-foreground">
-              Er zijn geen lessen gepland op deze dag
-            </p>
+            <p className="text-sm text-muted-foreground">Er zijn geen lessen gepland op deze dag</p>
           </div>
         ) : (
           <div className="space-y-3">
             {dayLessons.map((lesson) => (
               <div key={lesson.id}>
-                <LessonCard
-                  lesson={lesson}
-                  showActions={user.role === 'student'}
-                  onStatusChange={updateLessonStatus}
-                />
+                <LessonCard lesson={lesson} showActions={user.role === 'student'} onStatusChange={updateLessonStatus} />
               </div>
             ))}
           </div>
         )}
       </div>
-      </motion.div>
 
       <BottomTabNav />
-    </div>
+    </PullToRefresh>
   );
 }
