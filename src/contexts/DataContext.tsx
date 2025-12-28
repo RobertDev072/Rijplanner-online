@@ -509,10 +509,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const resetUserPincode = async (userId: string, newPincode: string): Promise<boolean> => {
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({ pincode: newPincode })
-        .eq('id', userId);
+      // Use secure RPC that bypasses RLS with server-side permission checks
+      const { error } = await supabase.rpc('reset_user_pincode', {
+        _target_user_id: userId,
+        _new_pincode: newPincode,
+      });
 
       if (error) throw error;
       await fetchData();
