@@ -39,12 +39,30 @@ serve(async (req) => {
       );
     }
 
-    // Create Supabase client with service role key to bypass RLS
+    // Create Supabase client with service role key to bypass RLS (admin operations)
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
+
+    // Separate anon client for sign-in (GoTrue can behave differently with service-role keys)
+    const supabaseAnon = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+
+    const signInWithRetry = async (email: string, password: string) => {
+      // Password updates can be briefly eventual-consistent; retry a couple times
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        const { data, error } = await supabaseAnon.auth.signInWithPassword({ email, password });
+        if (!error && data?.session) return { session: data.session, error: null };
+        if (attempt < 3) await new Promise((r) => setTimeout(r, 200));
+        if (attempt === 3) return { session: null, error };
+      }
+      return { session: null, error: null };
+    };
 
     // Verify credentials - fetch user from users table
     const { data: userData, error: userError } = await supabaseAdmin
@@ -91,8 +109,8 @@ serve(async (req) => {
     if (existingAuthUser?.user) {
       // Auth user exists with correct ID - update password and sign in
       console.log("Auth user exists with correct ID, updating password");
-      await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
-        password: pincode,
+      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
+        password: normalizedPin,
         email: email,
         user_metadata: {
           user_id: userData.id,
@@ -102,14 +120,15 @@ serve(async (req) => {
         },
       });
 
-      // Sign in
-      const { data: signInData, error: signInError } = await supabaseAdmin.auth.signInWithPassword({
-        email,
-        password: pincode,
-      });
+      if (updateError) {
+        console.log("Password update failed:", updateError.message);
+      }
 
-      if (!signInError && signInData?.session) {
-        session = signInData.session;
+      // Sign in (anon client) + retry for eventual consistency
+      const { session: signInSession, error: signInError } = await signInWithRetry(email, normalizedPin);
+
+      if (!signInError && signInSession) {
+        session = signInSession;
         console.log("Sign in successful");
       } else {
         console.log("Sign in failed:", signInError?.message);
@@ -132,7 +151,7 @@ serve(async (req) => {
       const { data: createData, error: createError } = await supabaseAdmin.auth.admin.createUser({
         id: targetUserId,
         email,
-        password: pincode,
+        password: normalizedPin,
         email_confirm: true,
         user_metadata: {
           user_id: userData.id,
@@ -144,30 +163,23 @@ serve(async (req) => {
 
       if (createError) {
         console.log("Create user error:", createError.message);
-        
+
         // If creation failed because ID already exists, try signing in
-        const { data: retrySignIn, error: retryError } = await supabaseAdmin.auth.signInWithPassword({
-          email,
-          password: pincode,
-        });
-        
-        if (!retryError && retrySignIn?.session) {
-          session = retrySignIn.session;
+        const { session: retrySession, error: retryError } = await signInWithRetry(email, normalizedPin);
+
+        if (!retryError && retrySession) {
+          session = retrySession;
           console.log("Retry sign in successful");
         } else {
           console.log("Retry sign in also failed:", retryError?.message);
         }
       } else if (createData?.user) {
         console.log("Auth user created successfully with ID:", createData.user.id);
-        
-        // Sign in with new user
-        const { data: signInData, error: signInError } = await supabaseAdmin.auth.signInWithPassword({
-          email,
-          password: pincode,
-        });
-        
-        if (!signInError && signInData?.session) {
-          session = signInData.session;
+
+        const { session: signInSession, error: signInError } = await signInWithRetry(email, normalizedPin);
+
+        if (!signInError && signInSession) {
+          session = signInSession;
           console.log("Sign in after create successful");
         } else {
           console.log("Sign in after create failed:", signInError?.message);
