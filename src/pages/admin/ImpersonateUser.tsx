@@ -19,6 +19,12 @@ import { toast } from 'sonner';
 import { User, Tenant } from '@/types';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { 
+  createImpersonationToken, 
+  storeImpersonationToken, 
+  getImpersonationToken,
+  isImpersonationTokenValid
+} from '@/utils/securityTokens';
 
 interface UserWithTenant extends User {
   tenant?: Tenant;
@@ -32,7 +38,7 @@ export default function ImpersonateUser() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isImpersonating, setIsImpersonating] = useState(false);
-  const [originalSuperadmin, setOriginalSuperadmin] = useState<User | null>(null);
+  const [hasActiveImpersonation, setHasActiveImpersonation] = useState(false);
 
   useEffect(() => {
     if (user?.role !== 'superadmin') {
@@ -40,11 +46,9 @@ export default function ImpersonateUser() {
       return;
     }
     
-    // Check for stored original superadmin
-    const stored = localStorage.getItem('original_superadmin');
-    if (stored) {
-      setOriginalSuperadmin(JSON.parse(stored));
-    }
+    // Check for existing valid impersonation token
+    const existingToken = getImpersonationToken();
+    setHasActiveImpersonation(isImpersonationTokenValid(existingToken));
     
     fetchData();
   }, [user, navigate]);
@@ -108,8 +112,13 @@ export default function ImpersonateUser() {
     
     setIsImpersonating(true);
     try {
-      // Store original superadmin info
-      localStorage.setItem('original_superadmin', JSON.stringify(user));
+      // Create secure impersonation token (without storing pincode)
+      const token = createImpersonationToken(
+        user.id,
+        user.username,
+        user.name
+      );
+      storeImpersonationToken(token);
       
       // Log the impersonation
       await supabase.from('audit_logs').insert({
@@ -123,10 +132,11 @@ export default function ImpersonateUser() {
         details: {
           target_role: targetUser.role,
           target_tenant: targetUser.tenant?.name,
+          session_token: token.sessionToken.substring(0, 8) + '...', // Only log partial token for audit
         },
       });
 
-      // Create impersonation session
+      // Create impersonation session in database
       await supabase.from('impersonation_sessions').insert({
         superadmin_id: user.id,
         impersonated_user_id: targetUser.id,
@@ -141,12 +151,13 @@ export default function ImpersonateUser() {
         navigate('/dashboard');
       } else {
         toast.error('Kon niet inloggen als gebruiker');
-        localStorage.removeItem('original_superadmin');
+        // Clear token on failure
+        localStorage.removeItem('impersonation_token');
       }
     } catch (error) {
       console.error('Error impersonating user:', error);
       toast.error('Fout bij impersonatie');
-      localStorage.removeItem('original_superadmin');
+      localStorage.removeItem('impersonation_token');
     } finally {
       setIsImpersonating(false);
     }

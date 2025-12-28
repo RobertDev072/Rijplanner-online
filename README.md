@@ -640,6 +640,75 @@ npx cap run android
 
 ---
 
+## 🔐 Security
+
+### Beveiligingsmaatregelen
+
+RijPlanner implementeert meerdere beveiligingslagen om gebruikersdata en sessies te beschermen:
+
+#### Session Security
+| Maatregel | Beschrijving |
+|-----------|--------------|
+| **Secure Token Generation** | Cryptografisch veilige tokens (32+ bytes) via `crypto.getRandomValues()` |
+| **Session Expiration** | Sessies verlopen automatisch na 24 uur |
+| **No Sensitive Data Storage** | Pincodes worden NOOIT opgeslagen in localStorage |
+| **Token Validation** | Elke sessie wordt gevalideerd op structuur en vervaltijd |
+
+#### Impersonation Security
+| Maatregel | Beschrijving |
+|-----------|--------------|
+| **Time-Limited Tokens** | Impersonatie tokens verlopen na 60 minuten |
+| **Database Verification** | Bij terugkeer naar superadmin wordt identiteit opnieuw geverifieerd via database |
+| **Audit Logging** | Alle impersonatie acties worden gelogd met timestamp en partial token |
+| **Session Tracking** | Actieve impersonatie sessies worden bijgehouden in database |
+
+#### Data Protection
+| Maatregel | Beschrijving |
+|-----------|--------------|
+| **Row Level Security (RLS)** | Alle tabellen hebben RLS policies voor tenant-isolatie |
+| **Superadmin Verification** | `is_superadmin()` functie met SECURITY DEFINER |
+| **Input Sanitization** | Gebruikersdata wordt gesanitized voor opslag |
+| **Multi-tenant Isolation** | Strikte scheiding van data tussen rijscholen |
+
+### Security Token Implementatie
+
+```typescript
+// Voorbeeld: Secure token generatie
+import { generateSecureToken } from '@/utils/securityTokens';
+
+const token = generateSecureToken(32); // 64-character hex string
+
+// Voorbeeld: Impersonation token met expiratie
+import { createImpersonationToken, isImpersonationTokenValid } from '@/utils/securityTokens';
+
+const token = createImpersonationToken(userId, username, name);
+// Token bevat: originalUserId, sessionToken, createdAt, expiresAt
+
+if (isImpersonationTokenValid(token)) {
+  // Token is geldig en niet verlopen
+}
+```
+
+### Aanbevolen Security Practices
+
+1. **Regelmatige Key Rotatie**: Roteer VAPID keys periodiek
+2. **Monitor Audit Logs**: Controleer regelmatig op verdachte activiteiten
+3. **Limiteer Impersonatie**: Beperk impersonatie tot noodzakelijke gevallen
+4. **SSL/TLS**: Altijd HTTPS gebruiken in productie
+5. **Rate Limiting**: Implementeer rate limiting op login endpoints (Supabase)
+
+### Security Checklist voor Productie
+
+- [ ] Alle environment variables zijn geconfigureerd
+- [ ] RLS policies zijn actief op alle tabellen
+- [ ] Service Role Key is NOOIT in client-side code
+- [ ] Audit logging is ingeschakeld
+- [ ] SSL certificaat is geldig
+- [ ] CORS is correct geconfigureerd in Supabase
+- [ ] Rate limiting is ingeschakeld op auth endpoints
+
+---
+
 ## 📄 Licentie
 
 © 2024 RobertDev.nl - Alle rechten voorbehouden.

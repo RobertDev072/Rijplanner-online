@@ -5,8 +5,13 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { User as UserType } from '@/types';
 import { cn } from '@/lib/utils';
+import { 
+  getImpersonationToken, 
+  clearImpersonationToken, 
+  isImpersonationTokenValid,
+  type ImpersonationToken 
+} from '@/utils/securityTokens';
 
 interface HeaderProps {
   title?: string;
@@ -15,22 +20,21 @@ interface HeaderProps {
 
 export function Header({ title, showLogo = false }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [originalSuperadmin, setOriginalSuperadmin] = useState<UserType | null>(null);
+  const [impersonationToken, setImpersonationToken] = useState<ImpersonationToken | null>(null);
   const [isExitingImpersonation, setIsExitingImpersonation] = useState(false);
   const { user, logout, login } = useAuth();
   const { theme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Check for impersonation on mount
+  // Check for valid impersonation token on mount
   useEffect(() => {
-    const stored = localStorage.getItem('original_superadmin');
-    if (stored) {
-      try {
-        setOriginalSuperadmin(JSON.parse(stored));
-      } catch {
-        localStorage.removeItem('original_superadmin');
-      }
+    const token = getImpersonationToken();
+    if (token && isImpersonationTokenValid(token)) {
+      setImpersonationToken(token);
+    } else {
+      clearImpersonationToken();
+      setImpersonationToken(null);
     }
   }, [user]);
 
@@ -50,36 +54,54 @@ export function Header({ title, showLogo = false }: HeaderProps) {
   };
 
   const handleExitImpersonation = async () => {
-    if (!originalSuperadmin) return;
+    if (!impersonationToken || !isImpersonationTokenValid(impersonationToken)) {
+      clearImpersonationToken();
+      setImpersonationToken(null);
+      toast.error('Impersonatie sessie verlopen');
+      return;
+    }
     
     setIsExitingImpersonation(true);
     try {
       // Log the end of impersonation
       await supabase.from('audit_logs').insert({
-        actor_id: originalSuperadmin.id,
-        actor_name: originalSuperadmin.name,
+        actor_id: impersonationToken.originalUserId,
+        actor_name: impersonationToken.originalName,
         action: 'end_impersonation',
         target_type: 'user',
         target_id: user?.id,
         target_name: user?.name,
       });
 
-      // End the impersonation session
+      // End the impersonation session in database
       await supabase
         .from('impersonation_sessions')
         .update({ 
           is_active: false, 
           ended_at: new Date().toISOString() 
         })
-        .eq('superadmin_id', originalSuperadmin.id)
+        .eq('superadmin_id', impersonationToken.originalUserId)
         .eq('is_active', true);
 
+      // Re-authenticate as superadmin using stored credentials
+      // Fetch fresh superadmin data from database to validate
+      const { data: superadminData, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', impersonationToken.originalUserId)
+        .eq('role', 'superadmin')
+        .single();
+      
+      if (error || !superadminData) {
+        throw new Error('Could not verify superadmin identity');
+      }
+
       // Login back as superadmin
-      const success = await login(originalSuperadmin.username, originalSuperadmin.pincode);
+      const success = await login(superadminData.username, superadminData.pincode);
       
       if (success) {
-        localStorage.removeItem('original_superadmin');
-        setOriginalSuperadmin(null);
+        clearImpersonationToken();
+        setImpersonationToken(null);
         toast.success('Terug als superadmin');
         navigate('/admin/platform');
       } else {
@@ -114,8 +136,8 @@ export function Header({ title, showLogo = false }: HeaderProps) {
   };
 
   const handleLogout = () => {
-    // Clear impersonation data on logout
-    localStorage.removeItem('original_superadmin');
+    // Clear all session data including impersonation
+    clearImpersonationToken();
     logout();
     navigate("/login");
     setIsMenuOpen(false);
@@ -150,7 +172,7 @@ export function Header({ title, showLogo = false }: HeaderProps) {
   return (
     <>
       {/* Impersonation Banner */}
-      {originalSuperadmin && (
+      {impersonationToken && (
         <div className="sticky top-0 z-50 bg-warning/90 text-warning-foreground px-4 py-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm">
@@ -177,7 +199,7 @@ export function Header({ title, showLogo = false }: HeaderProps) {
 
       <header className={cn(
         "sticky z-40 bg-background/95 backdrop-blur-lg border-b border-border/40",
-        originalSuperadmin ? "top-[44px]" : "top-0"
+        impersonationToken ? "top-[44px]" : "top-0"
       )}>
         <div className="flex items-center justify-between px-4 py-3">
           {/* Left: Logo or Title */}
@@ -286,7 +308,7 @@ export function Header({ title, showLogo = false }: HeaderProps) {
 
             {/* Logout Section */}
             <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border/50 bg-background safe-area-bottom">
-              {originalSuperadmin && (
+              {impersonationToken && (
                 <button
                   onClick={handleExitImpersonation}
                   disabled={isExitingImpersonation}
