@@ -515,6 +515,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_reset_pincode_for_user: {
+        Args: { _target_user_id: string }
+        Returns: boolean
+      }
       get_auth_user_role: { Args: never; Returns: string }
       get_auth_user_tenant_id: { Args: never; Returns: string }
       get_user_role: {
