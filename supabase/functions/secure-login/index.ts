@@ -13,13 +13,29 @@ serve(async (req) => {
   }
 
   try {
-    const { username, pincode } = await req.json();
+    const body = await req.json();
+    const rawUsername = body?.username;
+    const rawPincode = body?.pincode;
+
+    const username = String(rawUsername ?? '').trim();
+    const pincode = String(rawPincode ?? '').trim();
+
     console.log("Login attempt for username:", username);
 
     if (!username || !pincode) {
       return new Response(
         JSON.stringify({ error: "Username and pincode are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Normalize PINs (keep leading zeros)
+    const normalizedPin = pincode.replace(/\D/g, '').slice(0, 4).padStart(4, '0');
+
+    if (normalizedPin.length !== 4) {
+      return new Response(
+        JSON.stringify({ error: "Invalid credentials", success: false }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -37,7 +53,11 @@ serve(async (req) => {
       .ilike("username", username)
       .maybeSingle();
 
-    console.log("User lookup result:", userData ? `Found: ${userData.name}` : "No user found", userError?.message);
+    console.log(
+      "User lookup result:",
+      userData ? `Found: ${userData.name}` : "No user found",
+      userError?.message
+    );
 
     if (userError || !userData) {
       console.log("User not found for username:", username);
@@ -47,8 +67,10 @@ serve(async (req) => {
       );
     }
 
-    // Verify pincode
-    if (userData.pincode !== pincode) {
+    const storedPin = String(userData.pincode ?? '').trim().replace(/\D/g, '').slice(0, 4).padStart(4, '0');
+
+    // Verify pincode (normalized, keeps leading zeros)
+    if (storedPin !== normalizedPin) {
       console.log("Invalid pincode for user:", username);
       return new Response(
         JSON.stringify({ error: "Invalid credentials", success: false }),
