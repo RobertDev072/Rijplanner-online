@@ -14,6 +14,118 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          actor_id: string
+          actor_name: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: string | null
+          target_id: string | null
+          target_name: string | null
+          target_type: string
+          tenant_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          actor_name: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          target_id?: string | null
+          target_name?: string | null
+          target_type: string
+          tenant_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          actor_name?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          target_id?: string | null
+          target_name?: string | null
+          target_type?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feature_flags: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          feature_key: string
+          id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          feature_key: string
+          id?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          feature_key?: string
+          id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_flags_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      impersonation_sessions: {
+        Row: {
+          ended_at: string | null
+          id: string
+          impersonated_user_id: string
+          is_active: boolean
+          started_at: string
+          superadmin_id: string
+        }
+        Insert: {
+          ended_at?: string | null
+          id?: string
+          impersonated_user_id: string
+          is_active?: boolean
+          started_at?: string
+          superadmin_id: string
+        }
+        Update: {
+          ended_at?: string | null
+          id?: string
+          impersonated_user_id?: string
+          is_active?: boolean
+          started_at?: string
+          superadmin_id?: string
+        }
+        Relationships: []
+      }
       lesson_credits: {
         Row: {
           created_at: string
@@ -267,7 +379,10 @@ export type Database = {
           name: string
           primary_color: string | null
           secondary_color: string | null
+          status: Database["public"]["Enums"]["tenant_status"]
+          trial_ends_at: string | null
           updated_at: string | null
+          user_limit: number
           whatsapp_number: string | null
         }
         Insert: {
@@ -277,7 +392,10 @@ export type Database = {
           name: string
           primary_color?: string | null
           secondary_color?: string | null
+          status?: Database["public"]["Enums"]["tenant_status"]
+          trial_ends_at?: string | null
           updated_at?: string | null
+          user_limit?: number
           whatsapp_number?: string | null
         }
         Update: {
@@ -287,7 +405,10 @@ export type Database = {
           name?: string
           primary_color?: string | null
           secondary_color?: string | null
+          status?: Database["public"]["Enums"]["tenant_status"]
+          trial_ends_at?: string | null
           updated_at?: string | null
+          user_limit?: number
           whatsapp_number?: string | null
         }
         Relationships: []
@@ -394,10 +515,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_superadmin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       lesson_status: "pending" | "accepted" | "cancelled" | "completed"
+      tenant_status: "active" | "trial" | "suspended"
       user_role: "admin" | "instructor" | "student" | "superadmin"
     }
     CompositeTypes: {
@@ -527,6 +649,7 @@ export const Constants = {
   public: {
     Enums: {
       lesson_status: ["pending", "accepted", "cancelled", "completed"],
+      tenant_status: ["active", "trial", "suspended"],
       user_role: ["admin", "instructor", "student", "superadmin"],
     },
   },

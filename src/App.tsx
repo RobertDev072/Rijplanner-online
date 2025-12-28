@@ -28,6 +28,10 @@ import Vehicles from "./pages/Vehicles";
 import Feedback from "./pages/Feedback";
 import Credits from "./pages/Credits";
 import NotFound from "./pages/NotFound";
+import PlatformDashboard from "./pages/admin/PlatformDashboard";
+import TenantManagement from "./pages/admin/TenantManagement";
+import AuditLogs from "./pages/admin/AuditLogs";
+import ImpersonateUser from "./pages/admin/ImpersonateUser";
 
 const queryClient = new QueryClient();
 
@@ -152,6 +156,39 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Credits />
+          </ProtectedRoute>
+        }
+      />
+      {/* Superadmin Routes */}
+      <Route
+        path="/admin/platform"
+        element={
+          <ProtectedRoute>
+            <PlatformDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/tenants"
+        element={
+          <ProtectedRoute>
+            <TenantManagement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/audit-logs"
+        element={
+          <ProtectedRoute>
+            <AuditLogs />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/impersonate"
+        element={
+          <ProtectedRoute>
+            <ImpersonateUser />
           </ProtectedRoute>
         }
       />
