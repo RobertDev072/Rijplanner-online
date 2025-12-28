@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, MessageCircle, User, LogOut, Settings, Home, Calendar, Users, Car, BookOpen, FileText, Coins } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -59,100 +58,88 @@ export function MobileMenu() {
 
   return (
     <>
-      {/* Floating Menu Button - Fixed position with high z-index, no transform animations */}
+      {/* Floating Menu Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed top-4 right-4 z-[100] w-12 h-12 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:bg-primary/90"
-        style={{ transform: 'none' }}
+        className="fixed top-4 right-4 z-[9999] w-12 h-12 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center"
       >
         <Menu className="w-5 h-5" />
       </button>
 
       {/* Menu Overlay */}
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[110]"
-              onClick={() => setIsOpen(false)}
-            />
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/50 z-[9998] animate-fade-in"
+            onClick={() => setIsOpen(false)}
+          />
 
-            {/* Menu Panel - Simplified animation, higher z-index */}
-            <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "tween", duration: 0.2, ease: "easeOut" }}
-              className="fixed right-0 top-0 bottom-0 w-[280px] bg-background z-[120] shadow-2xl"
-              style={{ willChange: 'transform' }}
-            >
-              {/* Header */}
-              <div className="p-5 border-b border-border/50">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <User className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-foreground">{user?.name}</p>
-                      <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
-                    </div>
+          {/* Menu Panel */}
+          <div
+            className="fixed right-0 top-0 bottom-0 w-[280px] bg-background z-[9999] shadow-2xl animate-slide-in-right"
+          >
+            {/* Header */}
+            <div className="p-5 border-b border-border/50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User className="w-5 h-5 text-primary" />
                   </div>
-                  <button
-                    onClick={() => setIsOpen(false)}
-                    className="w-10 h-10 rounded-full bg-muted flex items-center justify-center hover:bg-destructive/10 transition-colors"
-                  >
-                    <X className="w-5 h-5 text-muted-foreground" />
-                  </button>
+                  <div>
+                    <p className="font-semibold text-foreground">{user?.name}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
+                  </div>
                 </div>
-              </div>
-
-              {/* Menu Items - Simplified animations */}
-              <div className="p-3 space-y-1">
-                {filteredMenuItems.map((item) => (
-                  <button
-                    key={item.path}
-                    onClick={() => handleNavigation(item.path)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                      isActive(item.path) ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"
-                    }`}
-                  >
-                    <item.icon className="w-5 h-5" />
-                    <span className="font-medium">{item.label}</span>
-                  </button>
-                ))}
-
-                {/* WhatsApp Support - Only visible for students */}
-                {theme.whatsapp_number && user?.role === 'student' && (
-                  <button
-                    onClick={handleWhatsAppSupport}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 transition-colors mt-4"
-                  >
-                    <MessageCircle className="w-5 h-5" />
-                    <span className="font-medium">Support via WhatsApp</span>
-                  </button>
-                )}
-              </div>
-
-              {/* Logout Section */}
-              <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-border/50 bg-background">
                 <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-destructive hover:bg-destructive/10 transition-colors"
+                  onClick={() => setIsOpen(false)}
+                  className="w-10 h-10 rounded-full bg-muted flex items-center justify-center"
                 >
-                  <LogOut className="w-5 h-5" />
-                  <span className="font-medium">Uitloggen</span>
+                  <X className="w-5 h-5 text-muted-foreground" />
                 </button>
               </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+            </div>
+
+            {/* Menu Items */}
+            <div className="p-3 space-y-1">
+              {filteredMenuItems.map((item) => (
+                <button
+                  key={item.path}
+                  onClick={() => handleNavigation(item.path)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                    isActive(item.path) ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"
+                  }`}
+                >
+                  <item.icon className="w-5 h-5" />
+                  <span className="font-medium">{item.label}</span>
+                </button>
+              ))}
+
+              {/* WhatsApp Support */}
+              {theme.whatsapp_number && user?.role === 'student' && (
+                <button
+                  onClick={handleWhatsAppSupport}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 transition-colors mt-4"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                  <span className="font-medium">Support via WhatsApp</span>
+                </button>
+              )}
+            </div>
+
+            {/* Logout Section */}
+            <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-border/50 bg-background">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                <LogOut className="w-5 h-5" />
+                <span className="font-medium">Uitloggen</span>
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 }
