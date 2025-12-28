@@ -171,12 +171,12 @@ export default function Vehicles() {
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Instructeur (optioneel)</label>
-            <Select value={instructorId} onValueChange={setInstructorId}>
+            <Select value={instructorId || "none"} onValueChange={(val) => setInstructorId(val === "none" ? "" : val)}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecteer instructeur" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Geen instructeur</SelectItem>
+                <SelectItem value="none">Geen instructeur</SelectItem>
                 {instructors.map(instructor => (
                   <SelectItem key={instructor.id} value={instructor.id}>
                     {instructor.name}
@@ -220,12 +220,12 @@ export default function Vehicles() {
                     onChange={e => setEditLicensePlate(e.target.value.toUpperCase())}
                     className="uppercase"
                   />
-                  <Select value={editInstructorId} onValueChange={setEditInstructorId}>
+                  <Select value={editInstructorId || "none"} onValueChange={(val) => setEditInstructorId(val === "none" ? "" : val)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecteer instructeur" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Geen instructeur</SelectItem>
+                      <SelectItem value="none">Geen instructeur</SelectItem>
                       {instructors.map(inst => (
                         <SelectItem key={inst.id} value={inst.id}>
                           {inst.name}
