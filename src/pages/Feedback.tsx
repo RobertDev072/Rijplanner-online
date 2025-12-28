@@ -3,7 +3,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { MobileLayout } from '@/components/MobileLayout';
 import { FeedbackCard } from '@/components/FeedbackCard';
-import { MobileMenu } from '@/components/MobileMenu';
 import { FileText, TrendingUp, Star, Filter, Search, X, ChevronDown, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Input } from '@/components/ui/input';
@@ -127,7 +126,6 @@ export default function Feedback() {
 
   return (
     <MobileLayout title="Mijn Feedback">
-      <MobileMenu />
 
       <motion.div
         variants={containerVariants}

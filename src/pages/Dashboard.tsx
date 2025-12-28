@@ -3,7 +3,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { supabase } from '@/integrations/supabase/client';
 import { MobileLayout } from '@/components/MobileLayout';
-import { MobileMenu } from '@/components/MobileMenu';
 import { LessonCard } from '@/components/LessonCard';
 import { CreditsBadge } from '@/components/CreditsBadge';
 import { InstallPWA } from '@/components/InstallPWA';
@@ -151,7 +150,6 @@ export default function Dashboard() {
 
   return (
     <MobileLayout showLogo>
-      <MobileMenu />
       <UpdatePrompt />
 
       {/* Greeting */}

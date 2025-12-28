@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { MobileLayout } from '@/components/MobileLayout';
-import { MobileMenu } from '@/components/MobileMenu';
 import { Button } from '@/components/ui/button';
 import { CreditsBadge } from '@/components/CreditsBadge';
 import { ProfileEditor } from '@/components/ProfileEditor';
@@ -154,7 +153,6 @@ export default function Profile() {
 
   return (
     <MobileLayout title="Profiel">
-      <MobileMenu />
 
       {isEditing ? (
         <div className="glass-card rounded-xl p-6 animate-slide-up">

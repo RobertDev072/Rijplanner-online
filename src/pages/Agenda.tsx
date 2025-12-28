@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { MobileLayout } from '@/components/MobileLayout';
-import { MobileMenu } from '@/components/MobileMenu';
 import { LessonCard } from '@/components/LessonCard';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Calendar, Clock, CheckCircle } from 'lucide-react';
@@ -81,7 +80,6 @@ export default function Agenda() {
 
   return (
     <MobileLayout title="Agenda">
-      <MobileMenu />
 
       {/* Week Navigation */}
       <div className="glass-card rounded-2xl p-4 mb-4">
