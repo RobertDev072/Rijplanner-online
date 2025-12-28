@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
-import { Header } from '@/components/Header';
-import { BottomTabNav } from '@/components/BottomTabNav';
+import { MobileLayout } from '@/components/MobileLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -119,8 +118,7 @@ export default function Vehicles() {
   };
 
   return (
-    <div className="page-container">
-      <Header title="Voertuigen" />
+    <MobileLayout title="Voertuigen">
 
       {/* Add Button */}
       <Button
@@ -304,8 +302,6 @@ export default function Vehicles() {
           </div>
         )}
       </div>
-
-      <BottomTabNav />
-    </div>
+    </MobileLayout>
   );
 }

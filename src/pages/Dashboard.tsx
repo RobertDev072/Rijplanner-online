@@ -100,9 +100,7 @@ export default function Dashboard() {
   // Superadmin dashboard
   if (user.role === 'superadmin') {
     return (
-      <div className="page-container">
-        <Header showLogo />
-        
+      <MobileLayout showLogo>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -132,9 +130,7 @@ export default function Dashboard() {
             <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
           </div>
         </motion.div>
-
-        <BottomTabNav />
-      </div>
+      </MobileLayout>
     );
   }
 

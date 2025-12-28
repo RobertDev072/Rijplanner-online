@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
-import { Header } from '@/components/Header';
-import { BottomTabNav } from '@/components/BottomTabNav';
+import { MobileLayout } from '@/components/MobileLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CreditsBadge } from '@/components/CreditsBadge';
@@ -182,8 +181,7 @@ export default function Users() {
   // Superadmin view - show all users grouped by tenant
   if (user.role === 'superadmin') {
     return (
-      <div className="page-container">
-        <Header title="Alle Gebruikers" />
+      <MobileLayout title="Alle Gebruikers">
 
         {isLoadingSuperadmin ? (
           <div className="flex items-center justify-center py-20">
@@ -312,9 +310,7 @@ export default function Users() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-
-        <BottomTabNav />
-      </div>
+      </MobileLayout>
     );
   }
 
@@ -395,8 +391,7 @@ export default function Users() {
   };
 
   return (
-    <div className="page-container">
-      <Header title="Gebruikers" />
+    <MobileLayout title="Gebruikers">
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6">
@@ -590,8 +585,6 @@ export default function Users() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <BottomTabNav />
-    </div>
+    </MobileLayout>
   );
 }
