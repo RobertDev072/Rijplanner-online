@@ -30,14 +30,14 @@ serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    // Verify credentials
+    // Verify credentials - fetch user from users table
     const { data: userData, error: userError } = await supabaseAdmin
       .from("users")
       .select("id, username, name, email, role, tenant_id, pincode")
       .ilike("username", username)
       .maybeSingle();
 
-    console.log("User lookup result:", userData ? "Found user" : "No user found", userError);
+    console.log("User lookup result:", userData ? `Found: ${userData.name}` : "No user found", userError?.message);
 
     if (userError || !userData) {
       console.log("User not found for username:", username);
@@ -56,26 +56,59 @@ serve(async (req) => {
       );
     }
 
-    // Generate email for Supabase Auth (use user's ID to ensure consistency)
-    const email = userData.email || `${userData.id}@rijplanner.local`;
-    console.log("Using email for auth:", email);
+    const targetUserId = userData.id;
+    const email = `${targetUserId}@rijplanner.local`;
+    console.log("Target user ID:", targetUserId, "Email:", email);
 
-    // Try to sign in first
-    const { data: signInData, error: signInError } = await supabaseAdmin.auth.signInWithPassword({
-      email,
-      password: pincode,
-    });
+    // Check if auth user exists with this ID
+    const { data: existingAuthUser } = await supabaseAdmin.auth.admin.getUserById(targetUserId);
+    console.log("Existing auth user check:", existingAuthUser?.user ? "Found" : "Not found");
 
-    let session = signInData?.session;
-    let authUserId = signInData?.user?.id;
-    console.log("Sign in attempt:", signInError ? "Failed" : "Success", signInError?.message);
+    let session = null;
 
-    if (signInError) {
-      // Auth user doesn't exist, create one with matching ID
-      console.log("Creating new auth user with ID:", userData.id);
+    if (existingAuthUser?.user) {
+      // Auth user exists with correct ID - update password and sign in
+      console.log("Auth user exists with correct ID, updating password");
+      await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
+        password: pincode,
+        email: email,
+        user_metadata: {
+          user_id: userData.id,
+          name: userData.name,
+          role: userData.role,
+          email_verified: true,
+        },
+      });
+
+      // Sign in
+      const { data: signInData, error: signInError } = await supabaseAdmin.auth.signInWithPassword({
+        email,
+        password: pincode,
+      });
+
+      if (!signInError && signInData?.session) {
+        session = signInData.session;
+        console.log("Sign in successful");
+      } else {
+        console.log("Sign in failed:", signInError?.message);
+      }
+    } else {
+      // Check if there's a mismatched auth user (same email but different ID)
+      const { data: users } = await supabaseAdmin.auth.admin.listUsers();
+      const mismatchedUser = users?.users?.find(u => 
+        u.email?.includes(userData.id) || 
+        u.user_metadata?.user_id === userData.id
+      );
       
-      const { data: signUpData, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
-        id: userData.id, // Use the same ID as the users table
+      if (mismatchedUser && mismatchedUser.id !== targetUserId) {
+        console.log("Found mismatched auth user, deleting:", mismatchedUser.id);
+        await supabaseAdmin.auth.admin.deleteUser(mismatchedUser.id);
+      }
+
+      // Create new auth user with the SAME ID as users table
+      console.log("Creating new auth user with ID:", targetUserId);
+      const { data: createData, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        id: targetUserId,
         email,
         password: pincode,
         email_confirm: true,
@@ -87,57 +120,42 @@ serve(async (req) => {
         },
       });
 
-      console.log("Create user result:", signUpError ? signUpError.message : "Success");
-
-      if (signUpError) {
-        // If user already exists with different email, try to get existing user
-        console.log("Trying to find existing auth user by ID");
-        const { data: existingUser } = await supabaseAdmin.auth.admin.getUserById(userData.id);
+      if (createError) {
+        console.log("Create user error:", createError.message);
         
-        if (existingUser?.user) {
-          console.log("Found existing auth user, updating password");
-          // Update password if user exists
-          await supabaseAdmin.auth.admin.updateUserById(userData.id, {
-            password: pincode,
-          });
-          
-          // Try sign in again with the correct email
-          const existingEmail = existingUser.user.email || email;
-          const { data: retrySignIn, error: retryError } = await supabaseAdmin.auth.signInWithPassword({
-            email: existingEmail,
-            password: pincode,
-          });
-          
-          if (!retryError) {
-            session = retrySignIn.session;
-            authUserId = retrySignIn.user?.id;
-            console.log("Retry sign in successful");
-          } else {
-            console.log("Retry sign in failed:", retryError.message);
-          }
-        }
-      } else if (signUpData?.user) {
-        authUserId = signUpData.user.id;
-        console.log("Auth user created with ID:", authUserId);
-        
-        // Sign in with new credentials
-        const { data: newSignIn, error: newSignInError } = await supabaseAdmin.auth.signInWithPassword({
+        // If creation failed because ID already exists, try signing in
+        const { data: retrySignIn, error: retryError } = await supabaseAdmin.auth.signInWithPassword({
           email,
           password: pincode,
         });
         
-        if (!newSignInError) {
-          session = newSignIn?.session;
+        if (!retryError && retrySignIn?.session) {
+          session = retrySignIn.session;
+          console.log("Retry sign in successful");
+        } else {
+          console.log("Retry sign in also failed:", retryError?.message);
+        }
+      } else if (createData?.user) {
+        console.log("Auth user created successfully with ID:", createData.user.id);
+        
+        // Sign in with new user
+        const { data: signInData, error: signInError } = await supabaseAdmin.auth.signInWithPassword({
+          email,
+          password: pincode,
+        });
+        
+        if (!signInError && signInData?.session) {
+          session = signInData.session;
           console.log("Sign in after create successful");
         } else {
-          console.log("Sign in after create failed:", newSignInError.message);
+          console.log("Sign in after create failed:", signInError?.message);
         }
       }
     }
 
-    // Verify we have a valid session
+    // Verify we have a session
     if (!session) {
-      console.log("No session obtained, returning error");
+      console.log("No session obtained");
       return new Response(
         JSON.stringify({ 
           error: "Authentication failed - please try again", 
@@ -147,14 +165,18 @@ serve(async (req) => {
       );
     }
 
-    console.log("Login successful for user:", userData.name, "with auth ID:", session.user?.id);
+    // Verify the session user ID matches our target user ID
+    if (session.user?.id !== targetUserId) {
+      console.log("WARNING: Session user ID mismatch!", session.user?.id, "vs", targetUserId);
+    }
 
-    // Return success with session tokens and user data from the users table
+    console.log("Login successful for user:", userData.name, "Auth ID:", session.user?.id);
+
     return new Response(
       JSON.stringify({
         success: true,
         user: {
-          id: userData.id, // Always use the users table ID
+          id: targetUserId, // Always return the users table ID
           username: userData.username,
           name: userData.name,
           email: userData.email,
