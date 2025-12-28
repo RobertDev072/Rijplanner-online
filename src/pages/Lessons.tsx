@@ -2,7 +2,6 @@ import React, { useState, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useData } from "@/contexts/DataContext";
 import { MobileLayout } from "@/components/MobileLayout";
-import { MobileMenu } from "@/components/MobileMenu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -267,7 +266,6 @@ export default function Lessons() {
 
   return (
     <MobileLayout title="Lessen Overzicht">
-      <MobileMenu />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3 mb-6">

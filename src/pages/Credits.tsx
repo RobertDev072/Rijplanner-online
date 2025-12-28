@@ -2,7 +2,6 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { MobileLayout } from '@/components/MobileLayout';
-import { MobileMenu } from '@/components/MobileMenu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -73,8 +72,6 @@ export default function Credits() {
 
   return (
     <MobileLayout title="Credits Overzicht">
-      <MobileMenu />
-
       <div className="space-y-6">
         {/* Summary Stats */}
         <div className="grid grid-cols-2 gap-3">

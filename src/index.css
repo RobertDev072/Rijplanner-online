@@ -499,6 +499,20 @@
     border-top-right-radius: 1.5rem;
   }
 
+  /* Slide in from right animation */
+  .animate-slide-in-right {
+    animation: slideInRight 0.3s ease-out forwards;
+  }
+
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
   .sheet-handle {
     @apply w-10 h-1 bg-muted-foreground/20 rounded-full mx-auto mt-3 mb-2;
   }

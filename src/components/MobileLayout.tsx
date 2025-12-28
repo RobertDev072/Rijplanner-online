@@ -23,7 +23,7 @@ export function MobileLayout({ children, title, showLogo }: MobileLayoutProps) {
 
   return (
     <div className="mobile-app-container">
-      {/* Header */}
+      {/* Header with integrated menu */}
       <Header title={title} showLogo={showLogo} />
 
       {/* Main Content with Pull-to-Refresh */}
