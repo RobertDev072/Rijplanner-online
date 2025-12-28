@@ -1,8 +1,7 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
-import { Header } from '@/components/Header';
-import { BottomTabNav } from '@/components/BottomTabNav';
+import { MobileLayout } from '@/components/MobileLayout';
 import { MobileMenu } from '@/components/MobileMenu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -73,11 +72,10 @@ export default function Credits() {
   };
 
   return (
-    <div className="page-container">
+    <MobileLayout title="Credits Overzicht">
       <MobileMenu />
-      <Header title="Credits Overzicht" />
 
-      <div className="space-y-6 pb-24">
+      <div className="space-y-6">
         {/* Summary Stats */}
         <div className="grid grid-cols-2 gap-3">
           <Card className="glass-card border-destructive/20">
@@ -251,8 +249,6 @@ export default function Credits() {
           </CardContent>
         </Card>
       </div>
-
-      <BottomTabNav />
-    </div>
+    </MobileLayout>
   );
 }

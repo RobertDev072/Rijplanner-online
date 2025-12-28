@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
-import { Header } from '@/components/Header';
-import { BottomTabNav } from '@/components/BottomTabNav';
+import { MobileLayout } from '@/components/MobileLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CreditsBadge } from '@/components/CreditsBadge';
@@ -102,8 +101,7 @@ export default function Students() {
   };
 
   return (
-    <div className="page-container">
-      <Header title="Mijn leerlingen" />
+    <MobileLayout title="Mijn leerlingen">
 
       {/* Search */}
       <div className="relative mb-3">
@@ -217,8 +215,6 @@ export default function Students() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <BottomTabNav />
-    </div>
+    </MobileLayout>
   );
 }

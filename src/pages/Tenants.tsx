@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Header } from '@/components/Header';
-import { BottomTabNav } from '@/components/BottomTabNav';
+import { MobileLayout } from '@/components/MobileLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
@@ -185,8 +184,7 @@ export default function Tenants() {
   if (user?.role !== 'superadmin') return null;
 
   return (
-    <div className="page-container">
-      <Header title="Rijscholen" />
+    <MobileLayout title="Rijscholen">
 
       <div className="space-y-4">
         {/* New Credentials Modal */}
@@ -405,8 +403,6 @@ export default function Tenants() {
           </div>
         </div>
       </div>
-
-      <BottomTabNav />
-    </div>
+    </MobileLayout>
   );
 }

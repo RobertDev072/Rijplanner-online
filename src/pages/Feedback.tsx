@@ -1,8 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
-import { Header } from '@/components/Header';
-import { BottomTabNav } from '@/components/BottomTabNav';
+import { MobileLayout } from '@/components/MobileLayout';
 import { FeedbackCard } from '@/components/FeedbackCard';
 import { MobileMenu } from '@/components/MobileMenu';
 import { FileText, TrendingUp, Star, Filter, Search, X, ChevronDown, Sparkles } from 'lucide-react';
@@ -127,9 +126,8 @@ export default function Feedback() {
   ];
 
   return (
-    <div className="page-container">
+    <MobileLayout title="Mijn Feedback">
       <MobileMenu />
-      <Header title="Mijn Feedback" />
 
       <motion.div
         variants={containerVariants}
@@ -365,8 +363,6 @@ export default function Feedback() {
           )}
         </motion.div>
       </motion.div>
-
-      <BottomTabNav />
-    </div>
+    </MobileLayout>
   );
 }
