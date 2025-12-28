@@ -87,7 +87,7 @@ export function FeedbackForm({ lesson, onClose, onSuccess }: FeedbackFormProps) 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center"
       onClick={onClose}
     >
       <motion.div
@@ -95,26 +95,30 @@ export function FeedbackForm({ lesson, onClose, onSuccess }: FeedbackFormProps) 
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
         onClick={e => e.stopPropagation()}
-        className="bg-card rounded-t-3xl sm:rounded-3xl w-full max-w-md max-h-[85vh] overflow-y-auto"
+        className="bg-card rounded-t-3xl sm:rounded-3xl w-full max-w-md max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col sm:mx-4"
       >
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl font-bold">Feedback geven</h2>
-              <p className="text-sm text-muted-foreground">
+        {/* Header - fixed */}
+        <div className="p-4 sm:p-6 border-b border-border shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="min-w-0 flex-1">
+              <h2 className="text-lg sm:text-xl font-bold truncate">Feedback geven</h2>
+              <p className="text-sm text-muted-foreground truncate">
                 {student?.name} • {format(new Date(lesson.date), 'd MMMM', { locale: nl })}
               </p>
             </div>
-            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full">
+            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full shrink-0 ml-2">
               <X className="w-5 h-5" />
             </Button>
           </div>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+          <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
             {/* Star Rating */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Beoordeling *</label>
-              <div className="flex gap-2 justify-center py-4">
+              <div className="flex gap-1 sm:gap-2 justify-center py-3 sm:py-4">
                 {[1, 2, 3, 4, 5].map(star => (
                   <button
                     key={star}
@@ -122,11 +126,11 @@ export function FeedbackForm({ lesson, onClose, onSuccess }: FeedbackFormProps) 
                     onClick={() => setRating(star)}
                     onMouseEnter={() => setHoverRating(star)}
                     onMouseLeave={() => setHoverRating(0)}
-                    className="transition-transform hover:scale-110"
+                    className="transition-transform hover:scale-110 p-1"
                   >
                     <Star
                       className={cn(
-                        'w-10 h-10 transition-colors',
+                        'w-8 h-8 sm:w-10 sm:h-10 transition-colors',
                         (hoverRating || rating) >= star
                           ? 'fill-warning text-warning'
                           : 'text-muted-foreground'
@@ -140,14 +144,14 @@ export function FeedbackForm({ lesson, onClose, onSuccess }: FeedbackFormProps) 
             {/* Topics */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Geoefende onderwerpen</label>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
                 {TOPICS.map(topic => (
                   <button
                     key={topic}
                     type="button"
                     onClick={() => toggleTopic(topic)}
                     className={cn(
-                      'px-3 py-1.5 rounded-full text-sm font-medium transition-all',
+                      'px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all',
                       selectedTopics.includes(topic)
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-muted text-muted-foreground hover:bg-muted/80'
@@ -166,26 +170,29 @@ export function FeedbackForm({ lesson, onClose, onSuccess }: FeedbackFormProps) 
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
                 placeholder="Hoe ging de les? Aandachtspunten?"
-                rows={4}
-                className="resize-none"
+                rows={3}
+                className="resize-none text-base"
               />
             </div>
 
-            <Button
-              type="submit"
-              size="lg"
-              className="w-full"
-              disabled={isSubmitting || rating === 0}
-            >
-              {isSubmitting ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <>
-                  <Send className="w-5 h-5" />
-                  Feedback versturen
-                </>
-              )}
-            </Button>
+            {/* Submit button - always visible */}
+            <div className="pb-safe">
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
+                disabled={isSubmitting || rating === 0}
+              >
+                {isSubmitting ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <>
+                    <Send className="w-5 h-5" />
+                    Feedback versturen
+                  </>
+                )}
+              </Button>
+            </div>
           </form>
         </div>
       </motion.div>
