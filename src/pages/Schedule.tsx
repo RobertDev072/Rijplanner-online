@@ -50,11 +50,14 @@ export default function Schedule() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState<'student' | 'details'>('student');
 
-  // Get instructor's assigned vehicle - moved before early return
-  const instructorVehicle = user?.role === 'instructor' ? getVehicleForInstructor(user.id) : null;
+  // Check if user can act as instructor (admin or instructor)
+  const canActAsInstructor = user?.role === 'instructor' || user?.role === 'admin';
   
-  // Get available vehicles for this instructor
-  const availableVehicles = user?.role === 'instructor' 
+  // Get instructor's assigned vehicle - moved before early return
+  const instructorVehicle = canActAsInstructor ? getVehicleForInstructor(user.id) : null;
+  
+  // Get available vehicles for this instructor/admin
+  const availableVehicles = canActAsInstructor 
     ? vehicles.filter(v => !v.instructor_id || v.instructor_id === user.id)
     : [];
   
@@ -67,7 +70,7 @@ export default function Schedule() {
     }
   }, [instructorVehicle, availableVehicles.length, selectedVehicleId]);
 
-  if (!user || user.role !== 'instructor') return null;
+  if (!user || !canActAsInstructor) return null;
 
   const students = getStudents();
   const studentCredits = selectedStudent ? getCreditsForStudent(selectedStudent) : 0;
