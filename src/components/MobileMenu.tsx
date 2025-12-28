@@ -1,21 +1,36 @@
 import React, { useState } from "react";
-import { Menu, X, MessageCircle, User, LogOut, Settings, Home, Calendar, Users, Car, BookOpen, FileText, Coins } from "lucide-react";
+import { Menu, X, MessageCircle, User, LogOut, Settings, Home, Calendar, Users, Car, BookOpen, FileText, Coins, Bell } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useData } from "@/contexts/DataContext";
+import { motion, AnimatePresence, PanInfo } from "framer-motion";
 
 export function MobileMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const { user, logout } = useAuth();
   const { theme } = useTheme();
+  const { lessons } = useData();
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Calculate pending lessons for notification badge
+  const pendingLessonsCount = lessons.filter(lesson => {
+    if (user?.role === 'instructor') {
+      return lesson.instructor_id === user.id && lesson.status === 'pending';
+    }
+    if (user?.role === 'student') {
+      return lesson.student_id === user.id && lesson.status === 'pending';
+    }
+    if (user?.role === 'admin') {
+      return lesson.status === 'pending';
+    }
+    return false;
+  }).length;
+
   const handleWhatsAppSupport = () => {
     if (theme.whatsapp_number && user?.name) {
-      // Clean the number (remove spaces, dashes, etc.)
       const cleanNumber = theme.whatsapp_number.replace(/[\s\-\(\)]/g, "");
-      // Add country code if not present
       const formattedNumber = cleanNumber.startsWith("+")
         ? cleanNumber.replace("+", "")
         : cleanNumber.startsWith("0")
@@ -42,6 +57,13 @@ export function MobileMenu() {
 
   const isActive = (path: string) => location.pathname === path;
 
+  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    // Close menu if swiped right more than 100px
+    if (info.offset.x > 100) {
+      setIsOpen(false);
+    }
+  };
+
   const menuItems = [
     { icon: Home, label: "Dashboard", path: "/dashboard", roles: ["admin", "instructor", "student"] },
     { icon: Calendar, label: "Agenda", path: "/agenda", roles: ["admin", "instructor", "student"] },
@@ -58,88 +80,128 @@ export function MobileMenu() {
 
   return (
     <>
-      {/* Floating Menu Button */}
+      {/* Floating Menu Button with Notification Badge */}
       <button
         onClick={() => setIsOpen(true)}
         className="fixed top-4 right-4 z-[9999] w-12 h-12 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center"
       >
         <Menu className="w-5 h-5" />
+        {pendingLessonsCount > 0 && (
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
+            {pendingLessonsCount > 9 ? '9+' : pendingLessonsCount}
+          </span>
+        )}
       </button>
 
       {/* Menu Overlay */}
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-black/50 z-[9998] animate-fade-in"
-            onClick={() => setIsOpen(false)}
-          />
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/50 z-[9998]"
+              onClick={() => setIsOpen(false)}
+            />
 
-          {/* Menu Panel */}
-          <div
-            className="fixed right-0 top-0 bottom-0 w-[280px] bg-background z-[9999] shadow-2xl animate-slide-in-right"
-          >
-            {/* Header */}
-            <div className="p-5 border-b border-border/50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <User className="w-5 h-5 text-primary" />
+            {/* Menu Panel - Swipeable */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={{ left: 0, right: 0.5 }}
+              onDragEnd={handleDragEnd}
+              className="fixed right-0 top-0 bottom-0 w-[280px] bg-background z-[9999] shadow-2xl touch-pan-y"
+            >
+              {/* Header */}
+              <div className="p-5 border-b border-border/50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">{user?.name}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-semibold text-foreground">{user?.name}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
+                  <button
+                    onClick={() => setIsOpen(false)}
+                    className="w-10 h-10 rounded-full bg-muted flex items-center justify-center"
+                  >
+                    <X className="w-5 h-5 text-muted-foreground" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Pending Lessons Notification */}
+              {pendingLessonsCount > 0 && (
+                <div 
+                  onClick={() => handleNavigation('/agenda')}
+                  className="mx-3 mt-3 p-3 bg-primary/10 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-primary/20 transition-colors"
+                >
+                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                    <Bell className="w-4 h-4 text-primary-foreground" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">
+                      {pendingLessonsCount} {pendingLessonsCount === 1 ? 'les' : 'lessen'} wachtend
+                    </p>
+                    <p className="text-xs text-muted-foreground">Klik om te bekijken</p>
                   </div>
                 </div>
+              )}
+
+              {/* Menu Items */}
+              <div className="p-3 space-y-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+                {filteredMenuItems.map((item) => (
+                  <button
+                    key={item.path}
+                    onClick={() => handleNavigation(item.path)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                      isActive(item.path) ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    <item.icon className="w-5 h-5" />
+                    <span className="font-medium">{item.label}</span>
+                  </button>
+                ))}
+
+                {/* WhatsApp Support */}
+                {theme.whatsapp_number && user?.role === 'student' && (
+                  <button
+                    onClick={handleWhatsAppSupport}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 transition-colors mt-4"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    <span className="font-medium">Support via WhatsApp</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Swipe Hint */}
+              <div className="absolute top-1/2 left-0 -translate-y-1/2 w-1 h-16 bg-muted-foreground/20 rounded-r-full" />
+
+              {/* Logout Section */}
+              <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-border/50 bg-background">
                 <button
-                  onClick={() => setIsOpen(false)}
-                  className="w-10 h-10 rounded-full bg-muted flex items-center justify-center"
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-destructive hover:bg-destructive/10 transition-colors"
                 >
-                  <X className="w-5 h-5 text-muted-foreground" />
+                  <LogOut className="w-5 h-5" />
+                  <span className="font-medium">Uitloggen</span>
                 </button>
               </div>
-            </div>
-
-            {/* Menu Items */}
-            <div className="p-3 space-y-1">
-              {filteredMenuItems.map((item) => (
-                <button
-                  key={item.path}
-                  onClick={() => handleNavigation(item.path)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                    isActive(item.path) ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"
-                  }`}
-                >
-                  <item.icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
-                </button>
-              ))}
-
-              {/* WhatsApp Support */}
-              {theme.whatsapp_number && user?.role === 'student' && (
-                <button
-                  onClick={handleWhatsAppSupport}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 transition-colors mt-4"
-                >
-                  <MessageCircle className="w-5 h-5" />
-                  <span className="font-medium">Support via WhatsApp</span>
-                </button>
-              )}
-            </div>
-
-            {/* Logout Section */}
-            <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-border/50 bg-background">
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-destructive hover:bg-destructive/10 transition-colors"
-              >
-                <LogOut className="w-5 h-5" />
-                <span className="font-medium">Uitloggen</span>
-              </button>
-            </div>
-          </div>
-        </>
-      )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </>
   );
 }
