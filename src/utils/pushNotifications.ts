@@ -1,4 +1,5 @@
 // PWA Push Notifications - Subscription Management
+// Enhanced for reliable background push notifications
 
 import { supabase } from '@/integrations/supabase/client';
 
@@ -19,16 +20,26 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 
 export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
   if (!('serviceWorker' in navigator)) {
-    console.log('Service Worker not supported');
+    console.log('[Push] Service Worker not supported');
     return null;
   }
 
   try {
-    const registration = await navigator.serviceWorker.register('/sw.js');
-    console.log('Service Worker registered:', registration);
+    // Register the service worker with specific scope
+    const registration = await navigator.serviceWorker.register('/sw.js', {
+      scope: '/',
+      updateViaCache: 'none', // Always check for updates
+    });
+    
+    console.log('[Push] Service Worker registered successfully:', registration.scope);
+    
+    // Wait for the service worker to be ready
+    await navigator.serviceWorker.ready;
+    console.log('[Push] Service Worker is ready');
+    
     return registration;
   } catch (error) {
-    console.error('Service Worker registration failed:', error);
+    console.error('[Push] Service Worker registration failed:', error);
     return null;
   }
 }
@@ -39,24 +50,27 @@ export async function subscribeToPushNotifications(
   vapidPublicKey: string
 ): Promise<boolean> {
   if (!('PushManager' in window)) {
-    console.log('Push notifications not supported');
+    console.log('[Push] Push notifications not supported');
     return false;
   }
 
   try {
     const registration = await navigator.serviceWorker.ready;
+    console.log('[Push] Service worker is ready for push subscription');
     
     // Check if already subscribed
     let subscription = await registration.pushManager.getSubscription();
+    console.log('[Push] Existing subscription:', subscription ? 'yes' : 'no');
     
     if (!subscription) {
       // Subscribe to push notifications
+      console.log('[Push] Creating new subscription with VAPID key...');
       const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: applicationServerKey as BufferSource,
       });
-      console.log('Push subscription created:', subscription);
+      console.log('[Push] Push subscription created:', subscription.endpoint.substring(0, 50) + '...');
     }
 
     // Extract keys from subscription
@@ -65,7 +79,9 @@ export async function subscribeToPushNotifications(
     const p256dh = subscriptionJson.keys?.p256dh || '';
     const auth = subscriptionJson.keys?.auth || '';
 
-    // Save subscription to database
+    console.log('[Push] Saving subscription to database for user:', userId);
+
+    // Save subscription to database - use upsert with proper conflict handling
     const { error } = await supabase
       .from('push_subscriptions')
       .upsert({
@@ -74,19 +90,20 @@ export async function subscribeToPushNotifications(
         endpoint,
         p256dh,
         auth,
+        updated_at: new Date().toISOString(),
       }, {
         onConflict: 'user_id,endpoint',
       });
 
     if (error) {
-      console.error('Error saving push subscription:', error);
+      console.error('[Push] Error saving push subscription:', error);
       return false;
     }
 
-    console.log('Push subscription saved to database');
+    console.log('[Push] Push subscription saved successfully');
     return true;
   } catch (error) {
-    console.error('Error subscribing to push notifications:', error);
+    console.error('[Push] Error subscribing to push notifications:', error);
     return false;
   }
 }
@@ -122,20 +139,25 @@ export async function sendPushNotification(
   body: string,
   tenantId: string
 ): Promise<boolean> {
+  console.log('[Push] Sending push notification to users:', userIds);
+  console.log('[Push] Title:', title);
+  console.log('[Push] Body:', body);
+  console.log('[Push] Tenant:', tenantId);
+  
   try {
     const { data, error } = await supabase.functions.invoke('send-push-notification', {
       body: { userIds, title, body, tenantId },
     });
 
     if (error) {
-      console.error('Error sending push notification:', error);
+      console.error('[Push] Error sending push notification:', error);
       return false;
     }
 
-    console.log('Push notification response:', data);
+    console.log('[Push] Push notification sent successfully:', data);
     return true;
   } catch (error) {
-    console.error('Error invoking push notification function:', error);
+    console.error('[Push] Error invoking push notification function:', error);
     return false;
   }
 }
