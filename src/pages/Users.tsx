@@ -128,12 +128,14 @@ export default function Users() {
 
     setIsResetting(true);
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({ pincode: newPincode })
-        .eq('id', resetPincodeUser.id);
+      const result = await resetUserPincode(resetPincodeUser.id, newPincode);
+      if (!result.success) {
+        toast.error(result.error || 'Kon pincode niet resetten');
+        return;
+      }
 
-      if (error) throw error;
+      // Superadmin view uses its own dataset
+      await fetchAllData();
 
       toast.success(`Pincode van ${resetPincodeUser.name} is gereset`);
       setResetPincodeUser(null);
@@ -377,13 +379,13 @@ export default function Users() {
 
     setIsResetting(true);
     try {
-      const success = await resetUserPincode(resetPincodeUser.id, newPincode);
-      if (success) {
+      const result = await resetUserPincode(resetPincodeUser.id, newPincode);
+      if (result.success) {
         toast.success(`Pincode van ${resetPincodeUser.name} is gereset`);
         setResetPincodeUser(null);
         setNewPincode('');
       } else {
-        toast.error('Kon pincode niet resetten');
+        toast.error(result.error || 'Kon pincode niet resetten');
       }
     } finally {
       setIsResetting(false);
