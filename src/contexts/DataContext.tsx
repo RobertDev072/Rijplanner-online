@@ -405,16 +405,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const formattedDate = format(new Date(lesson.date), 'd MMMM', { locale: nl });
       const formattedTime = lesson.start_time.slice(0, 5);
 
-      // If accepted, increment used_credits
-      if (status === 'accepted' && lesson.status === 'pending') {
-        const studentCredit = credits.find(c => c.student_id === lesson.student_id);
-        if (studentCredit) {
-          await supabase
-            .from('lesson_credits')
-            .update({ used_credits: studentCredit.used_credits + 1 })
-            .eq('student_id', lesson.student_id);
-        }
-      }
+      // Credits are now automatically deducted via database trigger when status changes to 'accepted'
 
       // Send notifications based on status change
       if (instructor && student) {
