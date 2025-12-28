@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
-import { Header } from '@/components/Header';
-import { BottomTabNav } from '@/components/BottomTabNav';
+import { MobileLayout } from '@/components/MobileLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { StudentSearch } from '@/components/StudentSearch';
@@ -135,8 +134,7 @@ export default function Schedule() {
   const today = new Date().toISOString().split('T')[0];
 
   return (
-    <div className="page-container">
-      <Header title="Les inplannen" />
+    <MobileLayout title="Les inplannen">
 
       {/* Progress indicator */}
       <motion.div 
@@ -382,8 +380,6 @@ export default function Schedule() {
           )}
         </AnimatePresence>
       </form>
-
-      <BottomTabNav />
-    </div>
+    </MobileLayout>
   );
 }

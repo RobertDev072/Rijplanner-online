@@ -1,8 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useData } from "@/contexts/DataContext";
-import { Header } from "@/components/Header";
-import { BottomTabNav } from "@/components/BottomTabNav";
+import { MobileLayout } from "@/components/MobileLayout";
 import { MobileMenu } from "@/components/MobileMenu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -267,9 +266,8 @@ export default function Lessons() {
   } : null;
 
   return (
-    <div className="page-container">
+    <MobileLayout title="Lessen Overzicht">
       <MobileMenu />
-      <Header title="Lessen Overzicht" />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3 mb-6">
@@ -583,8 +581,6 @@ export default function Lessons() {
           )}
         </DialogContent>
       </Dialog>
-
-      <BottomTabNav />
-    </div>
+    </MobileLayout>
   );
 }

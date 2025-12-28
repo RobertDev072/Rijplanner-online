@@ -2,12 +2,12 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { Header } from '@/components/Header';
-import { BottomTabNav } from '@/components/BottomTabNav';
+import { MobileLayout } from '@/components/MobileLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { PageSkeleton } from '@/components/PageSkeleton';
 import { 
   Palette, 
   Building2, 
@@ -79,19 +79,14 @@ export default function Settings() {
 
   if (isLoading) {
     return (
-      <div className="page-container">
-        <Header title="Instellingen" />
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-        <BottomTabNav />
-      </div>
+      <MobileLayout title="Instellingen">
+        <PageSkeleton type="form" />
+      </MobileLayout>
     );
   }
 
   return (
-    <div className="page-container">
-      <Header title="Instellingen" />
+    <MobileLayout title="Instellingen">
 
       {/* Tenant Branding */}
       <div className="glass-card rounded-2xl p-5 mb-4">
@@ -270,8 +265,6 @@ export default function Settings() {
           </Button>
         </div>
       </div>
-
-      <BottomTabNav />
-    </div>
+    </MobileLayout>
   );
 }
