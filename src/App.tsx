@@ -27,6 +27,7 @@ import Students from "./pages/Students";
 import Vehicles from "./pages/Vehicles";
 import Feedback from "./pages/Feedback";
 import Credits from "./pages/Credits";
+import Help from "./pages/Help";
 import NotFound from "./pages/NotFound";
 import PlatformDashboard from "./pages/admin/PlatformDashboard";
 import TenantManagement from "./pages/admin/TenantManagement";
@@ -156,6 +157,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Credits />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/help"
+        element={
+          <ProtectedRoute>
+            <Help />
           </ProtectedRoute>
         }
       />
