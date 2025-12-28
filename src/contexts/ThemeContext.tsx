@@ -20,8 +20,8 @@ interface ThemeContextType {
 const defaultTheme: TenantTheme = {
   name: '',
   logo_url: null,
-  primary_color: '#3B82F6',
-  secondary_color: '#10B981',
+  primary_color: '#2563EB',
+  secondary_color: '#22C55E',
   whatsapp_number: null,
 };
 
@@ -75,20 +75,33 @@ function applyThemeColors(primary: string, secondary: string) {
     const primaryHSL = hexToHSL(primary);
     const secondaryHSL = hexToHSL(secondary);
     
-    // Set primary color
-    root.style.setProperty('--primary', `${primaryHSL.h} ${primaryHSL.s}% ${primaryHSL.l}%`);
-    root.style.setProperty('--primary-foreground', primaryHSL.l > 50 ? '0 0% 0%' : '0 0% 100%');
+    // Skip applying if colors are too extreme (black/white) - use defaults instead
+    const isExtremeColor = (hsl: { h: number; s: number; l: number }) => 
+      hsl.s < 5 && (hsl.l < 10 || hsl.l > 90);
     
-    // Set accent/secondary color
-    root.style.setProperty('--accent', `${secondaryHSL.h} ${secondaryHSL.s}% ${secondaryHSL.l}%`);
-    root.style.setProperty('--accent-foreground', secondaryHSL.l > 50 ? '0 0% 0%' : '0 0% 100%');
+    if (isExtremeColor(primaryHSL)) {
+      // Use default blue instead of black/white
+      root.style.setProperty('--primary', '220 90% 56%');
+      root.style.setProperty('--primary-foreground', '0 0% 100%');
+      root.style.setProperty('--ring', '220 90% 56%');
+      root.style.setProperty('--sidebar-primary', '220 90% 56%');
+    } else {
+      root.style.setProperty('--primary', `${primaryHSL.h} ${primaryHSL.s}% ${primaryHSL.l}%`);
+      root.style.setProperty('--primary-foreground', primaryHSL.l > 50 ? '0 0% 0%' : '0 0% 100%');
+      root.style.setProperty('--ring', `${primaryHSL.h} ${primaryHSL.s}% ${primaryHSL.l}%`);
+      root.style.setProperty('--sidebar-primary', `${primaryHSL.h} ${primaryHSL.s}% ${primaryHSL.l}%`);
+    }
     
-    // Also set ring color to match primary
-    root.style.setProperty('--ring', `${primaryHSL.h} ${primaryHSL.s}% ${primaryHSL.l}%`);
-    
-    // Update sidebar primary to match
-    root.style.setProperty('--sidebar-primary', `${primaryHSL.h} ${primaryHSL.s}% ${primaryHSL.l}%`);
-    root.style.setProperty('--sidebar-accent', `${secondaryHSL.h} ${secondaryHSL.s}% ${secondaryHSL.l}%`);
+    if (isExtremeColor(secondaryHSL)) {
+      // Use default green instead of black/white
+      root.style.setProperty('--accent', '152 69% 45%');
+      root.style.setProperty('--accent-foreground', '0 0% 100%');
+      root.style.setProperty('--sidebar-accent', '152 69% 45%');
+    } else {
+      root.style.setProperty('--accent', `${secondaryHSL.h} ${secondaryHSL.s}% ${secondaryHSL.l}%`);
+      root.style.setProperty('--accent-foreground', secondaryHSL.l > 50 ? '0 0% 0%' : '0 0% 100%');
+      root.style.setProperty('--sidebar-accent', `${secondaryHSL.h} ${secondaryHSL.s}% ${secondaryHSL.l}%`);
+    }
     
     console.log('Theme colors applied:', { primary, secondary, primaryHSL, secondaryHSL });
   } catch (error) {
@@ -120,8 +133,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         const newTheme: TenantTheme = {
           name: data.name,
           logo_url: data.logo_url,
-          primary_color: data.primary_color || '#3B82F6',
-          secondary_color: data.secondary_color || '#10B981',
+          primary_color: data.primary_color || '#2563EB',
+          secondary_color: data.secondary_color || '#22C55E',
           whatsapp_number: data.whatsapp_number,
         };
         setTheme(newTheme);
