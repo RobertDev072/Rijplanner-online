@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Menu, X, MessageCircle, User, LogOut, Settings, Home, Calendar, Users, Car, BookOpen, FileText, Coins, Bell, HelpCircle } from "lucide-react";
+import { Menu, X, MessageCircle, User, LogOut, Settings, Home, Calendar, Users, Car, BookOpen, FileText, Coins, Bell } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -72,7 +72,6 @@ export function MobileMenu() {
     { icon: Coins, label: "Credits", path: "/credits", roles: ["admin", "instructor"] },
     { icon: Users, label: "Gebruikers", path: "/users", roles: ["admin"] },
     { icon: Car, label: "Voertuigen", path: "/vehicles", roles: ["admin"] },
-    { icon: HelpCircle, label: "Hulp", path: "/help", roles: ["admin", "instructor"] },
     { icon: User, label: "Profiel", path: "/profile", roles: ["admin", "instructor", "student"] },
     { icon: Settings, label: "Instellingen", path: "/settings", roles: ["admin"] },
   ];

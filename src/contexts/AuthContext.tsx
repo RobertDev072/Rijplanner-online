@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { User, AuthState } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
-import { sanitizeUserForStorage, generateSecureToken } from '@/utils/securityTokens';
 
 interface AuthContextType extends AuthState {
   login: (username: string, pincode: string) => Promise<boolean>;
@@ -22,7 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     id: data.id as string,
     tenant_id: data.tenant_id as string | null,
     username: data.username as string,
-    pincode: '', // Never store pincode
+    pincode: data.pincode as string,
     role: data.role as User['role'],
     name: data.name as string,
     avatar_url: data.avatar_url as string | null,
@@ -34,85 +33,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     created_at: data.created_at as string,
   });
 
-  // Check for existing Supabase session on mount
   useEffect(() => {
-    const initAuth = async () => {
-      // First check for Supabase session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session?.user) {
-        // Fetch user data from our users table
-        const { data: userData, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (!error && userData) {
-          const user = mapUser(userData);
-          const safeUser = sanitizeUserForStorage(user);
-          localStorage.setItem('rijplanner_user', JSON.stringify(safeUser));
-          setState({
-            user,
-            isAuthenticated: true,
-            isLoading: false,
-          });
-          return;
-        }
-      }
-
-      // Fallback to localStorage (for backwards compatibility during migration)
-      const savedUser = localStorage.getItem('rijplanner_user');
-      if (savedUser) {
-        try {
-          const user = JSON.parse(savedUser);
-          setState({
-            user,
-            isAuthenticated: true,
-            isLoading: false,
-          });
-        } catch {
-          localStorage.removeItem('rijplanner_user');
-          setState(prev => ({ ...prev, isLoading: false }));
-        }
-      } else {
+    const savedUser = localStorage.getItem('rijplanner_user');
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        setState({
+          user,
+          isAuthenticated: true,
+          isLoading: false,
+        });
+      } catch {
+        localStorage.removeItem('rijplanner_user');
         setState(prev => ({ ...prev, isLoading: false }));
       }
-    };
-
-    initAuth();
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_OUT') {
-        localStorage.removeItem('rijplanner_user');
-        localStorage.removeItem('rijplanner_session_token');
-        localStorage.removeItem('impersonation_token');
-        setState({ user: null, isAuthenticated: false, isLoading: false });
-      } else if (event === 'SIGNED_IN' && session?.user) {
-        // Defer the data fetch to avoid deadlock
-        setTimeout(async () => {
-          const { data: userData, error } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          
-          if (!error && userData) {
-            const user = mapUser(userData);
-            const safeUser = sanitizeUserForStorage(user);
-            localStorage.setItem('rijplanner_user', JSON.stringify(safeUser));
-            setState({
-              user,
-              isAuthenticated: true,
-              isLoading: false,
-            });
-          }
-        }, 0);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    } else {
+      setState(prev => ({ ...prev, isLoading: false }));
+    }
   }, []);
 
   const refreshUser = useCallback(async () => {
@@ -126,67 +63,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (!error && data) {
       const user = mapUser(data);
-      const safeUser = sanitizeUserForStorage(user);
-      localStorage.setItem('rijplanner_user', JSON.stringify(safeUser));
+      localStorage.setItem('rijplanner_user', JSON.stringify(user));
       setState(prev => ({ ...prev, user }));
     }
   }, [state.user]);
 
   const login = async (username: string, pincode: string): Promise<boolean> => {
     try {
-      // Call the secure-login edge function
-      const { data, error } = await supabase.functions.invoke('secure-login', {
-        body: { username, pincode },
-      });
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .ilike('username', username)
+        .eq('pincode', pincode)
+        .maybeSingle();
 
-      if (error || !data?.success) {
-        console.error('Login failed:', error || data?.error);
-        return false;
-      }
+      if (error || !data) return false;
 
-      // If we got a session, set it in Supabase Auth
-      if (data.session?.access_token) {
-        await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-        });
-      }
-
-      // Create user object from response
-      const user: User = {
-        id: data.user.id,
-        tenant_id: data.user.tenant_id,
-        username: data.user.username,
-        pincode: '', // Never store pincode
-        role: data.user.role,
-        name: data.user.name,
-        email: data.user.email,
-        avatar_url: null,
-        phone: null,
-        address: null,
-        created_at: new Date().toISOString(),
-      };
-
-      const safeUser = sanitizeUserForStorage(user);
-      const sessionToken = generateSecureToken();
-      localStorage.setItem('rijplanner_user', JSON.stringify(safeUser));
-      localStorage.setItem('rijplanner_session_token', sessionToken);
+      const user = mapUser(data);
+      localStorage.setItem('rijplanner_user', JSON.stringify(user));
       setState({ user, isAuthenticated: true, isLoading: false });
       return true;
-    } catch (error) {
-      console.error('Login error:', error);
+    } catch {
       return false;
     }
   };
 
-  const logout = async () => {
-    // Sign out from Supabase Auth
-    await supabase.auth.signOut();
-    
-    // Clear local storage
+  const logout = () => {
     localStorage.removeItem('rijplanner_user');
-    localStorage.removeItem('rijplanner_session_token');
-    localStorage.removeItem('impersonation_token');
     setState({ user: null, isAuthenticated: false, isLoading: false });
   };
 

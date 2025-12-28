@@ -101,7 +101,7 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const success = await login(username.trim(), pincode);
+      const success = await login(username, pincode);
       if (success) {
         setShowSuccess(true);
         setTimeout(() => {

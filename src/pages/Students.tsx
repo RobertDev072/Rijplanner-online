@@ -50,13 +50,13 @@ export default function Students() {
 
     setIsResetting(true);
     try {
-      const result = await resetUserPincode(resetPincodeUser.id, newPincode);
-      if (result.success) {
+      const success = await resetUserPincode(resetPincodeUser.id, newPincode);
+      if (success) {
         toast.success(`Pincode van ${resetPincodeUser.name} is gereset`);
         setResetPincodeUser(null);
         setNewPincode('');
       } else {
-        toast.error(result.error || 'Kon pincode niet resetten');
+        toast.error('Kon pincode niet resetten');
       }
     } finally {
       setIsResetting(false);
