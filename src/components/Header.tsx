@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Car, Menu, X, MessageCircle, User, LogOut, Settings, Home, Calendar, Users, BookOpen, FileText, Coins, Shield, Building2, FileSearch, UserCheck, Plus } from 'lucide-react';
+import { Car, Menu, X, MessageCircle, User, LogOut, Settings, Home, Calendar, Users, BookOpen, FileText, Coins, Shield, Building2, FileSearch, UserCheck } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -148,8 +148,6 @@ export function Header({ title, showLogo = false }: HeaderProps) {
   const menuItems = [
     { icon: Home, label: "Dashboard", path: "/dashboard", roles: ["admin", "instructor", "student"] },
     { icon: Calendar, label: "Agenda", path: "/agenda", roles: ["admin", "instructor", "student"] },
-    { icon: Plus, label: "Les Inplannen", path: "/schedule", roles: ["admin", "instructor"] },
-    { icon: Users, label: "Mijn Leerlingen", path: "/students", roles: ["admin", "instructor"] },
     { icon: FileText, label: "Mijn Feedback", path: "/feedback", roles: ["student"] },
     { icon: BookOpen, label: "Lessen", path: "/lessons", roles: ["admin", "instructor"] },
     { icon: Coins, label: "Credits", path: "/credits", roles: ["admin", "instructor"] },

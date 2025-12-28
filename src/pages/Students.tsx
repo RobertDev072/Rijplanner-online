@@ -33,7 +33,7 @@ export default function Students() {
   const [filterNoTheory, setFilterNoTheory] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  if (!user || (user.role !== 'instructor' && user.role !== 'admin')) return null;
+  if (!user || user.role !== 'instructor') return null;
 
   const allStudents = getStudents();
   const noTheoryCount = allStudents.filter(s => !s.theory_passed).length;
