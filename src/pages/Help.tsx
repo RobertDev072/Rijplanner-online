@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   BookOpen, 
@@ -13,9 +14,11 @@ import {
   ClipboardList,
   UserCheck,
   Bell,
-  HelpCircle
+  HelpCircle,
+  ArrowLeft
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 
@@ -152,6 +155,7 @@ const faqItems = [
 
 export default function Help() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   const isInstructor = user?.role === 'instructor';
   const isAdmin = user?.role === 'admin';
@@ -160,6 +164,21 @@ export default function Help() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
+      {/* Back Header */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
+        <div className="flex items-center gap-3 px-4 py-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+            className="shrink-0"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h1 className="text-lg font-semibold text-foreground">Handleiding</h1>
+        </div>
+      </div>
+
       <div className="px-4 py-6 space-y-6">
         {/* Header */}
         <motion.div
