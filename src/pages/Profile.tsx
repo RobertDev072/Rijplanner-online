@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
-import { Header } from '@/components/Header';
-import { BottomTabNav } from '@/components/BottomTabNav';
+import { MobileLayout } from '@/components/MobileLayout';
 import { MobileMenu } from '@/components/MobileMenu';
 import { Button } from '@/components/ui/button';
 import { CreditsBadge } from '@/components/CreditsBadge';
@@ -154,9 +153,8 @@ export default function Profile() {
   };
 
   return (
-    <div className="page-container">
+    <MobileLayout title="Profiel">
       <MobileMenu />
-      <Header title="Profiel" />
 
       {isEditing ? (
         <div className="glass-card rounded-xl p-6 animate-slide-up">
@@ -327,8 +325,6 @@ export default function Profile() {
           </Button>
         </>
       )}
-
-      <BottomTabNav />
-    </div>
+    </MobileLayout>
   );
 }

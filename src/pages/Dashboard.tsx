@@ -1,30 +1,28 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Header } from '@/components/Header';
-import { BottomTabNav } from '@/components/BottomTabNav';
+import { MobileLayout } from '@/components/MobileLayout';
 import { MobileMenu } from '@/components/MobileMenu';
 import { LessonCard } from '@/components/LessonCard';
 import { CreditsBadge } from '@/components/CreditsBadge';
 import { InstallPWA } from '@/components/InstallPWA';
 import { UpdatePrompt } from '@/components/UpdatePrompt';
 import { PageSkeleton } from '@/components/PageSkeleton';
-import { PullToRefresh } from '@/components/PullToRefresh';
 import { Users, GraduationCap, Calendar, Clock, Building2, Sparkles, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { toast } from 'sonner';
-import { hapticNotification, hapticImpact } from '@/utils/capacitor';
 import {
   registerServiceWorker,
   subscribeToPushNotifications,
   requestPushPermission,
   checkPushNotificationSupport
 } from '@/utils/pushNotifications';
+import { Header } from '@/components/Header';
+import { BottomTabNav } from '@/components/BottomTabNav';
 
 function StatCard({ icon: Icon, label, value, color }: { 
   icon: React.ElementType; 
@@ -57,21 +55,8 @@ export default function Dashboard() {
     getStudentsWithLowCredits,
     updateLessonStatus,
     isLoading,
-    refreshData,
   } = useData();
   const navigate = useNavigate();
-
-  const handlePullRefresh = useCallback(async () => {
-    hapticImpact('medium');
-    try {
-      await refreshData();
-      hapticNotification('success');
-      toast.success('Data vernieuwd!');
-    } catch {
-      hapticNotification('error');
-      toast.error('Kon data niet vernieuwen');
-    }
-  }, [refreshData]);
 
   // Register service worker and subscribe to push notifications
   useEffect(() => {
@@ -86,7 +71,7 @@ export default function Dashboard() {
         const granted = await requestPushPermission();
         if (!granted) return;
 
-        // Fetch VAPID public key from server (do not use VITE_* here)
+        // Fetch VAPID public key from server
         const { data, error } = await supabase.functions.invoke('get-vapid-public-key');
         if (error) return;
 
@@ -155,11 +140,9 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <div className="page-container">
-        <Header showLogo />
+      <MobileLayout showLogo>
         <PageSkeleton type="dashboard" />
-        <BottomTabNav />
-      </div>
+      </MobileLayout>
     );
   }
 
@@ -171,10 +154,9 @@ export default function Dashboard() {
   const pendingLessons = lessons.filter(l => l.status === 'pending');
 
   return (
-    <PullToRefresh onRefresh={handlePullRefresh} className="page-container">
+    <MobileLayout showLogo>
       <MobileMenu />
       <UpdatePrompt />
-      <Header showLogo />
 
       {/* Greeting */}
       <motion.div
@@ -328,8 +310,6 @@ export default function Dashboard() {
           </div>
         )}
       </div>
-
-      <BottomTabNav />
-    </PullToRefresh>
+    </MobileLayout>
   );
 }

@@ -1,9 +1,11 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
+import { useData } from '@/contexts/DataContext';
 import { BottomTabNav } from '@/components/BottomTabNav';
 import { Header } from '@/components/Header';
+import { PullToRefresh } from '@/components/PullToRefresh';
 
 interface MobileLayoutProps {
   children: ReactNode;
@@ -42,11 +44,16 @@ const pageVariants = {
 export function MobileLayout({ children, title, showLogo }: MobileLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
+  const { refreshData } = useData();
   const [direction, setDirection] = React.useState(0);
   const [isAnimating, setIsAnimating] = React.useState(false);
 
   const currentIndex = PAGE_ORDER.indexOf(location.pathname);
+
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([refreshData(), refreshUser()]);
+  }, [refreshData, refreshUser]);
 
   const handleSwipe = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     if (isAnimating || currentIndex === -1) return;
@@ -82,7 +89,7 @@ export function MobileLayout({ children, title, showLogo }: MobileLayoutProps) {
       {/* Header */}
       <Header title={title} showLogo={showLogo} />
 
-      {/* Main Content with Swipe */}
+      {/* Main Content with Swipe and Pull-to-Refresh */}
       <AnimatePresence mode="wait" custom={direction}>
         <motion.main
           key={location.pathname}
@@ -98,9 +105,11 @@ export function MobileLayout({ children, title, showLogo }: MobileLayoutProps) {
           className="mobile-page-content"
           onAnimationComplete={() => setIsAnimating(false)}
         >
-          <div className="page-inner touch-pan-y">
-            {children}
-          </div>
+          <PullToRefresh onRefresh={handleRefresh} className="h-full">
+            <div className="page-inner touch-pan-y">
+              {children}
+            </div>
+          </PullToRefresh>
         </motion.main>
       </AnimatePresence>
 
