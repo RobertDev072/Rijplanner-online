@@ -22,7 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     id: data.id as string,
     tenant_id: data.tenant_id as string | null,
     username: data.username as string,
-    pincode: data.pincode as string,
+    pincode: '', // Never store pincode
     role: data.role as User['role'],
     name: data.name as string,
     avatar_url: data.avatar_url as string | null,
@@ -90,23 +90,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('impersonation_token');
         setState({ user: null, isAuthenticated: false, isLoading: false });
       } else if (event === 'SIGNED_IN' && session?.user) {
-        // Fetch user data when signed in
-        const { data: userData, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (!error && userData) {
-          const user = mapUser(userData);
-          const safeUser = sanitizeUserForStorage(user);
-          localStorage.setItem('rijplanner_user', JSON.stringify(safeUser));
-          setState({
-            user,
-            isAuthenticated: true,
-            isLoading: false,
-          });
-        }
+        // Defer the data fetch to avoid deadlock
+        setTimeout(async () => {
+          const { data: userData, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (!error && userData) {
+            const user = mapUser(userData);
+            const safeUser = sanitizeUserForStorage(user);
+            localStorage.setItem('rijplanner_user', JSON.stringify(safeUser));
+            setState({
+              user,
+              isAuthenticated: true,
+              isLoading: false,
+            });
+          }
+        }, 0);
       }
     });
 
@@ -132,57 +134,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (username: string, pincode: string): Promise<boolean> => {
     try {
-      // First, verify credentials against our users table (using service for initial lookup)
-      // We need to use a special query that doesn't require auth
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .ilike('username', username)
-        .eq('pincode', pincode)
-        .maybeSingle();
+      // Call the secure-login edge function
+      const { data, error } = await supabase.functions.invoke('secure-login', {
+        body: { username, pincode },
+      });
 
-      if (userError || !userData) {
-        console.error('Login failed: Invalid credentials');
+      if (error || !data?.success) {
+        console.error('Login failed:', error || data?.error);
         return false;
       }
 
-      // Generate email from user ID for Supabase Auth
-      const email = userData.email || `${userData.id}@rijplanner.local`;
-      
-      // Try to sign in with Supabase Auth
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password: pincode,
-      });
-
-      // If sign in fails, try to create the auth user first
-      if (signInError) {
-        // Try to sign up (create auth user)
-        const { error: signUpError } = await supabase.auth.signUp({
-          email,
-          password: pincode,
-          options: {
-            data: {
-              user_id: userData.id,
-              name: userData.name,
-              role: userData.role,
-            },
-          },
+      // If we got a session, set it in Supabase Auth
+      if (data.session?.access_token) {
+        await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
         });
-
-        if (signUpError && !signUpError.message.includes('already registered')) {
-          console.error('Auth signup error:', signUpError);
-          // Continue without Supabase Auth for backwards compatibility
-        } else {
-          // Try signing in again after signup
-          await supabase.auth.signInWithPassword({
-            email,
-            password: pincode,
-          });
-        }
       }
 
-      const user = mapUser(userData);
+      // Create user object from response
+      const user: User = {
+        id: data.user.id,
+        tenant_id: data.user.tenant_id,
+        username: data.user.username,
+        pincode: '', // Never store pincode
+        role: data.user.role,
+        name: data.user.name,
+        email: data.user.email,
+        avatar_url: null,
+        phone: null,
+        address: null,
+        created_at: new Date().toISOString(),
+      };
+
       const safeUser = sanitizeUserForStorage(user);
       const sessionToken = generateSecureToken();
       localStorage.setItem('rijplanner_user', JSON.stringify(safeUser));
