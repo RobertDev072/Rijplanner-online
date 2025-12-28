@@ -10,6 +10,33 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+  // Build optimizations for Vercel
+  build: {
+    target: 'esnext',
+    minify: 'esbuild',
+    cssMinify: true,
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Vendor chunk for React ecosystem
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          // UI components chunk
+          'ui-vendor': ['framer-motion', '@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tabs'],
+          // Data management chunk
+          'data-vendor': ['@tanstack/react-query', '@supabase/supabase-js'],
+          // Charts chunk (loaded only when needed)
+          'charts': ['recharts'],
+        },
+      },
+    },
+    // Increase chunk size warning limit
+    chunkSizeWarningLimit: 500,
+  },
+  // Optimize dependencies
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom', 'framer-motion'],
+  },
   plugins: [
     react(),
     mode === "development" && componentTagger(),
@@ -45,6 +72,9 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api/],
+        // Skip waiting for immediate activation
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,

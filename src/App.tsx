@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -13,23 +13,40 @@ import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { SwipeablePages } from "@/components/SwipeablePages";
 
-import Index from "./pages/Index";
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import Agenda from "./pages/Agenda";
-import Schedule from "./pages/Schedule";
-import Users from "./pages/Users";
-import Lessons from "./pages/Lessons";
-import Profile from "./pages/Profile";
-import Tenants from "./pages/Tenants";
-import Settings from "./pages/Settings";
-import Students from "./pages/Students";
-import Vehicles from "./pages/Vehicles";
-import Feedback from "./pages/Feedback";
-import Credits from "./pages/Credits";
-import NotFound from "./pages/NotFound";
+// Lazy load pages for better performance
+const Index = lazy(() => import("./pages/Index"));
+const Login = lazy(() => import("./pages/Login"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Agenda = lazy(() => import("./pages/Agenda"));
+const Schedule = lazy(() => import("./pages/Schedule"));
+const Users = lazy(() => import("./pages/Users"));
+const Lessons = lazy(() => import("./pages/Lessons"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Tenants = lazy(() => import("./pages/Tenants"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Students = lazy(() => import("./pages/Students"));
+const Vehicles = lazy(() => import("./pages/Vehicles"));
+const Feedback = lazy(() => import("./pages/Feedback"));
+const Credits = lazy(() => import("./pages/Credits"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 30, // 30 minutes (formerly cacheTime)
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
+
+// Page loading fallback
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-screen bg-background">
+    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 // Simple fade transition
 function AnimatedPage({ children }: { children: React.ReactNode }) {
@@ -56,107 +73,109 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function AppRoutes() {
   return (
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/login" element={<Login />} />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/agenda"
-        element={
-          <ProtectedRoute>
-            <Agenda />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/schedule"
-        element={
-          <ProtectedRoute>
-            <Schedule />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/users"
-        element={
-          <ProtectedRoute>
-            <Users />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/lessons"
-        element={
-          <ProtectedRoute>
-            <Lessons />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/tenants"
-        element={
-          <ProtectedRoute>
-            <Tenants />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/settings"
-        element={
-          <ProtectedRoute>
-            <Settings />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/students"
-        element={
-          <ProtectedRoute>
-            <Students />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/vehicles"
-        element={
-          <ProtectedRoute>
-            <Vehicles />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/feedback"
-        element={
-          <ProtectedRoute>
-            <Feedback />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/credits"
-        element={
-          <ProtectedRoute>
-            <Credits />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/agenda"
+          element={
+            <ProtectedRoute>
+              <Agenda />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/schedule"
+          element={
+            <ProtectedRoute>
+              <Schedule />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute>
+              <Users />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/lessons"
+          element={
+            <ProtectedRoute>
+              <Lessons />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tenants"
+          element={
+            <ProtectedRoute>
+              <Tenants />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/students"
+          element={
+            <ProtectedRoute>
+              <Students />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/vehicles"
+          element={
+            <ProtectedRoute>
+              <Vehicles />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/feedback"
+          element={
+            <ProtectedRoute>
+              <Feedback />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/credits"
+          element={
+            <ProtectedRoute>
+              <Credits />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   );
 }
 
