@@ -1,18 +1,14 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
-import { Header } from '@/components/Header';
-import { BottomTabNav } from '@/components/BottomTabNav';
+import { MobileLayout } from '@/components/MobileLayout';
 import { MobileMenu } from '@/components/MobileMenu';
 import { LessonCard } from '@/components/LessonCard';
-import { PullToRefresh } from '@/components/PullToRefresh';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Calendar, Clock, CheckCircle } from 'lucide-react';
 import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
-import { hapticNotification, hapticImpact } from '@/utils/capacitor';
 
 const STATUS_COLORS = {
   pending: {
@@ -43,20 +39,8 @@ const STATUS_COLORS = {
 
 export default function Agenda() {
   const { user } = useAuth();
-  const { getLessonsForUser, updateLessonStatus, refreshData } = useData();
+  const { getLessonsForUser, updateLessonStatus } = useData();
   const [selectedDate, setSelectedDate] = useState(new Date());
-
-  const handlePullRefresh = useCallback(async () => {
-    hapticImpact('medium');
-    try {
-      await refreshData();
-      hapticNotification('success');
-      toast.success('Agenda vernieuwd!');
-    } catch {
-      hapticNotification('error');
-      toast.error('Kon agenda niet vernieuwen');
-    }
-  }, [refreshData]);
 
   if (!user) return null;
 
@@ -96,9 +80,8 @@ export default function Agenda() {
   const acceptedCount = dayLessons.filter(l => l.status === 'accepted').length;
 
   return (
-    <PullToRefresh onRefresh={handlePullRefresh} className="page-container">
+    <MobileLayout title="Agenda">
       <MobileMenu />
-      <Header title="Agenda" />
 
       {/* Week Navigation */}
       <div className="glass-card rounded-2xl p-4 mb-4">
@@ -255,8 +238,6 @@ export default function Agenda() {
           </div>
         )}
       </div>
-
-      <BottomTabNav />
-    </PullToRefresh>
+    </MobileLayout>
   );
 }
