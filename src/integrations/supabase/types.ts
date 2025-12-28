@@ -529,6 +529,10 @@ export type Database = {
       is_superadmin: { Args: { _user_id: string }; Returns: boolean }
       is_tenant_admin: { Args: never; Returns: boolean }
       is_tenant_admin_or_instructor: { Args: never; Returns: boolean }
+      reset_user_pincode: {
+        Args: { _new_pincode: string; _target_user_id: string }
+        Returns: undefined
+      }
       user_belongs_to_tenant: { Args: { _tenant_id: string }; Returns: boolean }
     }
     Enums: {
