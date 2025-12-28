@@ -31,7 +31,7 @@ interface DataContextType {
   updateLessonStatus: (lessonId: string, status: LessonStatus) => Promise<boolean>;
   cancelLesson: (lessonId: string, refundCredits: boolean) => Promise<boolean>;
   updateCredits: (studentId: string, totalCredits: number) => Promise<boolean>;
-  resetUserPincode: (userId: string, newPincode: string) => Promise<boolean>;
+  resetUserPincode: (userId: string, newPincode: string) => Promise<{ success: boolean; error?: string }>;
   addFeedback: (feedback: Omit<LessonFeedback, 'id' | 'created_at'>) => Promise<boolean>;
   // Vehicle functions
   addVehicle: (vehicle: Omit<Vehicle, 'id' | 'created_at' | 'updated_at'>) => Promise<boolean>;
@@ -507,20 +507,31 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const resetUserPincode = async (userId: string, newPincode: string): Promise<boolean> => {
+  const resetUserPincode = async (userId: string, newPincode: string): Promise<{ success: boolean; error?: string }> => {
+    const normalizedPincode = String(newPincode ?? '').replace(/\D/g, '').slice(0, 4);
+
     try {
       // Use secure RPC that bypasses RLS with server-side permission checks
       const { error } = await supabase.rpc('reset_user_pincode', {
         _target_user_id: userId,
-        _new_pincode: newPincode,
+        _new_pincode: normalizedPincode,
       });
 
-      if (error) throw error;
-      await fetchData();
-      return true;
+      if (error) {
+        const message = [error.message, (error as any).details].filter(Boolean).join(' — ');
+        return { success: false, error: message || 'Onbekende fout' };
+      }
+
+      // Refresh is best-effort; don't fail the reset if refresh fails
+      fetchData().catch((e) => console.warn('fetchData failed after pincode reset:', e));
+      return { success: true };
     } catch (error) {
+      const message =
+        error && typeof error === 'object' && 'message' in error
+          ? String((error as any).message)
+          : 'Onbekende fout';
       console.error('Error resetting pincode:', error);
-      return false;
+      return { success: false, error: message };
     }
   };
 
