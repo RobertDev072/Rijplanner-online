@@ -1,96 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertCircle, Car, User, Lock, Sparkles, Shield, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, Car, User, Lock, CheckCircle2, Check } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { PinInput } from '@/components/PinInput';
 
-// Floating particles component
-const FloatingParticles = () => (
-  <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    {[...Array(8)].map((_, i) => (
-      <motion.div
-        key={i}
-        className="absolute w-2 h-2 bg-primary/20 rounded-full"
-        style={{
-          left: `${Math.random() * 100}%`,
-          top: `${Math.random() * 100}%`,
-        }}
-        animate={{
-          y: [0, -20, 0],
-          opacity: [0.2, 0.4, 0.2],
-        }}
-        transition={{
-          duration: Math.random() * 3 + 4,
-          repeat: Infinity,
-          delay: Math.random() * 2,
-        }}
-      />
-    ))}
-  </div>
-);
-
-// Animated car road
-const AnimatedRoad = () => (
-  <div className="absolute bottom-0 left-0 right-0 h-24 overflow-hidden pointer-events-none">
-    <div className="absolute bottom-8 left-0 right-0 h-0.5 bg-muted-foreground/20" />
+// Modern gradient background
+const GradientBackground = () => (
+  <div className="absolute inset-0 overflow-hidden">
+    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-primary/10" />
     <motion.div
-      className="absolute bottom-5"
-      initial={{ x: '-10%' }}
-      animate={{ x: '110%' }}
-      transition={{
-        duration: 10,
-        repeat: Infinity,
-        ease: 'linear',
-      }}
-    >
-      <Car className="w-6 h-6 text-primary/50" />
-    </motion.div>
-  </div>
-);
-
-// Glowing orbs
-const GlowingOrbs = () => (
-  <>
-    <motion.div
-      className="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl"
+      className="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl"
       animate={{
-        scale: [1, 1.1, 1],
+        scale: [1, 1.2, 1],
+        opacity: [0.2, 0.3, 0.2],
+      }}
+      transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+    />
+    <motion.div
+      className="absolute bottom-0 left-0 w-80 h-80 bg-accent/15 rounded-full blur-3xl"
+      animate={{
+        scale: [1.2, 1, 1.2],
         opacity: [0.15, 0.25, 0.15],
       }}
-      transition={{
-        duration: 6,
-        repeat: Infinity,
-        ease: 'easeInOut',
-      }}
+      transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut', delay: 4 }}
     />
-    <motion.div
-      className="absolute -bottom-40 -left-40 w-80 h-80 bg-accent/10 rounded-full blur-3xl"
-      animate={{
-        scale: [1.1, 1, 1.1],
-        opacity: [0.25, 0.15, 0.25],
-      }}
-      transition={{
-        duration: 6,
-        repeat: Infinity,
-        ease: 'easeInOut',
-        delay: 3,
-      }}
-    />
-  </>
-);
-
-// Loading spinner
-const LoadingSpinner = () => (
-  <div className="flex items-center gap-3">
-    <motion.div
-      className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full"
-      animate={{ rotate: 360 }}
-      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-    />
-    <span>Inloggen...</span>
   </div>
 );
 
@@ -99,24 +35,24 @@ const SuccessAnimation = ({ show }: { show: boolean }) => (
   <AnimatePresence>
     {show && (
       <motion.div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 backdrop-blur-md"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-md"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
       >
         <motion.div
           className="flex flex-col items-center gap-4"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', damping: 15 }}
         >
           <motion.div
             className="w-20 h-20 bg-success rounded-full flex items-center justify-center shadow-lg"
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            transition={{ delay: 0.1, type: 'spring', damping: 10 }}
+            transition={{ delay: 0.1, type: 'spring', damping: 12 }}
           >
-            <CheckCircle2 className="w-10 h-10 text-success-foreground" />
+            <Check className="w-10 h-10 text-success-foreground stroke-[3]" />
           </motion.div>
           <motion.p
             className="text-xl font-semibold text-foreground"
@@ -134,13 +70,19 @@ const SuccessAnimation = ({ show }: { show: boolean }) => (
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isAuthenticated, isLoading: authLoading } = useAuth();
   const [username, setUsername] = useState('');
   const [pincode, setPincode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
-  const [focusedField, setFocusedField] = useState<string | null>(null);
+
+  // Redirect als al ingelogd - FIX voor de reload bug
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, authLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,8 +105,8 @@ export default function Login() {
       if (success) {
         setShowSuccess(true);
         setTimeout(() => {
-          navigate('/dashboard');
-        }, 1000);
+          navigate('/dashboard', { replace: true });
+        }, 800);
       } else {
         setError('Ongeldige gebruikersnaam of pincode');
       }
@@ -175,84 +117,58 @@ export default function Login() {
     }
   };
 
+  // Niet renderen terwijl we checken of user al ingelogd is
+  if (authLoading) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 py-12 relative overflow-hidden">
-      {/* Animated background */}
-      <GlowingOrbs />
-      <FloatingParticles />
-      <AnimatedRoad />
-
-      {/* Success overlay */}
+      <GradientBackground />
       <SuccessAnimation show={showSuccess} />
 
       <motion.div
         className="w-full max-w-sm relative z-10"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        transition={{ duration: 0.5 }}
       >
         {/* App Logo */}
         <motion.div
-          className="flex flex-col items-center mb-8"
+          className="flex flex-col items-center mb-10"
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.1 }}
         >
-          <motion.div
-            className="relative mb-4"
-            whileHover={{ scale: 1.05 }}
-          >
-            {/* Glow */}
-            <motion.div
-              className="absolute inset-0 bg-primary/20 blur-xl rounded-full scale-150"
-              animate={{ opacity: [0.3, 0.5, 0.3] }}
-              transition={{ duration: 3, repeat: Infinity }}
-            />
-            
-            <div className="relative">
-              <Car className="w-16 h-16 text-primary drop-shadow-lg" />
-              
-              {/* L badge */}
-              <motion.div
-                className="absolute -top-1 left-1/2 -translate-x-1/2 w-7 h-7 bg-primary rounded-lg flex items-center justify-center shadow-lg"
-                animate={{
-                  boxShadow: [
-                    '0 0 15px hsl(var(--primary) / 0.4)',
-                    '0 0 25px hsl(var(--primary) / 0.6)',
-                    '0 0 15px hsl(var(--primary) / 0.4)',
-                  ],
-                }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                <span className="text-primary-foreground font-black text-xs">L</span>
-              </motion.div>
-              
-              <motion.div
-                className="absolute -top-1 -right-1"
-                animate={{ rotate: [0, 15, -15, 0] }}
-                transition={{ duration: 4, repeat: Infinity }}
-              >
-                <Sparkles className="w-4 h-4 text-accent" />
-              </motion.div>
+          <motion.div className="relative mb-5" whileHover={{ scale: 1.05 }}>
+            <div className="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
+              <Car className="w-10 h-10 text-primary-foreground" />
             </div>
+            <motion.div
+              className="absolute -top-2 -right-2 w-8 h-8 bg-accent rounded-lg flex items-center justify-center shadow-md"
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              <span className="text-accent-foreground font-black text-sm">L</span>
+            </motion.div>
           </motion.div>
           
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">
             Rij<span className="text-primary">Planner</span>
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">
+          <p className="text-muted-foreground text-sm mt-2">
             Rijlessen eenvoudig gepland
           </p>
         </motion.div>
 
         {/* Login Form */}
         <motion.div
-          className="glass-card p-6"
+          className="bg-card border border-border/50 rounded-3xl p-6 shadow-lg"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {/* Username field */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground flex items-center gap-2">
@@ -265,21 +181,21 @@ export default function Login() {
                   placeholder="Voer je gebruikersnaam in"
                   value={username}
                   onChange={e => setUsername(e.target.value)}
-                  onFocus={() => setFocusedField('username')}
-                  onBlur={() => setFocusedField(null)}
                   autoComplete="username"
                   autoCapitalize="none"
-                  className="h-12 bg-background/50 border-border focus:border-primary transition-colors"
+                  className="h-12 bg-background border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all rounded-xl"
                 />
                 <AnimatePresence>
                   {username.length > 0 && (
                     <motion.div
                       className="absolute right-3 top-1/2 -translate-y-1/2"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      exit={{ scale: 0 }}
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0, opacity: 0 }}
                     >
-                      <Shield className="w-4 h-4 text-success" />
+                      <div className="w-5 h-5 bg-success rounded-full flex items-center justify-center">
+                        <Check className="w-3 h-3 text-success-foreground stroke-[3]" />
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -293,6 +209,19 @@ export default function Login() {
                 Pincode
               </label>
               <PinInput value={pincode} onChange={setPincode} />
+              <AnimatePresence>
+                {pincode.length === 4 && (
+                  <motion.div
+                    className="flex items-center gap-2 text-success text-sm"
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                  >
+                    <Check className="w-4 h-4 stroke-[3]" />
+                    <span>Pincode compleet</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Error message */}
@@ -314,10 +243,21 @@ export default function Login() {
             <Button
               type="submit"
               size="lg"
-              className="w-full h-12 shadow-lg"
+              className="w-full h-12 text-base font-semibold shadow-lg rounded-xl bg-primary hover:bg-primary/90"
               disabled={isLoading}
             >
-              {isLoading ? <LoadingSpinner /> : 'Inloggen'}
+              {isLoading ? (
+                <div className="flex items-center gap-3">
+                  <motion.div
+                    className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  />
+                  <span>Inloggen...</span>
+                </div>
+              ) : (
+                'Inloggen'
+              )}
             </Button>
           </form>
         </motion.div>
