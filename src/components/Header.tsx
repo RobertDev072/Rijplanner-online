@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
-import { Car, Menu, X, MessageCircle, User, LogOut, Settings, Home, Calendar, Users, BookOpen, FileText, Coins } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Car, Menu, X, MessageCircle, User, LogOut, Settings, Home, Calendar, Users, BookOpen, FileText, Coins, Shield, Building2, FileSearch, UserCheck } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { User as UserType } from '@/types';
+import { cn } from '@/lib/utils';
 
 interface HeaderProps {
   title?: string;
@@ -11,10 +15,24 @@ interface HeaderProps {
 
 export function Header({ title, showLogo = false }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const [originalSuperadmin, setOriginalSuperadmin] = useState<UserType | null>(null);
+  const [isExitingImpersonation, setIsExitingImpersonation] = useState(false);
+  const { user, logout, login } = useAuth();
   const { theme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Check for impersonation on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('original_superadmin');
+    if (stored) {
+      try {
+        setOriginalSuperadmin(JSON.parse(stored));
+      } catch {
+        localStorage.removeItem('original_superadmin');
+      }
+    }
+  }, [user]);
 
   const getRoleLabel = () => {
     switch (user?.role) {
@@ -24,8 +42,54 @@ export function Header({ title, showLogo = false }: HeaderProps) {
         return 'Instructeur';
       case 'student':
         return 'Leerling';
+      case 'superadmin':
+        return 'Superadmin';
       default:
         return '';
+    }
+  };
+
+  const handleExitImpersonation = async () => {
+    if (!originalSuperadmin) return;
+    
+    setIsExitingImpersonation(true);
+    try {
+      // Log the end of impersonation
+      await supabase.from('audit_logs').insert({
+        actor_id: originalSuperadmin.id,
+        actor_name: originalSuperadmin.name,
+        action: 'end_impersonation',
+        target_type: 'user',
+        target_id: user?.id,
+        target_name: user?.name,
+      });
+
+      // End the impersonation session
+      await supabase
+        .from('impersonation_sessions')
+        .update({ 
+          is_active: false, 
+          ended_at: new Date().toISOString() 
+        })
+        .eq('superadmin_id', originalSuperadmin.id)
+        .eq('is_active', true);
+
+      // Login back as superadmin
+      const success = await login(originalSuperadmin.username, originalSuperadmin.pincode);
+      
+      if (success) {
+        localStorage.removeItem('original_superadmin');
+        setOriginalSuperadmin(null);
+        toast.success('Terug als superadmin');
+        navigate('/admin/platform');
+      } else {
+        toast.error('Kon niet terug naar superadmin');
+      }
+    } catch (error) {
+      console.error('Error exiting impersonation:', error);
+      toast.error('Fout bij beëindigen impersonatie');
+    } finally {
+      setIsExitingImpersonation(false);
     }
   };
 
@@ -50,6 +114,8 @@ export function Header({ title, showLogo = false }: HeaderProps) {
   };
 
   const handleLogout = () => {
+    // Clear impersonation data on logout
+    localStorage.removeItem('original_superadmin');
     logout();
     navigate("/login");
     setIsMenuOpen(false);
@@ -69,18 +135,64 @@ export function Header({ title, showLogo = false }: HeaderProps) {
     { icon: Settings, label: "Instellingen", path: "/settings", roles: ["admin"] },
   ];
 
-  const filteredMenuItems = menuItems.filter((item) => user?.role && item.roles.includes(user.role));
+  const superadminMenuItems = [
+    { icon: Shield, label: "Platform Dashboard", path: "/admin/platform" },
+    { icon: Building2, label: "Rijscholen", path: "/tenants" },
+    { icon: Settings, label: "Tenant Beheer", path: "/admin/tenants" },
+    { icon: FileSearch, label: "Audit Logs", path: "/admin/audit-logs" },
+    { icon: UserCheck, label: "Impersonatie", path: "/admin/impersonate" },
+  ];
+
+  const filteredMenuItems = user?.role === 'superadmin' 
+    ? superadminMenuItems 
+    : menuItems.filter((item) => user?.role && item.roles.includes(user.role));
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border/40">
+      {/* Impersonation Banner */}
+      {originalSuperadmin && (
+        <div className="sticky top-0 z-50 bg-warning/90 text-warning-foreground px-4 py-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm">
+              <Shield className="w-4 h-4" />
+              <span className="font-medium">
+                Impersonatie actief als {user?.name}
+              </span>
+            </div>
+            <button
+              onClick={handleExitImpersonation}
+              disabled={isExitingImpersonation}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
+                "bg-background text-foreground hover:bg-background/90",
+                isExitingImpersonation && "opacity-50 cursor-not-allowed"
+              )}
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              {isExitingImpersonation ? 'Laden...' : 'Terug naar Superadmin'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      <header className={cn(
+        "sticky z-40 bg-background/95 backdrop-blur-lg border-b border-border/40",
+        originalSuperadmin ? "top-[44px]" : "top-0"
+      )}>
         <div className="flex items-center justify-between px-4 py-3">
           {/* Left: Logo or Title */}
           <div className="flex items-center gap-3">
             {showLogo ? (
               <>
-                <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-sm">
-                  <Car className="w-5 h-5 text-primary-foreground" />
+                <div className={cn(
+                  "w-10 h-10 rounded-xl flex items-center justify-center shadow-sm",
+                  user?.role === 'superadmin' ? "bg-gradient-to-br from-primary to-accent" : "bg-primary"
+                )}>
+                  {user?.role === 'superadmin' ? (
+                    <Shield className="w-5 h-5 text-primary-foreground" />
+                  ) : (
+                    <Car className="w-5 h-5 text-primary-foreground" />
+                  )}
                 </div>
                 <div>
                   <h1 className="text-lg font-bold text-foreground leading-tight">RijPlanner</h1>
@@ -118,8 +230,15 @@ export function Header({ title, showLogo = false }: HeaderProps) {
             <div className="p-5 border-b border-border/50">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center">
-                    <User className="w-5 h-5 text-primary" />
+                  <div className={cn(
+                    "w-11 h-11 rounded-full flex items-center justify-center",
+                    user?.role === 'superadmin' ? "bg-gradient-to-br from-primary/20 to-accent/20" : "bg-primary/10"
+                  )}>
+                    {user?.role === 'superadmin' ? (
+                      <Shield className="w-5 h-5 text-primary" />
+                    ) : (
+                      <User className="w-5 h-5 text-primary" />
+                    )}
                   </div>
                   <div>
                     <p className="font-semibold text-foreground">{user?.name}</p>
@@ -167,6 +286,18 @@ export function Header({ title, showLogo = false }: HeaderProps) {
 
             {/* Logout Section */}
             <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border/50 bg-background safe-area-bottom">
+              {originalSuperadmin && (
+                <button
+                  onClick={handleExitImpersonation}
+                  disabled={isExitingImpersonation}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-warning bg-warning/10 hover:bg-warning/20 transition-colors active:scale-[0.98] mb-2"
+                >
+                  <Shield className="w-5 h-5" />
+                  <span className="font-medium">
+                    {isExitingImpersonation ? 'Laden...' : 'Terug naar Superadmin'}
+                  </span>
+                </button>
+              )}
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-destructive hover:bg-destructive/10 transition-colors active:scale-[0.98]"
