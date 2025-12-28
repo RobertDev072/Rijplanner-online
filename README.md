@@ -4,6 +4,7 @@ Een moderne rijschool management applicatie gebouwd met React, TypeScript en Sup
 
 ## 📋 Inhoudsopgave
 
+- [Sitemap & Navigatie](#-sitemap--navigatie)
 - [Technologie Stack](#-technologie-stack)
 - [Functionaliteiten](#-functionaliteiten)
 - [Supabase Configuratie](#-supabase-configuratie)
@@ -16,6 +17,204 @@ Een moderne rijschool management applicatie gebouwd met React, TypeScript en Sup
 
 ---
 
+## 🗺 Sitemap & Navigatie
+
+### Applicatie Structuur Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              RijPlanner App                                 │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                     │
+                    ┌────────────────┼────────────────┐
+                    │                │                │
+                    ▼                ▼                ▼
+              ┌──────────┐    ┌──────────┐    ┌──────────┐
+              │  Index   │    │  Login   │    │ NotFound │
+              │    /     │    │  /login  │    │   /*     │
+              └────┬─────┘    └────┬─────┘    └──────────┘
+                   │               │
+                   └───────┬───────┘
+                           │
+                           ▼
+              ┌────────────────────────┐
+              │   Protected Routes     │
+              │  (Requires Login)      │
+              └───────────┬────────────┘
+                          │
+    ┌─────────────────────┼─────────────────────┐
+    │                     │                     │
+    ▼                     ▼                     ▼
+┌─────────┐         ┌─────────┐         ┌─────────┐
+│SUPERADMIN│        │  ADMIN  │         │INSTRUCTOR│
+└────┬────┘         └────┬────┘         └────┬────┘
+     │                   │                   │
+     ▼                   ▼                   ▼
+┌─────────┐         ┌─────────┐         ┌─────────┐
+│ STUDENT │←────────┤  Shared │─────────→│ Pages  │
+└─────────┘         └─────────┘         └─────────┘
+```
+
+### Pagina Overzicht per Rol
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            SUPERADMIN                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  /dashboard ──► Home (Rijscholen beheren link)                              │
+│  /tenants ────► Rijscholen Beheer (CRUD rijscholen + admin aanmaken)        │
+│  /users ──────► Alle Gebruikers (per rijschool gegroepeerd)                 │
+│  /profile ────► Profiel                                                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              ADMIN                                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  /dashboard ──► Dashboard (Statistieken, low credit warnings)               │
+│  /users ──────► Gebruikers (Instructeurs & Leerlingen beheren)              │
+│  /lessons ────► Lessen Overzicht (Alle lessen + export)                     │
+│  /vehicles ───► Voertuigen Beheer (CRUD voertuigen)                         │
+│  /credits ────► Credits Overzicht (Alerts & overzicht)                      │
+│  /settings ───► Instellingen (Branding, kleuren, export)                    │
+│  /profile ────► Profiel                                                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            INSTRUCTOR                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  /dashboard ──► Dashboard (Komende lessen)                                  │
+│  /agenda ─────► Agenda (Week kalender + dagweergave)                        │
+│  /schedule ───► Les Inplannen (Formulier voor nieuwe les)                   │
+│  /students ───► Mijn Leerlingen (CRUD + credits + theorie status)           │
+│  /credits ────► Credits Overzicht                                           │
+│  /profile ────► Profiel                                                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                             STUDENT                                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  /dashboard ──► Dashboard (Credits, pending lessen, komende lessen)         │
+│  /agenda ─────► Agenda (Week kalender + les accepteren/weigeren)            │
+│  /feedback ───► Mijn Feedback (Alle feedback van instructeurs)              │
+│  /profile ────► Profiel (Theorie toggle, contactinfo, uitloggen)            │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Navigatie Flow Diagram
+
+```
+                              ┌──────────────┐
+                              │    START     │
+                              └──────┬───────┘
+                                     │
+                                     ▼
+                              ┌──────────────┐
+                              │   / (Index)  │
+                              │  Landingpage │
+                              └──────┬───────┘
+                                     │
+                              ┌──────┴───────┐
+                              │  Ingelogd?   │
+                              └──────┬───────┘
+                                     │
+                    ┌────────────────┼────────────────┐
+                    │ Nee            │                │ Ja
+                    ▼                │                ▼
+             ┌──────────────┐        │      ┌──────────────┐
+             │   /login     │        │      │  /dashboard  │
+             │  Login Page  │        │      │   Homepage   │
+             └──────┬───────┘        │      └──────────────┘
+                    │                │              │
+                    ▼                │              ▼
+             ┌──────────────┐        │     ┌───────────────┐
+             │ Credentials  │────────┘     │ Bottom Tab    │
+             │   Correct?   │              │ Navigation    │
+             └──────────────┘              └───────────────┘
+                                                  │
+                    ┌─────────────────────────────┼─────────────────────────────┐
+                    │                             │                             │
+                    ▼                             ▼                             ▼
+           ┌────────────────┐            ┌────────────────┐            ┌────────────────┐
+           │    🏠 Home     │            │   📅 Agenda    │            │   👤 Profiel   │
+           │   /dashboard   │            │    /agenda     │            │    /profile    │
+           └────────────────┘            └────────────────┘            └────────────────┘
+                    │                             │                             │
+                    │                             ▼                             │
+                    │                    ┌────────────────┐                     │
+                    │                    │  📝 Inplannen  │                     │
+                    │                    │   /schedule    │                     │
+                    │                    │(Instructeur)   │                     │
+                    │                    └────────────────┘                     │
+                    │                                                           │
+                    ▼                                                           ▼
+           ┌────────────────┐                                          ┌────────────────┐
+           │   Menu (☰)     │──────────────────────────────────────────│   Uitloggen    │
+           │  Extra pages   │                                          │    /login      │
+           └────────────────┘                                          └────────────────┘
+```
+
+### Complete Route Tabel
+
+| Route | Pagina | Toegang | Beschrijving |
+|-------|--------|---------|--------------|
+| `/` | Index | Publiek | Landingspagina / redirect |
+| `/login` | Login | Publiek | Inlogpagina met username + pincode |
+| `/dashboard` | Dashboard | Alle rollen | Hoofdpagina met rol-specifieke content |
+| `/agenda` | Agenda | Instructor, Student | Weekkalender met lessen |
+| `/schedule` | Les Inplannen | Instructor | Formulier om nieuwe les te plannen |
+| `/students` | Mijn Leerlingen | Instructor | Leerlingenbeheer |
+| `/users` | Gebruikers | Admin, Superadmin | Gebruikersbeheer |
+| `/lessons` | Lessen | Admin | Overzicht van alle lessen |
+| `/vehicles` | Voertuigen | Admin | Voertuigenbeheer |
+| `/credits` | Credits | Admin, Instructor | Credits overzicht en alerts |
+| `/settings` | Instellingen | Admin | Rijschool configuratie |
+| `/feedback` | Feedback | Student | Lesfeedback overzicht |
+| `/tenants` | Rijscholen | Superadmin | Multi-tenant beheer |
+| `/profile` | Profiel | Alle rollen | Persoonlijk profiel |
+| `/*` | 404 | Publiek | Pagina niet gevonden |
+
+### Component Architectuur
+
+```
+src/
+├── components/
+│   ├── ui/                    # shadcn/ui componenten
+│   ├── BottomTabNav.tsx       # Navigatie balk onderin
+│   ├── Header.tsx             # Top header met titel/logo
+│   ├── MobileLayout.tsx       # Hoofd layout wrapper
+│   ├── MobileMenu.tsx         # Hamburger menu
+│   ├── LessonCard.tsx         # Les weergave component
+│   ├── CreditsBadge.tsx       # Credits indicator
+│   ├── FeedbackCard.tsx       # Feedback weergave
+│   └── ...
+│
+├── pages/
+│   ├── Index.tsx              # Landingspagina
+│   ├── Login.tsx              # Login pagina
+│   ├── Dashboard.tsx          # Hoofdpagina per rol
+│   ├── Agenda.tsx             # Weekkalender
+│   ├── Schedule.tsx           # Les inplannen
+│   ├── Students.tsx           # Leerlingen (instructeur)
+│   ├── Users.tsx              # Gebruikers (admin)
+│   ├── Lessons.tsx            # Lessen overzicht
+│   ├── Vehicles.tsx           # Voertuigen
+│   ├── Credits.tsx            # Credits overzicht
+│   ├── Settings.tsx           # Instellingen
+│   ├── Feedback.tsx           # Feedback (student)
+│   ├── Tenants.tsx            # Rijscholen (superadmin)
+│   ├── Profile.tsx            # Gebruikersprofiel
+│   └── NotFound.tsx           # 404 pagina
+│
+├── contexts/
+│   ├── AuthContext.tsx        # Authenticatie state
+│   ├── DataContext.tsx        # App data (users, lessons, etc.)
+│   └── ThemeContext.tsx       # Theming per tenant
+│
+└── App.tsx                    # Routes configuratie
+```
+
+---
+
 ## 🛠 Technologie Stack
 
 | Component | Technologie |
@@ -25,6 +224,7 @@ Een moderne rijschool management applicatie gebouwd met React, TypeScript en Sup
 | Backend | Supabase (PostgreSQL) |
 | Authenticatie | Pincode-based (eigen users tabel) |
 | PWA | Service Worker + Web Push Notifications |
+| Mobile | Capacitor (iOS/Android) |
 | Animaties | Framer Motion |
 | Routing | React Router v6 |
 | State Management | React Context |
@@ -38,13 +238,17 @@ Een moderne rijschool management applicatie gebouwd met React, TypeScript en Sup
 - 📅 Lesoverzicht en agenda
 - ✅ Lessen accepteren of weigeren
 - 💳 Credits beheren
+- 📝 Feedback bekijken van instructeurs
+- 🎓 Theorie status bijhouden
 - 🔔 Push notifications voor lesgebeurtenissen
 - 📱 PWA installeerbaar op telefoon
 
 ### Voor Instructeurs
 - 📝 Lessen inplannen met leerlingen
 - ❌ Lessen annuleren (met/zonder credit terugboeking)
-- 👥 Leerlingenoverzicht
+- 👥 Leerlingenoverzicht met theorie status
+- 🚗 Voertuig toewijzen aan lessen
+- ⭐ Feedback geven na voltooide lessen
 - 🔔 Push notifications bij les acceptatie/weigering
 
 ### Voor Admins
@@ -53,10 +257,13 @@ Een moderne rijschool management applicatie gebouwd met React, TypeScript en Sup
 - 🚗 Voertuigenbeheer
 - 📊 Dashboard met statistieken
 - ⚠️ Waarschuwingen bij lage credits
+- 🎨 Branding aanpassen (logo, kleuren)
+- 📤 Data exporteren naar CSV
 
 ### Voor Superadmins
 - 🏢 Multi-tenant beheer (meerdere rijscholen)
-- 🎨 Branding per rijschool (logo, kleuren)
+- 👥 Alle gebruikers overzicht per rijschool
+- 🔐 Pincode reset voor alle gebruikers
 
 ---
 
@@ -85,6 +292,57 @@ Een moderne rijschool management applicatie gebouwd met React, TypeScript en Sup
 
 ## 📊 Database Schema
 
+### Entity Relationship Diagram
+
+```
+┌─────────────┐       ┌─────────────┐       ┌─────────────┐
+│   tenants   │       │    users    │       │   lessons   │
+├─────────────┤       ├─────────────┤       ├─────────────┤
+│ id (PK)     │◄──────│ tenant_id   │       │ id (PK)     │
+│ name        │       │ id (PK)     │◄──┬───│ tenant_id   │
+│ logo_url    │       │ username    │   │   │ instructor_id│
+│ primary_clr │       │ pincode     │   │   │ student_id  │
+│ secondary   │       │ role        │   │   │ date        │
+│ whatsapp    │       │ name        │   │   │ start_time  │
+│ created_at  │       │ email       │   │   │ duration    │
+│ updated_at  │       │ phone       │   │   │ status      │
+└─────────────┘       │ address     │   │   │ vehicle_id  │
+                      │ avatar_url  │   │   │ remarks     │
+                      │ theory_pass │   │   │ created_at  │
+                      │ created_at  │   │   └──────┬──────┘
+                      └──────┬──────┘          │
+                             │                 │
+        ┌────────────────────┼─────────────────┘
+        │                    │
+        ▼                    ▼
+┌─────────────┐       ┌─────────────┐       ┌─────────────┐
+│lesson_credits│      │  vehicles   │       │lesson_feedbk│
+├─────────────┤       ├─────────────┤       ├─────────────┤
+│ id (PK)     │       │ id (PK)     │       │ id (PK)     │
+│ tenant_id   │       │ tenant_id   │       │ tenant_id   │
+│ student_id  │       │ brand       │       │ lesson_id   │
+│ total_creds │       │ model       │       │ student_id  │
+│ used_credits│       │ license_plt │       │ instructor  │
+│ created_at  │       │ instructor  │       │ rating      │
+│ updated_at  │       │ created_at  │       │ notes       │
+└─────────────┘       │ updated_at  │       │ topics      │
+                      └─────────────┘       │ created_at  │
+                                            └─────────────┘
+
+┌─────────────┐
+│push_subscr  │
+├─────────────┤
+│ id (PK)     │
+│ user_id     │
+│ tenant_id   │
+│ endpoint    │
+│ p256dh      │
+│ auth        │
+│ created_at  │
+│ updated_at  │
+└─────────────┘
+```
+
 ### Tabellen
 
 #### `tenants`
@@ -96,6 +354,8 @@ Rijscholen (multi-tenant support)
 | name | TEXT | Naam rijschool |
 | logo_url | TEXT | Logo URL |
 | primary_color | TEXT | Primaire kleur (hex) |
+| secondary_color | TEXT | Secundaire kleur (hex) |
+| whatsapp_number | TEXT | WhatsApp support nummer |
 | created_at | TIMESTAMP | Aanmaakdatum |
 | updated_at | TIMESTAMP | Laatst bijgewerkt |
 
@@ -114,6 +374,8 @@ Alle gebruikers van de applicatie
 | phone | TEXT | Telefoonnummer |
 | address | TEXT | Adres |
 | avatar_url | TEXT | Profielfoto URL |
+| theory_passed | BOOLEAN | Theorie examen gehaald |
+| theory_passed_at | TIMESTAMP | Datum theorie gehaald |
 | created_at | TIMESTAMP | Aanmaakdatum |
 
 #### `lessons`
@@ -125,10 +387,11 @@ Rijlessen
 | tenant_id | UUID | FK naar tenants |
 | instructor_id | UUID | FK naar users (instructeur) |
 | student_id | UUID | FK naar users (leerling) |
+| vehicle_id | UUID | FK naar vehicles |
 | date | DATE | Lesdatum |
 | start_time | TIME | Starttijd |
 | duration | INTEGER | Duur in minuten (default: 60) |
-| status | ENUM | pending, accepted, cancelled |
+| status | ENUM | pending, accepted, cancelled, completed |
 | remarks | TEXT | Opmerkingen/ophaaladres |
 | created_at | TIMESTAMP | Aanmaakdatum |
 
@@ -144,6 +407,21 @@ Lescredits per leerling
 | used_credits | INTEGER | Gebruikte credits |
 | created_at | TIMESTAMP | Aanmaakdatum |
 | updated_at | TIMESTAMP | Laatst bijgewerkt |
+
+#### `lesson_feedback`
+Feedback per les
+
+| Kolom | Type | Beschrijving |
+|-------|------|--------------|
+| id | UUID | Primary key |
+| tenant_id | UUID | FK naar tenants |
+| lesson_id | UUID | FK naar lessons |
+| student_id | UUID | FK naar users |
+| instructor_id | UUID | FK naar users |
+| rating | INTEGER | Score 1-5 |
+| notes | TEXT | Opmerkingen |
+| topics_practiced | TEXT[] | Geoefende onderwerpen |
+| created_at | TIMESTAMP | Aanmaakdatum |
 
 #### `vehicles`
 Lesvoertuigen
@@ -208,6 +486,14 @@ Verstuurt Web Push notifications naar gebruikers.
 }
 ```
 
+### `auto-complete-lessons`
+
+Markeert lessen automatisch als voltooid na de lesdatum.
+
+### `get-vapid-public-key`
+
+Haalt de VAPID public key op voor push notificatie registratie.
+
 ---
 
 ## 🔔 Push Notifications
@@ -253,6 +539,31 @@ VITE_VAPID_PUBLIC_KEY="BByDFZxCmooeH-1lWGqvSbDaYZnlrXE5HWB01xiCu9eYXt5mAbI3UwdFr
 | `admin` | Rijschool eigenaar | Eigen rijschool beheren, gebruikers, credits |
 | `instructor` | Rij-instructeur | Lessen inplannen en annuleren |
 | `student` | Leerling | Lessen bekijken, accepteren/weigeren |
+
+### Rol Hiërarchie
+
+```
+                    ┌──────────────┐
+                    │  SUPERADMIN  │
+                    │   (Platform) │
+                    └──────┬───────┘
+                           │
+                           ▼
+                    ┌──────────────┐
+                    │    ADMIN     │
+                    │  (Rijschool) │
+                    └──────┬───────┘
+                           │
+                           ▼
+                    ┌──────────────┐
+                    │  INSTRUCTOR  │
+                    └──────┬───────┘
+                           │
+                           ▼
+                    ┌──────────────┐
+                    │   STUDENT    │
+                    └──────────────┘
+```
 
 ### Authenticatie Flow
 
@@ -301,13 +612,31 @@ VITE_VAPID_PUBLIC_KEY="BByDFZxCmooeH-1lWGqvSbDaYZnlrXE5HWB01xiCu9eYXt5mAbI3UwdFr
 
 ---
 
-## 📱 PWA Installatie
+## 📱 PWA & Native App
+
+### PWA Installatie
 
 De applicatie kan geïnstalleerd worden als Progressive Web App:
 
 1. Open de app in Chrome/Safari
 2. Klik op "Installeren" of "Toevoegen aan startscherm"
 3. De app werkt nu als native applicatie
+
+### Native App (Capacitor)
+
+Voor een echte native app:
+
+```bash
+# iOS
+npx cap add ios
+npx cap sync ios
+npx cap run ios
+
+# Android  
+npx cap add android
+npx cap sync android
+npx cap run android
+```
 
 ---
 
