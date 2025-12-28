@@ -515,7 +515,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_role: {
+        Args: never
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
+      get_user_tenant_id: { Args: never; Returns: string }
       is_superadmin: { Args: { _user_id: string }; Returns: boolean }
+      is_tenant_admin: { Args: never; Returns: boolean }
+      is_tenant_admin_or_instructor: { Args: never; Returns: boolean }
+      user_belongs_to_tenant: { Args: { _tenant_id: string }; Returns: boolean }
     }
     Enums: {
       lesson_status: "pending" | "accepted" | "cancelled" | "completed"
