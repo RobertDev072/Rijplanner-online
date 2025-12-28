@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { User, AuthState } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
+import { sanitizeUserForStorage, generateSecureToken } from '@/utils/securityTokens';
 
 interface AuthContextType extends AuthState {
   login: (username: string, pincode: string) => Promise<boolean>;
@@ -80,7 +81,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error || !data) return false;
 
       const user = mapUser(data);
-      localStorage.setItem('rijplanner_user', JSON.stringify(user));
+      // Store user without sensitive data (pincode)
+      const safeUser = sanitizeUserForStorage(user);
+      const sessionToken = generateSecureToken();
+      localStorage.setItem('rijplanner_user', JSON.stringify(safeUser));
+      localStorage.setItem('rijplanner_session_token', sessionToken);
       setState({ user, isAuthenticated: true, isLoading: false });
       return true;
     } catch {
@@ -90,6 +95,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     localStorage.removeItem('rijplanner_user');
+    localStorage.removeItem('rijplanner_session_token');
+    localStorage.removeItem('impersonation_token');
     setState({ user: null, isAuthenticated: false, isLoading: false });
   };
 
