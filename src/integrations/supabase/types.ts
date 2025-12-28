@@ -515,6 +515,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_auth_user_role: { Args: never; Returns: string }
+      get_auth_user_tenant_id: { Args: never; Returns: string }
       get_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
