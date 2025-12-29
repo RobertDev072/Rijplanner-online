@@ -50,6 +50,11 @@ import mockupAgenda from '@/assets/mockup-agenda.png';
 import mockupProfile from '@/assets/mockup-profile.png';
 import mockupStudents from '@/assets/mockup-students.png';
 
+// Import device frames
+import deviceIphoneFrame from '@/assets/device-iphone-frame.png';
+import deviceAndroidFrame from '@/assets/device-android-frame.png';
+import deviceTabletFrame from '@/assets/device-tablet-frame.png';
+
 interface Feature {
   icon: React.ElementType;
   title: string;
@@ -303,6 +308,55 @@ export default function MarketingGallery() {
 
           {/* Gallery Tab */}
           <TabsContent value="gallery" className="space-y-4">
+            {/* Device Frames Section */}
+            <div className="bg-card border border-border/50 rounded-xl p-4">
+              <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                <Smartphone className="w-4 h-4 text-primary" />
+                Device Mockup Frames
+              </h3>
+              <p className="text-xs text-muted-foreground mb-4">
+                Professionele device frames voor presentaties. Download en combineer met screenshots.
+              </p>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="text-center">
+                  <div className="relative aspect-[9/16] bg-muted/50 rounded-xl overflow-hidden mb-2 group">
+                    <img src={deviceIphoneFrame} alt="iPhone Frame" className="w-full h-full object-contain" />
+                    <button
+                      onClick={() => handleDownload(deviceIphoneFrame, 'rijplanner-iphone-frame.png')}
+                      className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                    >
+                      <Download className="w-6 h-6 text-white" />
+                    </button>
+                  </div>
+                  <p className="text-xs font-medium">iPhone</p>
+                </div>
+                <div className="text-center">
+                  <div className="relative aspect-[9/16] bg-muted/50 rounded-xl overflow-hidden mb-2 group">
+                    <img src={deviceAndroidFrame} alt="Android Frame" className="w-full h-full object-contain" />
+                    <button
+                      onClick={() => handleDownload(deviceAndroidFrame, 'rijplanner-android-frame.png')}
+                      className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                    >
+                      <Download className="w-6 h-6 text-white" />
+                    </button>
+                  </div>
+                  <p className="text-xs font-medium">Android</p>
+                </div>
+                <div className="text-center">
+                  <div className="relative aspect-[4/3] bg-muted/50 rounded-xl overflow-hidden mb-2 group">
+                    <img src={deviceTabletFrame} alt="Tablet Frame" className="w-full h-full object-contain" />
+                    <button
+                      onClick={() => handleDownload(deviceTabletFrame, 'rijplanner-tablet-frame.png')}
+                      className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                    >
+                      <Download className="w-6 h-6 text-white" />
+                    </button>
+                  </div>
+                  <p className="text-xs font-medium">Tablet</p>
+                </div>
+              </div>
+            </div>
+
             {/* Download All Button */}
             <Button 
               onClick={handleDownloadAll}
