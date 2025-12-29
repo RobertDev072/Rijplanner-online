@@ -400,11 +400,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
         // Local browser notification
         sendLessonNotification('planned', student.name, instructor.name, formattedDate, formattedTime);
         
-        // Push notification to student
+        // Push notification to student - pending lesson request
         sendPushNotification(
           [lesson.student_id],
-          '📅 Nieuwe les gepland',
-          `Les met ${instructor.name} op ${formattedDate} om ${formattedTime}`,
+          '📩 Nieuw lesverzoek',
+          `${instructor.name} wil een les inplannen op ${formattedDate} om ${formattedTime}. Tik om te accepteren of weigeren.`,
           lesson.tenant_id
         );
       }
