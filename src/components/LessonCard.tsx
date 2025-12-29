@@ -133,6 +133,8 @@ export function LessonCard({ lesson, showActions = false, onStatusChange }: Less
       return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
     };
 
+    const personName = user?.role === 'student' ? instructor?.name : student?.name;
+
     const icsContent = `BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//RijPlanner//NL
@@ -141,9 +143,14 @@ UID:${lesson.id}@rijplanner
 DTSTAMP:${formatICSDate(new Date())}
 DTSTART:${formatICSDate(startDate)}
 DTEND:${formatICSDate(endDate)}
-SUMMARY:Rijles met ${user?.role === 'student' ? instructor?.name : student?.name}
+SUMMARY:Rijles met ${personName}
 DESCRIPTION:Rijles van ${lesson.duration} minuten${lesson.remarks ? `\\nOpmerking: ${lesson.remarks}` : ''}
 LOCATION:${lesson.remarks || ''}
+BEGIN:VALARM
+TRIGGER:-P1D
+ACTION:DISPLAY
+DESCRIPTION:Herinnering: Morgen rijles met ${personName}
+END:VALARM
 END:VEVENT
 END:VCALENDAR`;
 
