@@ -1,3 +1,11 @@
+/**
+ * RijPlanner - Rijschool Management Software
+ * © 2026 Robert Rocha / ROBERTDEV.NL
+ * Alle rechten voorbehouden. All rights reserved.
+ * 
+ * PROPRIETARY SOFTWARE - Niet kopiëren of distribueren zonder toestemming.
+ */
+
 // Supabase Edge Function: get-vapid-public-key
 // Returns the VAPID public key to the client (safe to expose)
 

@@ -1,3 +1,11 @@
+/**
+ * RijPlanner - Rijschool Management Software
+ * © 2026 Robert Rocha / ROBERTDEV.NL
+ * Alle rechten voorbehouden. All rights reserved.
+ * 
+ * PROPRIETARY SOFTWARE - Niet kopiëren of distribueren zonder toestemming.
+ */
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { encode as encodeBase64Url, decode as decodeBase64Url } from "https://deno.land/std@0.190.0/encoding/base64url.ts";

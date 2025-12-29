@@ -1,3 +1,11 @@
+/**
+ * RijPlanner - Rijschool Management Software
+ * © 2026 Robert Rocha / ROBERTDEV.NL
+ * Alle rechten voorbehouden. All rights reserved.
+ * 
+ * PROPRIETARY SOFTWARE - Niet kopiëren of distribueren zonder toestemming.
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
