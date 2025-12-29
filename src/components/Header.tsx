@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Car, Menu, X, MessageCircle, User, LogOut, Settings, Home, Calendar, Users, BookOpen, FileText, Coins } from 'lucide-react';
+import { Car, Menu, X, MessageCircle, User, LogOut, Settings, Home, Calendar, Users, BookOpen, FileText, Coins, HelpCircle, Bug } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { BugReportDialog } from '@/components/BugReportDialog';
+import { HelpDialog } from '@/components/HelpDialog';
 
 interface HeaderProps {
   title?: string;
@@ -11,6 +13,8 @@ interface HeaderProps {
 
 export function Header({ title, showLogo = false }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showBugReport, setShowBugReport] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const { user, logout } = useAuth();
   const { theme } = useTheme();
   const navigate = useNavigate();
@@ -47,6 +51,16 @@ export function Header({ title, showLogo = false }: HeaderProps) {
   const handleNavigation = (path: string) => {
     navigate(path);
     setIsMenuOpen(false);
+  };
+
+  const handleOpenBugReport = () => {
+    setIsMenuOpen(false);
+    setTimeout(() => setShowBugReport(true), 150);
+  };
+
+  const handleOpenHelp = () => {
+    setIsMenuOpen(false);
+    setTimeout(() => setShowHelp(true), 150);
   };
 
   const handleLogout = () => {
@@ -153,6 +167,27 @@ export function Header({ title, showLogo = false }: HeaderProps) {
                 </button>
               ))}
 
+              {/* Divider */}
+              <div className="my-3 border-t border-border/50" />
+
+              {/* Help */}
+              <button
+                onClick={handleOpenHelp}
+                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-foreground hover:bg-muted transition-colors active:scale-[0.98]"
+              >
+                <HelpCircle className="w-5 h-5" />
+                <span className="font-medium">Hulp & Handleiding</span>
+              </button>
+
+              {/* Bug report */}
+              <button
+                onClick={handleOpenBugReport}
+                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-foreground hover:bg-muted transition-colors active:scale-[0.98]"
+              >
+                <Bug className="w-5 h-5" />
+                <span className="font-medium">Bug Melden</span>
+              </button>
+
               {/* WhatsApp Support */}
               {theme?.whatsapp_number && user?.role === 'student' && (
                 <button
@@ -178,6 +213,10 @@ export function Header({ title, showLogo = false }: HeaderProps) {
           </div>
         </>
       )}
+      
+      {/* Dialogs */}
+      <BugReportDialog open={showBugReport} onOpenChange={setShowBugReport} />
+      <HelpDialog open={showHelp} onOpenChange={setShowHelp} />
     </>
   );
 }
