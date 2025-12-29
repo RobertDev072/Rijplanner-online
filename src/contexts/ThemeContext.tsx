@@ -1,3 +1,11 @@
+/**
+ * RijPlanner - Rijschool Management Software
+ * © 2026 Robert Rocha / ROBERTDEV.NL
+ * Alle rechten voorbehouden. All rights reserved.
+ * 
+ * PROPRIETARY SOFTWARE - Niet kopiëren of distribueren zonder toestemming.
+ */
+
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
