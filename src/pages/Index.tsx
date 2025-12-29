@@ -11,11 +11,18 @@ import {
   ArrowRight,
   Star,
   Smartphone,
-  Bell
+  Bell,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 
+// Import mockup images
+import mockupDashboard from '@/assets/mockup-dashboard.png';
+import mockupAgenda from '@/assets/mockup-agenda.png';
+import mockupProfile from '@/assets/mockup-profile.png';
+import mockupStudents from '@/assets/mockup-students.png';
 // Animated background with floating elements
 const AnimatedBackground = () => (
   <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -326,6 +333,88 @@ const Index = () => {
               />
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* App Screenshots Gallery Section */}
+      <section className="relative z-10 py-20 md:py-28">
+        <div className="max-w-6xl mx-auto px-6">
+          <motion.div 
+            className="text-center mb-14"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Bekijk de app in actie
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Een blik op de belangrijkste schermen van RijPlanner. Ontdek hoe eenvoudig het is.
+            </p>
+          </motion.div>
+
+          {/* Screenshot Gallery */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            {[
+              { img: mockupDashboard, title: 'Dashboard', desc: 'Overzicht van alle lessen' },
+              { img: mockupAgenda, title: 'Agenda', desc: 'Weekplanning in één oogopslag' },
+              { img: mockupProfile, title: 'Profiel', desc: 'Leerling voortgang bijhouden' },
+              { img: mockupStudents, title: 'Leerlingen', desc: 'Beheer al je leerlingen' },
+            ].map((screen, i) => (
+              <motion.div
+                key={i}
+                className="group relative"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <div className="relative bg-gradient-to-b from-muted/50 to-muted/20 rounded-2xl md:rounded-3xl p-2 md:p-3 shadow-lg border border-border/50 overflow-hidden group-hover:shadow-xl group-hover:border-primary/30 transition-all duration-300">
+                  {/* Phone frame effect */}
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 md:w-16 h-1 md:h-1.5 bg-border/50 rounded-full mt-1" />
+                  
+                  <div className="relative rounded-xl md:rounded-2xl overflow-hidden mt-2">
+                    <motion.img
+                      src={screen.img}
+                      alt={screen.title}
+                      className="w-full h-auto object-cover"
+                      whileHover={{ scale: 1.02 }}
+                      transition={{ duration: 0.3 }}
+                    />
+                    
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+                      <div className="p-3 md:p-4 text-primary-foreground">
+                        <p className="font-semibold text-sm md:text-base">{screen.title}</p>
+                        <p className="text-[10px] md:text-xs opacity-90">{screen.desc}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Title below on mobile */}
+                <div className="mt-2 md:mt-3 text-center">
+                  <p className="font-medium text-foreground text-sm">{screen.title}</p>
+                  <p className="text-muted-foreground text-xs hidden md:block">{screen.desc}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Additional info */}
+          <motion.div
+            className="mt-12 text-center"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+          >
+            <div className="inline-flex items-center gap-2 bg-muted/50 border border-border/50 rounded-full px-4 py-2">
+              <Smartphone className="w-4 h-4 text-primary" />
+              <span className="text-sm text-muted-foreground">
+                Werkt op iPhone, Android en desktop
+              </span>
+            </div>
+          </motion.div>
         </div>
       </section>
 
