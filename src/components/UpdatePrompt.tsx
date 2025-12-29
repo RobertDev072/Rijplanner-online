@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { RefreshCw, X } from 'lucide-react';
+import { Download, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -106,17 +106,13 @@ export const UpdatePrompt = () => {
         >
           <div className="surface-card p-4 flex items-start gap-3 border border-primary/20">
             <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <RefreshCw className="w-5 h-5 text-primary" />
+              <Download className="w-5 h-5 text-primary" />
             </div>
-            
+
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-foreground text-sm">
-                Nieuwe versie beschikbaar
-              </h3>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Update nu voor de beste ervaring.
-              </p>
-              
+              <h3 className="font-semibold text-foreground text-sm">Nieuwe versie beschikbaar</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">Update nu voor de beste ervaring.</p>
+
               <div className="flex gap-2 mt-3">
                 <Button
                   size="sm"
@@ -124,17 +120,7 @@ export const UpdatePrompt = () => {
                   disabled={isUpdating}
                   className="h-8 text-xs px-3"
                 >
-                  {isUpdating ? (
-                    <>
-                      <RefreshCw className="w-3 h-3 mr-1.5 animate-spin" />
-                      Bezig...
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="w-3 h-3 mr-1.5" />
-                      Update nu
-                    </>
-                  )}
+                  {isUpdating ? 'Bezig...' : 'Update nu'}
                 </Button>
                 <Button
                   size="sm"
@@ -146,10 +132,11 @@ export const UpdatePrompt = () => {
                 </Button>
               </div>
             </div>
-            
+
             <button
               onClick={handleDismiss}
               className="flex-shrink-0 p-1 rounded-lg hover:bg-muted/50 transition-colors"
+              aria-label="Sluiten"
             >
               <X className="w-4 h-4 text-muted-foreground" />
             </button>
@@ -159,3 +146,4 @@ export const UpdatePrompt = () => {
     </AnimatePresence>
   );
 };
+

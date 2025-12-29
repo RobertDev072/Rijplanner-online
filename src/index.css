@@ -141,6 +141,8 @@
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    height: 100%;
+    background: hsl(var(--background));
   }
 
   body {
@@ -149,6 +151,7 @@
     overscroll-behavior: none;
     user-select: none;
     -webkit-user-select: none;
+    min-height: 100%;
   }
 
   /* Allow text selection in inputs and textareas */
@@ -169,9 +172,7 @@
   }
 
   .mobile-page-content {
-    @apply flex-1 overflow-y-auto overflow-x-hidden;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-y: contain;
+    @apply flex-1 overflow-hidden;
   }
 
   .page-inner {

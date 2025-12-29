@@ -221,6 +221,28 @@ export function DataProvider({ children }: { children: ReactNode }) {
     fetchData();
   }, [fetchData]);
 
+  // Auto sync data periodically to reduce the need for manual refresh
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const interval = window.setInterval(() => {
+      fetchData();
+    }, 60 * 1000);
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchData();
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [currentUser, fetchData]);
+
   const getInstructors = () => users.filter(u => u.role === 'instructor');
   const getStudents = () => users.filter(u => u.role === 'student');
   const getUserById = (id: string) => users.find(u => u.id === id);
