@@ -10,6 +10,7 @@ import { InstallPWA } from '@/components/InstallPWA';
 import { UpdatePrompt } from '@/components/UpdatePrompt';
 import { PageSkeleton } from '@/components/PageSkeleton';
 import { InstructorTodayLessons } from '@/components/InstructorTodayLessons';
+import { OnboardingFlow } from '@/components/OnboardingFlow';
 import { Users, GraduationCap, Calendar, Clock, Building2, Sparkles, ArrowRight, CalendarDays, ChevronDown, ChevronUp, List, LayoutGrid } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
@@ -397,6 +398,9 @@ export default function Dashboard() {
           </Button>
         )}
       </div>
+
+      {/* Onboarding Flow for new users */}
+      <OnboardingFlow />
     </MobileLayout>
   );
 }
