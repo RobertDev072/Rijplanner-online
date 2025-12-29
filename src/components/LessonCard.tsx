@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Clock, User, CheckCircle, XCircle, Download, Loader2, MapPin, AlertTriangle, MessageSquare, Star, Car } from 'lucide-react';
+import { Calendar, Clock, User, CheckCircle, XCircle, Download, Loader2, MapPin, AlertTriangle, MessageSquare, Star, Car, MessageCircle } from 'lucide-react';
 import { Lesson, LessonStatus } from '@/types';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -125,6 +125,22 @@ export function LessonCard({ lesson, showActions = false, onStatusChange }: Less
     }
   };
 
+  // WhatsApp functie om instructeur te contacteren
+  const openWhatsAppInstructor = () => {
+    if (!instructor?.phone) return;
+    
+    let cleanPhone = instructor.phone.replace(/[\s\-\(\)]/g, '');
+    if (cleanPhone.startsWith('0')) {
+      cleanPhone = '+31' + cleanPhone.slice(1);
+    }
+    if (!cleanPhone.startsWith('+')) {
+      cleanPhone = '+31' + cleanPhone;
+    }
+    
+    const message = encodeURIComponent(`Hoi ${instructor.name?.split(' ')[0] || 'daar'}, betreft mijn rijles op ${format(new Date(lesson.date), 'd MMMM', { locale: nl })} om ${lesson.start_time.slice(0, 5)}.`);
+    window.open(`https://wa.me/${cleanPhone.replace('+', '')}?text=${message}`, '_blank');
+  };
+
   const generateICS = () => {
     const startDate = new Date(`${lesson.date}T${lesson.start_time}`);
     const endDate = new Date(startDate.getTime() + lesson.duration * 60000);
@@ -209,6 +225,19 @@ END:VCALENDAR`;
               ? (instructor?.name || 'Instructeur') 
               : (student?.name || 'Leerling')}
           </span>
+          {/* WhatsApp button for students to contact instructor */}
+          {user?.role === 'student' && instructor?.phone && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                openWhatsAppInstructor();
+              }}
+              className="ml-auto p-1.5 rounded-full bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#25D366] transition-colors"
+              title="WhatsApp instructeur"
+            >
+              <MessageCircle className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 

@@ -188,14 +188,25 @@ export function Header({ title, showLogo = false }: HeaderProps) {
                 <span className="font-medium">Bug Melden</span>
               </button>
 
-              {/* WhatsApp Support */}
-              {theme?.whatsapp_number && user?.role === 'student' && (
+              {/* WhatsApp Support - altijd zichtbaar voor leerlingen */}
+              {user?.role === 'student' && theme?.whatsapp_number && (
                 <button
                   onClick={handleWhatsAppSupport}
-                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 transition-colors mt-4"
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 transition-colors mt-2"
                 >
                   <MessageCircle className="w-5 h-5" />
-                  <span className="font-medium">Support via WhatsApp</span>
+                  <span className="font-medium">Contact Rijschool</span>
+                </button>
+              )}
+              
+              {/* Instructeurs ook WhatsApp support als backup */}
+              {user?.role === 'instructor' && theme?.whatsapp_number && (
+                <button
+                  onClick={handleWhatsAppSupport}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 transition-colors mt-2"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                  <span className="font-medium">Contact Rijschool</span>
                 </button>
               )}
             </div>
