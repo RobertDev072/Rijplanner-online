@@ -205,7 +205,9 @@ END:VCALENDAR`;
         <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 flex-1 min-w-0">
           <User className="w-4 h-4 text-accent" />
           <span className="font-medium truncate">
-            {user?.role === 'student' ? instructor?.name : student?.name}
+            {user?.role === 'student' 
+              ? (instructor?.name || 'Instructeur') 
+              : (student?.name || 'Leerling')}
           </span>
         </div>
       </div>
