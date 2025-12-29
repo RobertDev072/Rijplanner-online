@@ -1,3 +1,11 @@
+/**
+ * RijPlanner - Rijschool Management Software
+ * © 2026 Robert Rocha / ROBERTDEV.NL
+ * Alle rechten voorbehouden. All rights reserved.
+ * 
+ * PROPRIETARY SOFTWARE - Niet kopiëren of distribueren zonder toestemming.
+ */
+
 import React, { useState } from 'react';
 import { Bug, Send, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -66,8 +74,12 @@ function getDeviceInfo() {
   };
 }
 
-export function BugReportButton() {
-  const [isOpen, setIsOpen] = useState(false);
+interface BugReportDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function BugReportDialog({ open, onOpenChange }: BugReportDialogProps) {
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
@@ -106,7 +118,7 @@ export function BugReportButton() {
 
       toast.success('Bug rapport verzonden!');
       setDescription('');
-      setIsOpen(false);
+      onOpenChange(false);
     } catch (error) {
       console.error('Failed to submit bug report:', error);
       toast.error('Kon bug rapport niet verzenden');
@@ -116,63 +128,53 @@ export function BugReportButton() {
   };
 
   return (
-    <>
-      <button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-20 right-4 z-[9997] w-10 h-10 rounded-full bg-muted text-muted-foreground shadow-lg flex items-center justify-center hover:bg-muted/80 transition-colors"
-        aria-label="Bug rapporteren"
-      >
-        <Bug className="w-4 h-4" />
-      </button>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-[90vw] sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Bug className="w-5 h-5 text-destructive" />
+            Bug Rapporteren
+          </DialogTitle>
+          <DialogDescription>
+            Beschrijf het probleem. Device info en errors worden automatisch toegevoegd.
+          </DialogDescription>
+        </DialogHeader>
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-[90vw] sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Bug className="w-5 h-5 text-destructive" />
-              Bug Rapporteren
-            </DialogTitle>
-            <DialogDescription>
-              Beschrijf het probleem. Device info en errors worden automatisch toegevoegd.
-            </DialogDescription>
-          </DialogHeader>
+        <div className="space-y-4">
+          <Textarea
+            placeholder="Wat ging er mis? (optioneel)"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={4}
+            className="resize-none"
+          />
 
-          <div className="space-y-4">
-            <Textarea
-              placeholder="Wat ging er mis? (optioneel)"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={4}
-              className="resize-none"
-            />
-
-            <div className="text-xs text-muted-foreground space-y-1">
-              <p>📍 Route: {location.pathname}</p>
-              <p>📱 {navigator.userAgent.includes('Mobile') ? 'Mobiel' : 'Desktop'} • {window.innerWidth}x{window.innerHeight}</p>
-              <p>⚠️ {recentErrors.length} recente errors gevonden</p>
-            </div>
-
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setIsOpen(false)}
-                className="flex-1"
-              >
-                <X className="w-4 h-4 mr-2" />
-                Annuleren
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="flex-1"
-              >
-                <Send className="w-4 h-4 mr-2" />
-                {isSubmitting ? 'Verzenden...' : 'Verzenden'}
-              </Button>
-            </div>
+          <div className="text-xs text-muted-foreground space-y-1">
+            <p>📍 Route: {location.pathname}</p>
+            <p>📱 {navigator.userAgent.includes('Mobile') ? 'Mobiel' : 'Desktop'} • {window.innerWidth}x{window.innerHeight}</p>
+            <p>⚠️ {recentErrors.length} recente errors gevonden</p>
           </div>
-        </DialogContent>
-      </Dialog>
-    </>
+
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="flex-1"
+            >
+              <X className="w-4 h-4 mr-2" />
+              Annuleren
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="flex-1"
+            >
+              <Send className="w-4 h-4 mr-2" />
+              {isSubmitting ? 'Verzenden...' : 'Verzenden'}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
