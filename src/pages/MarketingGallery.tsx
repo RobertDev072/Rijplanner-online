@@ -30,12 +30,16 @@ import {
   Sparkles,
   Play,
   Image as ImageIcon,
-  X
+  X,
+  FileDown,
+  Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { toast } from 'sonner';
+import jsPDF from 'jspdf';
 
 // Import all screenshots
 import screenshotDashboard from '@/assets/screenshot-dashboard.png';
@@ -169,6 +173,7 @@ export default function MarketingGallery() {
   const [selectedImage, setSelectedImage] = useState<Screenshot | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState('features');
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   // Redirect non-superadmins
   if (user?.role !== 'superadmin') {
@@ -215,6 +220,341 @@ export default function MarketingGallery() {
     setSelectedImage(screenshots[newIndex]);
   };
 
+  // Convert image to base64
+  const imageToBase64 = async (src: string): Promise<string> => {
+    const response = await fetch(src);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  // Generate PDF Brochure
+  const generatePDFBrochure = async () => {
+    setIsGeneratingPDF(true);
+    toast.info('PDF wordt gegenereerd...');
+
+    try {
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 15;
+      const contentWidth = pageWidth - (margin * 2);
+
+      // Colors
+      const primaryColor: [number, number, number] = [59, 130, 246]; // Blue
+      const darkColor: [number, number, number] = [15, 23, 42];
+      const grayColor: [number, number, number] = [100, 116, 139];
+
+      // ============ PAGE 1: Cover ============
+      // Background gradient effect
+      pdf.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      pdf.rect(0, 0, pageWidth, 80, 'F');
+
+      // Logo placeholder
+      pdf.setFillColor(255, 255, 255);
+      pdf.roundedRect(margin, 20, 40, 40, 5, 5, 'F');
+      pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      pdf.setFontSize(24);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('RP', margin + 11, 47);
+
+      // Title
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(32);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('RijPlanner', margin + 50, 38);
+      
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('Rijschool Management Software', margin + 50, 50);
+
+      // Subtitle area
+      pdf.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+      pdf.setFontSize(20);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Complete Marketing Brochure', margin, 100);
+
+      pdf.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'normal');
+      const introText = 'RijPlanner is een modern, cloudgebaseerd platform voor rijscholen. Van lesplanning tot leerlingbeheer, van feedback tot facturatie - alles in één intuïtieve applicatie.';
+      const introLines = pdf.splitTextToSize(introText, contentWidth);
+      pdf.text(introLines, margin, 115);
+
+      // Key stats
+      let statsY = 145;
+      pdf.setFillColor(248, 250, 252);
+      pdf.roundedRect(margin, statsY, contentWidth, 45, 3, 3, 'F');
+
+      const stats = [
+        { value: '10+', label: 'Features' },
+        { value: '3', label: 'Platformen' },
+        { value: '4', label: 'Gebruikersrollen' },
+        { value: '100%', label: 'White-label' }
+      ];
+
+      const statWidth = contentWidth / 4;
+      stats.forEach((stat, i) => {
+        const statX = margin + (statWidth * i) + (statWidth / 2);
+        pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        pdf.setFontSize(22);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(stat.value, statX, statsY + 20, { align: 'center' });
+        pdf.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(stat.label, statX, statsY + 30, { align: 'center' });
+      });
+
+      // Contact info
+      pdf.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
+      pdf.setFontSize(10);
+      pdf.text('© 2026 ROBERTDEV.NL - Alle rechten voorbehouden', margin, pageHeight - 20);
+      pdf.text(`Gegenereerd op ${new Date().toLocaleDateString('nl-NL')}`, margin, pageHeight - 14);
+
+      // ============ PAGE 2: Features Overview ============
+      pdf.addPage();
+
+      // Header
+      pdf.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      pdf.rect(0, 0, pageWidth, 25, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Functionaliteiten', margin, 17);
+
+      let yPos = 40;
+
+      // Features list
+      features.forEach((feature, index) => {
+        if (yPos > pageHeight - 40) {
+          pdf.addPage();
+          pdf.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+          pdf.rect(0, 0, pageWidth, 25, 'F');
+          pdf.setTextColor(255, 255, 255);
+          pdf.setFontSize(16);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text('Functionaliteiten (vervolg)', margin, 17);
+          yPos = 40;
+        }
+
+        // Feature box
+        pdf.setFillColor(248, 250, 252);
+        pdf.roundedRect(margin, yPos, contentWidth, 24, 2, 2, 'F');
+
+        // Feature number
+        pdf.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        pdf.circle(margin + 8, yPos + 12, 5, 'F');
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(String(index + 1), margin + 8, yPos + 15, { align: 'center' });
+
+        // Feature title
+        pdf.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(feature.title, margin + 18, yPos + 9);
+
+        // Feature description
+        pdf.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'normal');
+        const descLines = pdf.splitTextToSize(feature.description, contentWidth - 25);
+        pdf.text(descLines[0] || '', margin + 18, yPos + 17);
+
+        // Roles badge
+        pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        pdf.setFontSize(7);
+        pdf.text(feature.roles.join(' • '), pageWidth - margin, yPos + 9, { align: 'right' });
+
+        yPos += 28;
+      });
+
+      // ============ PAGE 3: Platform Support ============
+      pdf.addPage();
+
+      pdf.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      pdf.rect(0, 0, pageWidth, 25, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Ondersteunde Platformen', margin, 17);
+
+      yPos = 45;
+
+      const platforms = [
+        { name: 'iOS (iPhone/iPad)', desc: 'Native app beschikbaar via App Store of als PWA' },
+        { name: 'Android', desc: 'Native app beschikbaar via Play Store of als PWA' },
+        { name: 'Web Browser', desc: 'Volledige desktop ervaring in elke moderne browser' },
+        { name: 'Progressive Web App', desc: 'Installeerbaar op elk apparaat, offline ondersteuning' }
+      ];
+
+      platforms.forEach((platform, i) => {
+        pdf.setFillColor(248, 250, 252);
+        pdf.roundedRect(margin, yPos, contentWidth, 20, 2, 2, 'F');
+        
+        pdf.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(platform.name, margin + 8, yPos + 8);
+        
+        pdf.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(platform.desc, margin + 8, yPos + 15);
+        
+        yPos += 25;
+      });
+
+      // User roles section
+      yPos += 15;
+      pdf.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Gebruikersrollen', margin, yPos);
+
+      yPos += 12;
+
+      const roles = [
+        { role: 'Superadmin', desc: 'Platformbeheer, tenant management, systeem configuratie' },
+        { role: 'Admin', desc: 'Rijschoolbeheer, gebruikers, voertuigen, branding' },
+        { role: 'Instructeur', desc: 'Agenda, leerlingen, feedback, lesplanning' },
+        { role: 'Leerling', desc: 'Lessen boeken, voortgang, feedback bekijken' }
+      ];
+
+      roles.forEach((role) => {
+        pdf.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        pdf.setFillColor(240, 249, 255);
+        pdf.roundedRect(margin, yPos, contentWidth, 18, 2, 2, 'F');
+        
+        pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(role.role, margin + 8, yPos + 7);
+        
+        pdf.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(role.desc, margin + 8, yPos + 14);
+        
+        yPos += 22;
+      });
+
+      // ============ PAGE 4+: Screenshots ============
+      pdf.addPage();
+
+      pdf.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      pdf.rect(0, 0, pageWidth, 25, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('App Screenshots', margin, 17);
+
+      // Add screenshots in a grid
+      const mobileScreenshots = screenshots.filter(s => s.category === 'mobile');
+      const screenshotWidth = 50;
+      const screenshotHeight = 90;
+      let screenshotX = margin;
+      let screenshotY = 35;
+      let col = 0;
+
+      for (const screenshot of mobileScreenshots) {
+        try {
+          const base64 = await imageToBase64(screenshot.src);
+          
+          if (col >= 3) {
+            col = 0;
+            screenshotX = margin;
+            screenshotY += screenshotHeight + 15;
+          }
+
+          if (screenshotY + screenshotHeight > pageHeight - 20) {
+            pdf.addPage();
+            pdf.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+            pdf.rect(0, 0, pageWidth, 25, 'F');
+            pdf.setTextColor(255, 255, 255);
+            pdf.setFontSize(16);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('App Screenshots (vervolg)', margin, 17);
+            screenshotY = 35;
+            screenshotX = margin;
+            col = 0;
+          }
+
+          // Screenshot frame
+          pdf.setDrawColor(220, 220, 220);
+          pdf.setLineWidth(0.5);
+          pdf.roundedRect(screenshotX, screenshotY, screenshotWidth, screenshotHeight, 3, 3, 'S');
+          
+          pdf.addImage(base64, 'PNG', screenshotX + 2, screenshotY + 2, screenshotWidth - 4, screenshotHeight - 12);
+
+          // Caption
+          pdf.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+          pdf.setFontSize(8);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text(screenshot.title, screenshotX + (screenshotWidth / 2), screenshotY + screenshotHeight - 4, { align: 'center' });
+
+          screenshotX += screenshotWidth + 10;
+          col++;
+        } catch (error) {
+          console.warn('Could not add screenshot:', screenshot.title, error);
+        }
+      }
+
+      // ============ FINAL PAGE: Contact ============
+      pdf.addPage();
+
+      pdf.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(28);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Interesse?', pageWidth / 2, 80, { align: 'center' });
+
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'normal');
+      const contactText = 'Neem contact op voor een demo of vrijblijvende offerte.';
+      pdf.text(contactText, pageWidth / 2, 95, { align: 'center' });
+
+      // Contact box
+      pdf.setFillColor(255, 255, 255);
+      pdf.roundedRect(margin + 20, 115, contentWidth - 40, 60, 5, 5, 'F');
+
+      pdf.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('ROBERTDEV.NL', pageWidth / 2, 135, { align: 'center' });
+
+      pdf.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('www.robertdev.nl', pageWidth / 2, 150, { align: 'center' });
+      pdf.text('RijPlanner - Rijschool Management Software', pageWidth / 2, 162, { align: 'center' });
+
+      // Footer
+      pdf.setTextColor(255, 255, 255, 0.7);
+      pdf.setFontSize(9);
+      pdf.text('© 2026 Robert Rocha / ROBERTDEV.NL - Alle rechten voorbehouden', pageWidth / 2, pageHeight - 20, { align: 'center' });
+
+      // Save PDF
+      const date = new Date().toISOString().split('T')[0];
+      pdf.save(`RijPlanner-Marketing-Brochure-${date}.pdf`);
+
+      toast.success('PDF brochure succesvol gegenereerd!');
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      toast.error('Er ging iets mis bij het genereren van de PDF');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
   return (
     <MobileLayout title="Marketing Gallery">
       <div className="space-y-6 pb-20">
@@ -229,6 +569,25 @@ export default function MarketingGallery() {
           <p className="text-muted-foreground text-sm">
             Mockups, screenshots en feature overzichten voor presentaties
           </p>
+
+          {/* PDF Export Button */}
+          <Button 
+            onClick={generatePDFBrochure}
+            disabled={isGeneratingPDF}
+            className="mt-4 rounded-xl bg-gradient-to-r from-primary to-primary/80"
+          >
+            {isGeneratingPDF ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                PDF Genereren...
+              </>
+            ) : (
+              <>
+                <FileDown className="w-4 h-4 mr-2" />
+                Download Marketing Brochure (PDF)
+              </>
+            )}
+          </Button>
         </div>
 
         {/* Tabs */}
