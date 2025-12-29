@@ -174,9 +174,23 @@ export default function Login() {
     }
   };
 
-  // Niet renderen terwijl we checken of user al ingelogd is
+  // Toon laadscherm terwijl we checken of user al ingelogd is
   if (authLoading) {
-    return null;
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
+              <Car className="w-8 h-8 text-primary-foreground" />
+            </div>
+            <div className="absolute -top-1 -right-1 w-6 h-6 bg-accent rounded-lg flex items-center justify-center shadow-md">
+              <span className="text-accent-foreground font-black text-xs">L</span>
+            </div>
+          </div>
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    );
   }
 
   return (

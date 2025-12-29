@@ -203,42 +203,25 @@ function AppWithSplash() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false);
-    }, 1500);
+    }, 1200);
     return () => clearTimeout(timer);
   }, []);
 
+  if (showSplash) {
+    return <SplashScreen />;
+  }
+
   return (
-    <AnimatePresence mode="wait">
-      {showSplash ? (
-        <motion.div
-          key="splash"
-          initial={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          className="fixed inset-0 z-[100]"
-        >
-          <SplashScreen />
-        </motion.div>
-      ) : (
-        <motion.div
-          key="app"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          className="w-full h-full"
-        >
-          <OfflineIndicator />
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            
-            <SwipeablePages>
-              <AppRoutes />
-            </SwipeablePages>
-          </BrowserRouter>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <div className="w-full h-full animate-fade-in">
+      <OfflineIndicator />
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <SwipeablePages>
+          <AppRoutes />
+        </SwipeablePages>
+      </BrowserRouter>
+    </div>
   );
 }
 
