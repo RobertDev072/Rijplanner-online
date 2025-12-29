@@ -17,16 +17,35 @@ import {
   Sparkles,
   KeyRound,
   User,
-  ChevronRight
+  ChevronRight,
+  ChevronDown,
+  Shield,
+  RefreshCw
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tenant } from '@/types';
 import { cn } from '@/lib/utils';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface TenantStats {
   tenant: Tenant;
   userCount: number;
   lessonCount: number;
+  admins: { id: string; name: string; username: string }[];
 }
 
 interface NewTenantCredentials {
@@ -45,6 +64,10 @@ export default function Tenants() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newCredentials, setNewCredentials] = useState<NewTenantCredentials | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [expandedTenants, setExpandedTenants] = useState<Set<string>>(new Set());
+  const [resetPincodeUser, setResetPincodeUser] = useState<{ id: string; name: string } | null>(null);
+  const [newPincode, setNewPincode] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
 
   useEffect(() => {
     if (user?.role !== 'superadmin') {
@@ -76,6 +99,13 @@ export default function Tenants() {
             .select('*', { count: 'exact', head: true })
             .eq('tenant_id', tenant.id);
 
+          // Fetch admins for this tenant
+          const { data: adminsData } = await supabase
+            .from('users')
+            .select('id, name, username')
+            .eq('tenant_id', tenant.id)
+            .eq('role', 'admin');
+
           return {
             tenant: {
               id: tenant.id,
@@ -84,6 +114,7 @@ export default function Tenants() {
             },
             userCount: userCount || 0,
             lessonCount: lessonCount || 0,
+            admins: adminsData || [],
           };
         })
       );
@@ -174,11 +205,49 @@ export default function Tenants() {
     }
   };
 
+  const handleResetPincode = async () => {
+    if (!resetPincodeUser || !newPincode || newPincode.length !== 4) {
+      toast.error('Pincode moet 4 cijfers zijn');
+      return;
+    }
+
+    setIsResetting(true);
+    try {
+      const { error } = await supabase.rpc('reset_user_pincode', {
+        _target_user_id: resetPincodeUser.id,
+        _new_pincode: newPincode,
+      });
+
+      if (error) throw error;
+
+      toast.success(`Pincode van ${resetPincodeUser.name} is gereset`);
+      setResetPincodeUser(null);
+      setNewPincode('');
+    } catch (error) {
+      console.error('Error resetting pincode:', error);
+      toast.error('Fout bij resetten pincode');
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   const copyToClipboard = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
     setCopiedField(field);
     setTimeout(() => setCopiedField(null), 2000);
     toast.success('Gekopieerd!');
+  };
+
+  const toggleTenantExpand = (tenantId: string) => {
+    setExpandedTenants(prev => {
+      const next = new Set(prev);
+      if (next.has(tenantId)) {
+        next.delete(tenantId);
+      } else {
+        next.add(tenantId);
+      }
+      return next;
+    });
   };
 
   if (user?.role !== 'superadmin') return null;
@@ -187,6 +256,39 @@ export default function Tenants() {
     <MobileLayout title="Rijscholen">
 
       <div className="space-y-4">
+        {/* Reset Pincode Dialog */}
+        <AlertDialog open={!!resetPincodeUser} onOpenChange={() => setResetPincodeUser(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Pincode resetten</AlertDialogTitle>
+              <AlertDialogDescription>
+                Nieuwe pincode voor {resetPincodeUser?.name}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="py-4">
+              <Input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={4}
+                placeholder="Nieuwe 4-cijferige pincode"
+                value={newPincode}
+                onChange={(e) => setNewPincode(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                className="text-center text-2xl tracking-widest font-mono"
+              />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setNewPincode('')}>Annuleren</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleResetPincode}
+                disabled={newPincode.length !== 4 || isResetting}
+              >
+                {isResetting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Opslaan'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         {/* New Credentials Modal */}
         {newCredentials && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
@@ -259,20 +361,6 @@ export default function Tenants() {
             </div>
           </div>
         )}
-
-        {/* Marketing Gallery Button */}
-        <Button
-          onClick={() => navigate('/marketing')}
-          variant="outline"
-          className="w-full h-14 text-base gap-3 border-primary/30 hover:bg-primary/5 transition-all duration-300"
-          size="lg"
-        >
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-primary" />
-          </div>
-          Marketing Gallery & Demo
-          <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground" />
-        </Button>
 
         {/* Add Button */}
         <Button
@@ -350,52 +438,110 @@ export default function Tenants() {
           </div>
         ) : (
           <div className="space-y-3">
-            {tenants.map(({ tenant, userCount, lessonCount }, index) => (
-              <div
+            {tenants.map(({ tenant, userCount, lessonCount, admins }, index) => (
+              <Collapsible
                 key={tenant.id}
-                className={cn(
-                  "glass-card rounded-2xl p-5 animate-slide-up hover:border-primary/50 transition-all duration-300",
-                )}
-                style={{ animationDelay: `${index * 50}ms` }}
+                open={expandedTenants.has(tenant.id)}
+                onOpenChange={() => toggleTenantExpand(tenant.id)}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                        <Building2 className="w-6 h-6 text-primary" />
+                <div
+                  className={cn(
+                    "glass-card rounded-2xl animate-slide-up hover:border-primary/50 transition-all duration-300",
+                  )}
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <div className="p-5">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                            <Building2 className="w-6 h-6 text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-foreground text-lg">{tenant.name}</h3>
+                            <p className="text-xs text-muted-foreground">
+                              Aangemaakt op {new Date(tenant.created_at).toLocaleDateString('nl-NL')}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex gap-4 mb-3">
+                          <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2">
+                            <Users className="w-4 h-4 text-primary" />
+                            <span className="text-sm font-medium">{userCount}</span>
+                            <span className="text-xs text-muted-foreground">gebruikers</span>
+                          </div>
+                          <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2">
+                            <BookOpen className="w-4 h-4 text-success" />
+                            <span className="text-sm font-medium">{lessonCount}</span>
+                            <span className="text-xs text-muted-foreground">lessen</span>
+                          </div>
+                        </div>
+
+                        <CollapsibleTrigger asChild>
+                          <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+                            <Shield className="w-4 h-4" />
+                            {admins.length} beheerder{admins.length !== 1 ? 's' : ''}
+                            <ChevronDown className={cn(
+                              "w-4 h-4 transition-transform",
+                              expandedTenants.has(tenant.id) && "rotate-180"
+                            )} />
+                          </Button>
+                        </CollapsibleTrigger>
                       </div>
-                      <div>
-                        <h3 className="font-bold text-foreground text-lg">{tenant.name}</h3>
-                        <p className="text-xs text-muted-foreground">
-                          Aangemaakt op {new Date(tenant.created_at).toLocaleDateString('nl-NL')}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex gap-4">
-                      <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2">
-                        <Users className="w-4 h-4 text-primary" />
-                        <span className="text-sm font-medium">{userCount}</span>
-                        <span className="text-xs text-muted-foreground">gebruikers</span>
-                      </div>
-                      <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2">
-                        <BookOpen className="w-4 h-4 text-success" />
-                        <span className="text-sm font-medium">{lessonCount}</span>
-                        <span className="text-xs text-muted-foreground">lessen</span>
-                      </div>
+                      
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl"
+                        onClick={() => handleDeleteTenant(tenant.id, tenant.name)}
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </Button>
                     </div>
                   </div>
-                  
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl"
-                    onClick={() => handleDeleteTenant(tenant.id, tenant.name)}
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </Button>
+
+                  <CollapsibleContent>
+                    <div className="border-t border-border px-5 py-4 bg-muted/30 rounded-b-2xl">
+                      <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                        <Shield className="w-4 h-4 text-primary" />
+                        Beheerders
+                      </h4>
+                      {admins.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">Geen beheerders gevonden</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {admins.map((admin) => (
+                            <div
+                              key={admin.id}
+                              className="flex items-center justify-between bg-background/50 rounded-xl p-3"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                  <User className="w-5 h-5 text-primary" />
+                                </div>
+                                <div>
+                                  <p className="font-medium text-sm">{admin.name}</p>
+                                  <p className="text-xs text-muted-foreground">@{admin.username}</p>
+                                </div>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="gap-2"
+                                onClick={() => setResetPincodeUser({ id: admin.id, name: admin.name })}
+                              >
+                                <RefreshCw className="w-4 h-4" />
+                                Pincode
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </CollapsibleContent>
                 </div>
-              </div>
+              </Collapsible>
             ))}
           </div>
         )}
