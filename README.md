@@ -1,292 +1,293 @@
 # 🚗 RijPlanner
 
-Een moderne rijschool management applicatie gebouwd met React, TypeScript en Supabase.
+Een moderne rijschool management applicatie gebouwd met React, TypeScript en Supabase. Ontworpen als mobiel-first PWA met multi-tenant ondersteuning.
+
+[![React](https://img.shields.io/badge/React-18.3-61DAFB?logo=react)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-Backend-3FCF8E?logo=supabase)](https://supabase.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-06B6D4?logo=tailwindcss)](https://tailwindcss.com/)
+[![PWA Ready](https://img.shields.io/badge/PWA-Ready-5A0FC8?logo=pwa)](https://web.dev/progressive-web-apps/)
+[![Capacitor](https://img.shields.io/badge/Capacitor-iOS%20%26%20Android-119EFF?logo=capacitor)](https://capacitorjs.com/)
 
 ## 📋 Inhoudsopgave
 
-- [Sitemap & Navigatie](#-sitemap--navigatie)
+- [Features](#-features)
+- [Demo & Screenshots](#-demo--screenshots)
 - [Technologie Stack](#-technologie-stack)
-- [Functionaliteiten](#-functionaliteiten)
-- [Supabase Configuratie](#-supabase-configuratie)
-- [Database Schema](#-database-schema)
-- [Edge Functions](#-edge-functions)
-- [Push Notifications](#-push-notifications)
-- [Environment Variables](#-environment-variables)
-- [Gebruikersrollen](#-gebruikersrollen)
+- [Architectuur](#-architectuur)
 - [Installatie](#-installatie)
+- [Configuratie](#-configuratie)
+- [Database Schema](#-database-schema)
+- [API & Edge Functions](#-api--edge-functions)
+- [Gebruikersrollen](#-gebruikersrollen)
+- [Deployment](#-deployment)
+- [Contributing](#-contributing)
 
 ---
 
-## 🗺 Sitemap & Navigatie
+## ✨ Features
 
-### Applicatie Structuur Diagram
+### 🎓 Voor Leerlingen
+| Feature | Beschrijving |
+|---------|--------------|
+| 📅 Lesagenda | Bekijk en beheer je geplande rijlessen in een overzichtelijke weekkalender |
+| ✅ Les accepteren | Accepteer of weiger voorgestelde lessen van je instructeur |
+| 💳 Credits systeem | Houd je beschikbare lesuren bij met het credit systeem |
+| 📝 Feedback | Ontvang gedetailleerde feedback van je instructeur na elke les |
+| 🎓 Theorie status | Track je theorie voortgang en examen status |
+| 🔔 Push notificaties | Krijg real-time meldingen voor nieuwe lessen en updates |
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              RijPlanner App                                 │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                     │
-                    ┌────────────────┼────────────────┐
-                    │                │                │
-                    ▼                ▼                ▼
-              ┌──────────┐    ┌──────────┐    ┌──────────┐
-              │  Index   │    │  Login   │    │ NotFound │
-              │    /     │    │  /login  │    │   /*     │
-              └────┬─────┘    └────┬─────┘    └──────────┘
-                   │               │
-                   └───────┬───────┘
-                           │
-                           ▼
-              ┌────────────────────────┐
-              │   Protected Routes     │
-              │  (Requires Login)      │
-              └───────────┬────────────┘
-                          │
-    ┌─────────────────────┼─────────────────────┐
-    │                     │                     │
-    ▼                     ▼                     ▼
-┌─────────┐         ┌─────────┐         ┌─────────┐
-│SUPERADMIN│        │  ADMIN  │         │INSTRUCTOR│
-└────┬────┘         └────┬────┘         └────┬────┘
-     │                   │                   │
-     ▼                   ▼                   ▼
-┌─────────┐         ┌─────────┐         ┌─────────┐
-│ STUDENT │←────────┤  Shared │─────────→│ Pages  │
-└─────────┘         └─────────┘         └─────────┘
-```
+### 🚗 Voor Instructeurs
+| Feature | Beschrijving |
+|---------|--------------|
+| 📝 Les inplannen | Plan eenvoudig lessen in met je leerlingen |
+| 📊 Leerlingoverzicht | Beheer je leerlingen en bekijk hun voortgang |
+| ⭐ Feedback geven | Geef feedback na elke les met topics en ratings |
+| 🚙 Voertuig selectie | Wijs voertuigen toe aan lessen |
+| 📱 Mobiele agenda | Altijd en overal toegang tot je lesrooster |
 
-### Pagina Overzicht per Rol
+### 👔 Voor Admins
+| Feature | Beschrijving |
+|---------|--------------|
+| 👥 Gebruikersbeheer | Beheer instructeurs en leerlingen |
+| 💰 Credit administratie | Ken credits toe en monitor verbruik |
+| 🚗 Voertuigenbeheer | Beheer het wagenpark van de rijschool |
+| 📊 Dashboard analytics | Inzicht in statistieken en performance |
+| 🎨 Branding | Pas logo en kleuren aan per rijschool |
+| 📤 Data export | Exporteer gegevens naar CSV |
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                            SUPERADMIN                                       │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  /dashboard ──► Home (Rijscholen beheren link)                              │
-│  /tenants ────► Rijscholen Beheer (CRUD rijscholen + admin aanmaken)        │
-│  /users ──────► Alle Gebruikers (per rijschool gegroepeerd)                 │
-│  /profile ────► Profiel                                                     │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              ADMIN                                          │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  /dashboard ──► Dashboard (Statistieken, low credit warnings)               │
-│  /users ──────► Gebruikers (Instructeurs & Leerlingen beheren)              │
-│  /lessons ────► Lessen Overzicht (Alle lessen + export)                     │
-│  /vehicles ───► Voertuigen Beheer (CRUD voertuigen)                         │
-│  /credits ────► Credits Overzicht (Alerts & overzicht)                      │
-│  /settings ───► Instellingen (Branding, kleuren, export)                    │
-│  /profile ────► Profiel                                                     │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                            INSTRUCTOR                                       │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  /dashboard ──► Dashboard (Komende lessen)                                  │
-│  /agenda ─────► Agenda (Week kalender + dagweergave)                        │
-│  /schedule ───► Les Inplannen (Formulier voor nieuwe les)                   │
-│  /students ───► Mijn Leerlingen (CRUD + credits + theorie status)           │
-│  /credits ────► Credits Overzicht                                           │
-│  /profile ────► Profiel                                                     │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                             STUDENT                                         │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  /dashboard ──► Dashboard (Credits, pending lessen, komende lessen)         │
-│  /agenda ─────► Agenda (Week kalender + les accepteren/weigeren)            │
-│  /feedback ───► Mijn Feedback (Alle feedback van instructeurs)              │
-│  /profile ────► Profiel (Theorie toggle, contactinfo, uitloggen)            │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### Navigatie Flow Diagram
-
-```
-                              ┌──────────────┐
-                              │    START     │
-                              └──────┬───────┘
-                                     │
-                                     ▼
-                              ┌──────────────┐
-                              │   / (Index)  │
-                              │  Landingpage │
-                              └──────┬───────┘
-                                     │
-                              ┌──────┴───────┐
-                              │  Ingelogd?   │
-                              └──────┬───────┘
-                                     │
-                    ┌────────────────┼────────────────┐
-                    │ Nee            │                │ Ja
-                    ▼                │                ▼
-             ┌──────────────┐        │      ┌──────────────┐
-             │   /login     │        │      │  /dashboard  │
-             │  Login Page  │        │      │   Homepage   │
-             └──────┬───────┘        │      └──────────────┘
-                    │                │              │
-                    ▼                │              ▼
-             ┌──────────────┐        │     ┌───────────────┐
-             │ Credentials  │────────┘     │ Bottom Tab    │
-             │   Correct?   │              │ Navigation    │
-             └──────────────┘              └───────────────┘
-                                                  │
-                    ┌─────────────────────────────┼─────────────────────────────┐
-                    │                             │                             │
-                    ▼                             ▼                             ▼
-           ┌────────────────┐            ┌────────────────┐            ┌────────────────┐
-           │    🏠 Home     │            │   📅 Agenda    │            │   👤 Profiel   │
-           │   /dashboard   │            │    /agenda     │            │    /profile    │
-           └────────────────┘            └────────────────┘            └────────────────┘
-                    │                             │                             │
-                    │                             ▼                             │
-                    │                    ┌────────────────┐                     │
-                    │                    │  📝 Inplannen  │                     │
-                    │                    │   /schedule    │                     │
-                    │                    │(Instructeur)   │                     │
-                    │                    └────────────────┘                     │
-                    │                                                           │
-                    ▼                                                           ▼
-           ┌────────────────┐                                          ┌────────────────┐
-           │   Menu (☰)     │──────────────────────────────────────────│   Uitloggen    │
-           │  Extra pages   │                                          │    /login      │
-           └────────────────┘                                          └────────────────┘
-```
-
-### Complete Route Tabel
-
-| Route | Pagina | Toegang | Beschrijving |
-|-------|--------|---------|--------------|
-| `/` | Index | Publiek | Landingspagina / redirect |
-| `/login` | Login | Publiek | Inlogpagina met username + pincode |
-| `/dashboard` | Dashboard | Alle rollen | Hoofdpagina met rol-specifieke content |
-| `/agenda` | Agenda | Instructor, Student | Weekkalender met lessen |
-| `/schedule` | Les Inplannen | Instructor | Formulier om nieuwe les te plannen |
-| `/students` | Mijn Leerlingen | Instructor | Leerlingenbeheer |
-| `/users` | Gebruikers | Admin, Superadmin | Gebruikersbeheer |
-| `/lessons` | Lessen | Admin | Overzicht van alle lessen |
-| `/vehicles` | Voertuigen | Admin | Voertuigenbeheer |
-| `/credits` | Credits | Admin, Instructor | Credits overzicht en alerts |
-| `/settings` | Instellingen | Admin | Rijschool configuratie |
-| `/feedback` | Feedback | Student | Lesfeedback overzicht |
-| `/tenants` | Rijscholen | Superadmin | Multi-tenant beheer |
-| `/profile` | Profiel | Alle rollen | Persoonlijk profiel |
-| `/*` | 404 | Publiek | Pagina niet gevonden |
-
-### Component Architectuur
-
-```
-src/
-├── components/
-│   ├── ui/                    # shadcn/ui componenten
-│   ├── BottomTabNav.tsx       # Navigatie balk onderin
-│   ├── Header.tsx             # Top header met titel/logo
-│   ├── MobileLayout.tsx       # Hoofd layout wrapper
-│   ├── MobileMenu.tsx         # Hamburger menu
-│   ├── LessonCard.tsx         # Les weergave component
-│   ├── CreditsBadge.tsx       # Credits indicator
-│   ├── FeedbackCard.tsx       # Feedback weergave
-│   └── ...
-│
-├── pages/
-│   ├── Index.tsx              # Landingspagina
-│   ├── Login.tsx              # Login pagina
-│   ├── Dashboard.tsx          # Hoofdpagina per rol
-│   ├── Agenda.tsx             # Weekkalender
-│   ├── Schedule.tsx           # Les inplannen
-│   ├── Students.tsx           # Leerlingen (instructeur)
-│   ├── Users.tsx              # Gebruikers (admin)
-│   ├── Lessons.tsx            # Lessen overzicht
-│   ├── Vehicles.tsx           # Voertuigen
-│   ├── Credits.tsx            # Credits overzicht
-│   ├── Settings.tsx           # Instellingen
-│   ├── Feedback.tsx           # Feedback (student)
-│   ├── Tenants.tsx            # Rijscholen (superadmin)
-│   ├── Profile.tsx            # Gebruikersprofiel
-│   └── NotFound.tsx           # 404 pagina
-│
-├── contexts/
-│   ├── AuthContext.tsx        # Authenticatie state
-│   ├── DataContext.tsx        # App data (users, lessons, etc.)
-│   └── ThemeContext.tsx       # Theming per tenant
-│
-└── App.tsx                    # Routes configuratie
-```
+### 🏢 Voor Superadmins
+| Feature | Beschrijving |
+|---------|--------------|
+| 🏢 Multi-tenant beheer | Beheer meerdere rijscholen vanuit één platform |
+| 👥 Cross-tenant overzicht | Bekijk alle gebruikers per rijschool |
+| 🔐 Pincode reset | Reset pincodes voor elke gebruiker |
 
 ---
 
 ## 🛠 Technologie Stack
 
-| Component | Technologie |
-|-----------|-------------|
-| Frontend | React 18 + TypeScript + Vite |
-| Styling | Tailwind CSS + shadcn/ui |
-| Backend | Supabase (PostgreSQL) |
-| Authenticatie | Pincode-based (eigen users tabel) |
-| PWA | Service Worker + Web Push Notifications |
-| Mobile | Capacitor (iOS/Android) |
-| Animaties | Framer Motion |
-| Routing | React Router v6 |
-| State Management | React Context |
-| Data Fetching | TanStack Query |
+### Frontend
+```
+React 18          → UI Framework
+TypeScript        → Type Safety
+Vite              → Build Tool & Dev Server
+Tailwind CSS      → Utility-first Styling
+shadcn/ui         → Component Library
+Framer Motion     → Animations
+React Router v6   → Client-side Routing
+TanStack Query    → Server State Management
+```
+
+### Backend
+```
+Supabase          → Backend as a Service
+PostgreSQL        → Database
+Row Level Security→ Data Access Control
+Edge Functions    → Serverless Functions
+Realtime          → Live Updates
+```
+
+### Mobile & PWA
+```
+Service Worker    → Offline Support
+Web Push API      → Push Notifications
+Capacitor         → Native iOS/Android Builds
+```
+
+### DevOps
+```
+Docker            → Containerization
+Nginx             → Production Web Server
+Vercel            → Hosting (optional)
+```
 
 ---
 
-## ✨ Functionaliteiten
+## 🏗 Architectuur
 
-### Voor Leerlingen
-- 📅 Lesoverzicht en agenda
-- ✅ Lessen accepteren of weigeren
-- 💳 Credits beheren
-- 📝 Feedback bekijken van instructeurs
-- 🎓 Theorie status bijhouden
-- 🔔 Push notifications voor lesgebeurtenissen
-- 📱 PWA installeerbaar op telefoon
+### Project Structuur
 
-### Voor Instructeurs
-- 📝 Lessen inplannen met leerlingen
-- ❌ Lessen annuleren (met/zonder credit terugboeking)
-- 👥 Leerlingenoverzicht met theorie status
-- 🚗 Voertuig toewijzen aan lessen
-- ⭐ Feedback geven na voltooide lessen
-- 🔔 Push notifications bij les acceptatie/weigering
+```
+rijplanner/
+├── 📁 public/
+│   ├── logo.png              # App logo
+│   ├── sw.js                 # Service Worker
+│   ├── robots.txt            # SEO
+│   └── sitemap.xml           # SEO
+│
+├── 📁 src/
+│   ├── 📁 components/
+│   │   ├── 📁 ui/            # shadcn/ui componenten
+│   │   ├── BottomTabNav.tsx  # Bottom navigation
+│   │   ├── Header.tsx        # App header
+│   │   ├── MobileLayout.tsx  # Main layout wrapper
+│   │   ├── LessonCard.tsx    # Lesson display
+│   │   ├── CreditsBadge.tsx  # Credits indicator
+│   │   └── ...
+│   │
+│   ├── 📁 pages/
+│   │   ├── Dashboard.tsx     # Home per rol
+│   │   ├── Agenda.tsx        # Week calendar
+│   │   ├── Schedule.tsx      # Create lesson
+│   │   ├── Students.tsx      # Instructor students
+│   │   ├── Users.tsx         # Admin user management
+│   │   ├── Lessons.tsx       # All lessons overview
+│   │   ├── Vehicles.tsx      # Vehicle management
+│   │   ├── Credits.tsx       # Credits overview
+│   │   ├── Feedback.tsx      # Student feedback
+│   │   ├── Profile.tsx       # User profile
+│   │   ├── Settings.tsx      # Tenant settings
+│   │   └── Tenants.tsx       # Multi-tenant admin
+│   │
+│   ├── 📁 contexts/
+│   │   ├── AuthContext.tsx   # Authentication state
+│   │   ├── DataContext.tsx   # App data (users, lessons)
+│   │   └── ThemeContext.tsx  # Tenant theming
+│   │
+│   ├── 📁 hooks/
+│   │   ├── use-mobile.tsx    # Mobile detection
+│   │   └── useOfflineStorage.ts
+│   │
+│   ├── 📁 utils/
+│   │   ├── csvExport.ts      # CSV export helpers
+│   │   ├── lessonValidation.ts
+│   │   └── notifications.ts  # Push notification helpers
+│   │
+│   └── 📁 integrations/
+│       └── supabase/
+│           ├── client.ts     # Supabase client
+│           └── types.ts      # Generated types
+│
+├── 📁 supabase/
+│   ├── 📁 functions/         # Edge Functions
+│   │   ├── secure-login/     # PIN authentication
+│   │   ├── send-push-notification/
+│   │   ├── get-vapid-public-key/
+│   │   └── auto-complete-lessons/
+│   └── 📁 migrations/        # Database migrations
+│
+├── Dockerfile                # Docker container
+├── docker-compose.yml        # Docker orchestration
+├── nginx.conf                # Production server
+└── capacitor.config.json     # Native app config
+```
 
-### Voor Admins
-- 👤 Gebruikersbeheer (instructeurs & leerlingen)
-- 💰 Credits toekennen aan leerlingen
-- 🚗 Voertuigenbeheer
-- 📊 Dashboard met statistieken
-- ⚠️ Waarschuwingen bij lage credits
-- 🎨 Branding aanpassen (logo, kleuren)
-- 📤 Data exporteren naar CSV
+### Navigatie Flow
 
-### Voor Superadmins
-- 🏢 Multi-tenant beheer (meerdere rijscholen)
-- 👥 Alle gebruikers overzicht per rijschool
-- 🔐 Pincode reset voor alle gebruikers
+```
+                    ┌─────────────┐
+                    │   Index /   │
+                    └──────┬──────┘
+                           │
+              ┌────────────┼────────────┐
+              │ Not logged │            │ Logged in
+              ▼            │            ▼
+       ┌──────────┐        │     ┌──────────────┐
+       │  Login   │        │     │  Dashboard   │
+       │ /login   │────────┘     │  /dashboard  │
+       └──────────┘              └──────┬───────┘
+                                        │
+           ┌────────────────────────────┼────────────────────────────┐
+           │                            │                            │
+           ▼                            ▼                            ▼
+    ┌──────────────┐            ┌──────────────┐            ┌──────────────┐
+    │   📅 Agenda  │            │  📝 Schedule │            │  👤 Profile  │
+    │   /agenda    │            │  /schedule   │            │  /profile    │
+    └──────────────┘            └──────────────┘            └──────────────┘
+```
+
+### Route Tabel
+
+| Route | Pagina | Toegang | Beschrijving |
+|-------|--------|---------|--------------|
+| `/` | Index | Publiek | Redirect naar login/dashboard |
+| `/login` | Login | Publiek | Inloggen met username + pincode |
+| `/dashboard` | Dashboard | Alle rollen | Rol-specifieke homepage |
+| `/agenda` | Agenda | Instructor, Student | Weekkalender met lessen |
+| `/schedule` | Inplannen | Instructor | Nieuwe les aanmaken |
+| `/students` | Leerlingen | Instructor | Leerlingenbeheer |
+| `/users` | Gebruikers | Admin, Superadmin | Gebruikersbeheer |
+| `/lessons` | Lessen | Admin | Alle lessen overzicht |
+| `/vehicles` | Voertuigen | Admin | Voertuigenbeheer |
+| `/credits` | Credits | Admin, Instructor | Credit overzicht |
+| `/settings` | Instellingen | Admin | Rijschool configuratie |
+| `/feedback` | Feedback | Student | Ontvangen feedback |
+| `/tenants` | Rijscholen | Superadmin | Multi-tenant beheer |
+| `/profile` | Profiel | Alle rollen | Gebruikersprofiel |
 
 ---
 
-## 🗄 Supabase Configuratie
+## 🚀 Installatie
 
-### Project Details
+### Vereisten
 
-| Setting | Waarde |
-|---------|--------|
-| Project ID | `mlbeciqslbemjrezgclq` |
-| URL | `https://mlbeciqslbemjrezgclq.supabase.co` |
-| Region | EU (Frankfurt) |
+- Node.js 18+ of Bun
+- npm, yarn, pnpm of bun
+- Supabase account (of Lovable Cloud)
 
-### Secrets
+### Lokale Ontwikkeling
+
+```bash
+# 1. Clone repository
+git clone <repository-url>
+cd rijplanner
+
+# 2. Installeer dependencies
+npm install
+# of
+bun install
+
+# 3. Configureer environment
+cp .env.example .env
+# Vul de Supabase credentials in
+
+# 4. Start development server
+npm run dev
+# of
+bun dev
+
+# 5. Open in browser
+open http://localhost:5173
+```
+
+### Docker Deployment
+
+```bash
+# Build en start met Docker Compose
+docker-compose up -d
+
+# Of handmatig
+docker build -t rijplanner .
+docker run -p 80:80 rijplanner
+```
+
+---
+
+## ⚙️ Configuratie
+
+### Environment Variables
+
+Maak een `.env` bestand aan met de volgende variabelen:
+
+```env
+# Supabase
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+
+# Push Notifications (optioneel)
+VAPID_PUBLIC_KEY=your-vapid-public-key
+VAPID_PRIVATE_KEY=your-vapid-private-key
+```
+
+### Supabase Secrets (Edge Functions)
 
 | Secret | Beschrijving |
 |--------|--------------|
-| `SUPABASE_URL` | Supabase project URL |
-| `SUPABASE_PUBLISHABLE_KEY` | Publieke anon key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Admin service role key |
-| `SUPABASE_DB_URL` | PostgreSQL database URL |
-| `VAPID_PUBLIC_KEY` | Web Push VAPID public key |
-| `VAPID_PRIVATE_KEY` | Web Push VAPID private key |
+| `SUPABASE_URL` | Project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Admin API key |
+| `VAPID_PUBLIC_KEY` | Web Push public key |
+| `VAPID_PRIVATE_KEY` | Web Push private key |
 
 ---
 
@@ -295,360 +296,264 @@ src/
 ### Entity Relationship Diagram
 
 ```
-┌─────────────┐       ┌─────────────┐       ┌─────────────┐
-│   tenants   │       │    users    │       │   lessons   │
-├─────────────┤       ├─────────────┤       ├─────────────┤
-│ id (PK)     │◄──────│ tenant_id   │       │ id (PK)     │
-│ name        │       │ id (PK)     │◄──┬───│ tenant_id   │
-│ logo_url    │       │ username    │   │   │ instructor_id│
-│ primary_clr │       │ pincode     │   │   │ student_id  │
-│ secondary   │       │ role        │   │   │ date        │
-│ whatsapp    │       │ name        │   │   │ start_time  │
-│ created_at  │       │ email       │   │   │ duration    │
-│ updated_at  │       │ phone       │   │   │ status      │
-└─────────────┘       │ address     │   │   │ vehicle_id  │
-                      │ avatar_url  │   │   │ remarks     │
-                      │ theory_pass │   │   │ created_at  │
-                      │ created_at  │   │   └──────┬──────┘
-                      └──────┬──────┘          │
-                             │                 │
-        ┌────────────────────┼─────────────────┘
-        │                    │
-        ▼                    ▼
-┌─────────────┐       ┌─────────────┐       ┌─────────────┐
-│lesson_credits│      │  vehicles   │       │lesson_feedbk│
-├─────────────┤       ├─────────────┤       ├─────────────┤
-│ id (PK)     │       │ id (PK)     │       │ id (PK)     │
-│ tenant_id   │       │ tenant_id   │       │ tenant_id   │
-│ student_id  │       │ brand       │       │ lesson_id   │
-│ total_creds │       │ model       │       │ student_id  │
-│ used_credits│       │ license_plt │       │ instructor  │
-│ created_at  │       │ instructor  │       │ rating      │
-│ updated_at  │       │ created_at  │       │ notes       │
-└─────────────┘       │ updated_at  │       │ topics      │
-                      └─────────────┘       │ created_at  │
-                                            └─────────────┘
-
-┌─────────────┐
-│push_subscr  │
-├─────────────┤
-│ id (PK)     │
-│ user_id     │
-│ tenant_id   │
-│ endpoint    │
-│ p256dh      │
-│ auth        │
-│ created_at  │
-│ updated_at  │
-└─────────────┘
+┌─────────────────┐
+│     tenants     │
+├─────────────────┤
+│ id              │───────────┐
+│ name            │           │
+│ status          │           │
+│ logo_url        │           │
+│ primary_color   │           │
+│ user_limit      │           │
+└─────────────────┘           │
+                              │
+          ┌───────────────────┼───────────────────┐
+          │                   │                   │
+          ▼                   ▼                   ▼
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│      users      │  │    vehicles     │  │ lesson_credits  │
+├─────────────────┤  ├─────────────────┤  ├─────────────────┤
+│ id              │  │ id              │  │ id              │
+│ tenant_id (FK)  │  │ tenant_id (FK)  │  │ tenant_id (FK)  │
+│ name            │  │ brand           │  │ student_id (FK) │
+│ username        │  │ model           │  │ total_credits   │
+│ pincode (hash)  │  │ license_plate   │  │ used_credits    │
+│ role            │  │ instructor_id   │  └─────────────────┘
+│ email           │  └─────────────────┘
+│ phone           │
+│ theory_passed   │
+└─────────────────┘
+        │
+        │ instructor_id, student_id
+        ▼
+┌─────────────────┐
+│     lessons     │
+├─────────────────┤
+│ id              │
+│ tenant_id (FK)  │
+│ instructor_id   │───► users
+│ student_id      │───► users
+│ vehicle_id      │───► vehicles
+│ date            │
+│ start_time      │
+│ duration        │
+│ status          │     (pending/accepted/cancelled/completed)
+│ remarks         │
+└─────────────────┘
+        │
+        ▼
+┌─────────────────┐
+│ lesson_feedback │
+├─────────────────┤
+│ id              │
+│ lesson_id (FK)  │
+│ instructor_id   │
+│ student_id      │
+│ rating          │
+│ notes           │
+│ topics_practiced│
+└─────────────────┘
 ```
 
-### Tabellen
+### Belangrijke Tabellen
 
-#### `tenants`
-Rijscholen (multi-tenant support)
+| Tabel | Beschrijving |
+|-------|--------------|
+| `tenants` | Rijscholen (multi-tenant) |
+| `users` | Alle gebruikers (superadmin, admin, instructor, student) |
+| `lessons` | Ingeplande rijlessen |
+| `vehicles` | Lesvoertuigen per rijschool |
+| `lesson_credits` | Credit saldo per leerling |
+| `lesson_feedback` | Feedback van instructeurs |
+| `push_subscriptions` | Push notification endpoints |
+| `audit_logs` | Audit trail van acties |
 
-| Kolom | Type | Beschrijving |
-|-------|------|--------------|
-| id | UUID | Primary key |
-| name | TEXT | Naam rijschool |
-| logo_url | TEXT | Logo URL |
-| primary_color | TEXT | Primaire kleur (hex) |
-| secondary_color | TEXT | Secundaire kleur (hex) |
-| whatsapp_number | TEXT | WhatsApp support nummer |
-| created_at | TIMESTAMP | Aanmaakdatum |
-| updated_at | TIMESTAMP | Laatst bijgewerkt |
+### Row Level Security (RLS)
 
-#### `users`
-Alle gebruikers van de applicatie
+Alle tabellen zijn beveiligd met RLS policies:
 
-| Kolom | Type | Beschrijving |
-|-------|------|--------------|
-| id | UUID | Primary key |
-| tenant_id | UUID | FK naar tenants |
-| username | TEXT | Gebruikersnaam (uniek) |
-| pincode | TEXT | Login pincode |
-| role | ENUM | admin, instructor, student, superadmin |
-| name | TEXT | Volledige naam |
-| email | TEXT | E-mailadres |
-| phone | TEXT | Telefoonnummer |
-| address | TEXT | Adres |
-| avatar_url | TEXT | Profielfoto URL |
-| theory_passed | BOOLEAN | Theorie examen gehaald |
-| theory_passed_at | TIMESTAMP | Datum theorie gehaald |
-| created_at | TIMESTAMP | Aanmaakdatum |
-
-#### `lessons`
-Rijlessen
-
-| Kolom | Type | Beschrijving |
-|-------|------|--------------|
-| id | UUID | Primary key |
-| tenant_id | UUID | FK naar tenants |
-| instructor_id | UUID | FK naar users (instructeur) |
-| student_id | UUID | FK naar users (leerling) |
-| vehicle_id | UUID | FK naar vehicles |
-| date | DATE | Lesdatum |
-| start_time | TIME | Starttijd |
-| duration | INTEGER | Duur in minuten (default: 60) |
-| status | ENUM | pending, accepted, cancelled, completed |
-| remarks | TEXT | Opmerkingen/ophaaladres |
-| created_at | TIMESTAMP | Aanmaakdatum |
-
-#### `lesson_credits`
-Lescredits per leerling
-
-| Kolom | Type | Beschrijving |
-|-------|------|--------------|
-| id | UUID | Primary key |
-| tenant_id | UUID | FK naar tenants |
-| student_id | UUID | FK naar users (uniek) |
-| total_credits | INTEGER | Totaal toegekende credits |
-| used_credits | INTEGER | Gebruikte credits |
-| created_at | TIMESTAMP | Aanmaakdatum |
-| updated_at | TIMESTAMP | Laatst bijgewerkt |
-
-#### `lesson_feedback`
-Feedback per les
-
-| Kolom | Type | Beschrijving |
-|-------|------|--------------|
-| id | UUID | Primary key |
-| tenant_id | UUID | FK naar tenants |
-| lesson_id | UUID | FK naar lessons |
-| student_id | UUID | FK naar users |
-| instructor_id | UUID | FK naar users |
-| rating | INTEGER | Score 1-5 |
-| notes | TEXT | Opmerkingen |
-| topics_practiced | TEXT[] | Geoefende onderwerpen |
-| created_at | TIMESTAMP | Aanmaakdatum |
-
-#### `vehicles`
-Lesvoertuigen
-
-| Kolom | Type | Beschrijving |
-|-------|------|--------------|
-| id | UUID | Primary key |
-| tenant_id | UUID | FK naar tenants |
-| brand | TEXT | Merk |
-| model | TEXT | Model |
-| license_plate | TEXT | Kenteken |
-| instructor_id | UUID | FK naar users (optioneel) |
-| created_at | TIMESTAMP | Aanmaakdatum |
-| updated_at | TIMESTAMP | Laatst bijgewerkt |
-
-#### `push_subscriptions`
-Push notification subscriptions
-
-| Kolom | Type | Beschrijving |
-|-------|------|--------------|
-| id | UUID | Primary key |
-| user_id | UUID | FK naar users |
-| tenant_id | UUID | FK naar tenants |
-| endpoint | TEXT | Push endpoint URL |
-| p256dh | TEXT | Encryption key |
-| auth | TEXT | Auth secret |
-| created_at | TIMESTAMP | Aanmaakdatum |
-| updated_at | TIMESTAMP | Laatst bijgewerkt |
-
-### Storage Buckets
-
-| Bucket | Publiek | Beschrijving |
-|--------|---------|--------------|
-| `avatars` | Ja | Profielfoto's van gebruikers |
+- **Tenant isolation**: Gebruikers zien alleen data van hun eigen rijschool
+- **Role-based access**: Admins kunnen meer dan studenten
+- **Ownership rules**: Leerlingen zien alleen hun eigen lessen
 
 ---
 
-## ⚡ Edge Functions
+## 🔌 API & Edge Functions
 
-### `send-push-notification`
+### Edge Functions
 
-Verstuurt Web Push notifications naar gebruikers.
+| Function | Endpoint | Beschrijving |
+|----------|----------|--------------|
+| `secure-login` | `/functions/v1/secure-login` | PIN-based authenticatie |
+| `send-push-notification` | `/functions/v1/send-push-notification` | Push notificaties versturen |
+| `get-vapid-public-key` | `/functions/v1/get-vapid-public-key` | VAPID key voor push setup |
+| `auto-complete-lessons` | `/functions/v1/auto-complete-lessons` | Automatisch lessen voltooien |
 
-**Endpoint:** `POST /functions/v1/send-push-notification`
+### Secure Login Flow
 
-**Request Body:**
-```json
-{
-  "userIds": ["uuid1", "uuid2"],
-  "title": "Notificatie titel",
-  "body": "Notificatie bericht",
-  "tenantId": "tenant-uuid"
-}
 ```
-
-**Response:**
-```json
-{
-  "success": true,
-  "sent": 2,
-  "removed": 0
-}
+┌─────────────┐     ┌─────────────────┐     ┌─────────────┐
+│   Client    │────►│  secure-login   │────►│  Supabase   │
+│   (React)   │     │  Edge Function  │     │  Database   │
+└─────────────┘     └─────────────────┘     └─────────────┘
+      │                     │                      │
+      │  POST /secure-login │                      │
+      │  {username, pin}    │                      │
+      │────────────────────►│                      │
+      │                     │  Verify credentials  │
+      │                     │─────────────────────►│
+      │                     │                      │
+      │                     │◄─────────────────────│
+      │  {user, session}    │                      │
+      │◄────────────────────│                      │
 ```
-
-### `auto-complete-lessons`
-
-Markeert lessen automatisch als voltooid na de lesdatum.
-
-### `get-vapid-public-key`
-
-Haalt de VAPID public key op voor push notificatie registratie.
-
----
-
-## 🔔 Push Notifications
-
-Push notifications worden verstuurd bij de volgende gebeurtenissen:
-
-| Gebeurtenis | Ontvangers | Titel |
-|-------------|-----------|-------|
-| Les gepland | Leerling | 📅 Nieuwe les gepland |
-| Les geaccepteerd | Instructeur | ✅ Les geaccepteerd |
-| Les geweigerd | Instructeur | 🚫 Les geweigerd |
-| Les geannuleerd | Instructeur + Leerling | ❌ Les geannuleerd |
-
-### Technische implementatie
-
-- **Service Worker:** `public/sw.js`
-- **VAPID Protocol:** Web Push standaard
-- **Subscription opslag:** `push_subscriptions` tabel
-- **Automatische cleanup:** Ongeldige subscriptions worden verwijderd
-
----
-
-## 🔐 Environment Variables
-
-### `.env` bestand
-
-```env
-VITE_SUPABASE_PROJECT_ID="mlbeciqslbemjrezgclq"
-VITE_SUPABASE_PUBLISHABLE_KEY="eyJhbG..."
-VITE_SUPABASE_URL="https://mlbeciqslbemjrezgclq.supabase.co"
-VITE_VAPID_PUBLIC_KEY="BByDFZxCmooeH-1lWGqvSbDaYZnlrXE5HWB01xiCu9eYXt5mAbI3UwdFrG_9a9EzBu-eV05q7n6wBeEV3yfI2Bc"
-```
-
-> ⚠️ **Let op:** Gebruik nooit `VITE_` prefix voor geheime keys. Deze zijn zichtbaar in de browser.
 
 ---
 
 ## 👥 Gebruikersrollen
 
-| Rol | Beschrijving | Rechten |
-|-----|--------------|---------|
-| `superadmin` | Platform beheerder | Alle rijscholen beheren |
-| `admin` | Rijschool eigenaar | Eigen rijschool beheren, gebruikers, credits |
-| `instructor` | Rij-instructeur | Lessen inplannen en annuleren |
-| `student` | Leerling | Lessen bekijken, accepteren/weigeren |
-
 ### Rol Hiërarchie
 
 ```
-                    ┌──────────────┐
-                    │  SUPERADMIN  │
-                    │   (Platform) │
-                    └──────┬───────┘
-                           │
-                           ▼
-                    ┌──────────────┐
-                    │    ADMIN     │
-                    │  (Rijschool) │
-                    └──────┬───────┘
-                           │
-                           ▼
-                    ┌──────────────┐
-                    │  INSTRUCTOR  │
-                    └──────┬───────┘
-                           │
-                           ▼
-                    ┌──────────────┐
-                    │   STUDENT    │
-                    └──────────────┘
+     Superadmin
+          │
+          ▼
+        Admin
+          │
+          ▼
+     Instructor
+          │
+          ▼
+       Student
 ```
 
-### Authenticatie Flow
+### Rol Permissies
 
-1. Gebruiker voert gebruikersnaam in
-2. Gebruiker voert 4-cijferige pincode in
-3. Bij succes: redirect naar dashboard
-4. Sessie wordt opgeslagen in localStorage
-
----
-
-## 🚀 Installatie
-
-### Vereisten
-
-- Node.js 18+
-- npm of bun
-
-### Stappen
-
-1. **Clone de repository**
-   ```bash
-   git clone <repository-url>
-   cd rijplanner
-   ```
-
-2. **Installeer dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Configureer environment variables**
-   ```bash
-   cp .env.example .env
-   # Vul de juiste waarden in
-   ```
-
-4. **Start development server**
-   ```bash
-   npm run dev
-   ```
-
-5. **Open de applicatie**
-   ```
-   http://localhost:5173
-   ```
+| Actie | Superadmin | Admin | Instructor | Student |
+|-------|:----------:|:-----:|:----------:|:-------:|
+| Rijscholen beheren | ✅ | ❌ | ❌ | ❌ |
+| Gebruikers beheren | ✅ | ✅ | ❌ | ❌ |
+| Voertuigen beheren | ✅ | ✅ | ❌ | ❌ |
+| Lessen inplannen | ❌ | ❌ | ✅ | ❌ |
+| Lessen accepteren | ❌ | ❌ | ❌ | ✅ |
+| Credits toekennen | ✅ | ✅ | ❌ | ❌ |
+| Feedback geven | ❌ | ❌ | ✅ | ❌ |
+| Feedback bekijken | ❌ | ❌ | ✅ | ✅ |
 
 ---
 
-## 📱 PWA & Native App
+## 🚢 Deployment
+
+### Lovable (Recommended)
+
+1. Push naar GitHub via Lovable integratie
+2. Automatische deployments bij elke push
+
+### Vercel
+
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy
+vercel --prod
+```
+
+### Docker (Self-hosted)
+
+```bash
+# Build image
+docker build -t rijplanner .
+
+# Run container
+docker run -d \
+  -p 80:80 \
+  --name rijplanner \
+  rijplanner
+```
+
+### Docker Compose
+
+```yaml
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "80:80"
+    restart: unless-stopped
+```
+
+---
+
+## 📱 PWA & Native Apps
 
 ### PWA Installatie
 
-De applicatie kan geïnstalleerd worden als Progressive Web App:
+De app is installeerbaar als Progressive Web App:
 
 1. Open de app in Chrome/Safari
-2. Klik op "Installeren" of "Toevoegen aan startscherm"
-3. De app werkt nu als native applicatie
+2. Klik op "Installeren" of "Toevoegen aan beginscherm"
+3. De app werkt nu offline
 
-### Native App (Capacitor)
-
-Voor een echte native app:
+### Native Apps (Capacitor)
 
 ```bash
 # iOS
 npx cap add ios
 npx cap sync ios
-npx cap run ios
+npx cap open ios
 
-# Android  
+# Android
 npx cap add android
 npx cap sync android
-npx cap run android
+npx cap open android
 ```
+
+---
+
+## 🔔 Push Notifications
+
+### Setup
+
+1. Genereer VAPID keys:
+```bash
+npx web-push generate-vapid-keys
+```
+
+2. Configureer in Supabase secrets:
+   - `VAPID_PUBLIC_KEY`
+   - `VAPID_PRIVATE_KEY`
+
+3. Gebruikers kunnen notificaties inschakelen via hun profiel
+
+### Notification Events
+
+| Event | Ontvanger | Trigger |
+|-------|-----------|---------|
+| Nieuwe les | Student | Instructeur plant les in |
+| Les geaccepteerd | Instructeur | Student accepteert les |
+| Les geweigerd | Instructeur | Student weigert les |
+| Les geannuleerd | Student | Instructeur annuleert les |
+
+---
+
+## 🤝 Contributing
+
+1. Fork de repository
+2. Maak een feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit je changes (`git commit -m 'Add amazing feature'`)
+4. Push naar de branch (`git push origin feature/amazing-feature`)
+5. Open een Pull Request
 
 ---
 
 ## 📄 Licentie
 
-© 2024 RobertDev.nl - Alle rechten voorbehouden.
+Dit project is eigendom van de ontwikkelaar. Alle rechten voorbehouden.
 
 ---
 
-## 🔗 Links
+## 📞 Support
 
-- [Supabase Dashboard](https://supabase.com/dashboard/project/mlbeciqslbemjrezgclq)
-- [Edge Functions](https://supabase.com/dashboard/project/mlbeciqslbemjrezgclq/functions)
-- [Database Editor](https://supabase.com/dashboard/project/mlbeciqslbemjrezgclq/editor)
-- [Storage](https://supabase.com/dashboard/project/mlbeciqslbemjrezgclq/storage/buckets)
+Voor vragen of ondersteuning, neem contact op via de rijschool administrator.
