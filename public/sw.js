@@ -1,53 +1,92 @@
-// Service Worker for RijPlanner Push Notifications
-// Version: 2.0.0 - Enhanced for background push notifications
+// Service Worker for RijPlanner
+// Version: 3.0.0 - Enhanced PWA auto-update system
+// IMPORTANT: Increment CACHE_VERSION on each release!
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `rijplanner-${CACHE_VERSION}`;
+const APP_VERSION = '3.0.0';
 
-// Install event - activate immediately for faster updates
+// Assets to pre-cache for offline support
+const PRECACHE_ASSETS = [
+  '/',
+  '/index.html',
+  '/logo.png'
+];
+
+// Install event - activate immediately
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing service worker...');
-  // Skip waiting to activate new service worker immediately
-  self.skipWaiting();
+  console.log(`[SW] Installing version ${APP_VERSION}...`);
+  
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        console.log('[SW] Pre-caching app shell');
+        return cache.addAll(PRECACHE_ASSETS);
+      })
+      .then(() => {
+        console.log('[SW] Skip waiting to activate immediately');
+        return self.skipWaiting();
+      })
+  );
 });
 
-// Activate event - claim all clients
+// Activate event - clean up old caches and take control
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating service worker...');
+  console.log(`[SW] Activating version ${APP_VERSION}...`);
+  
   event.waitUntil(
     Promise.all([
-      // Clear old caches
+      // Delete ALL old caches (aggressive cleanup)
       caches.keys().then((cacheNames) => {
         return Promise.all(
-          cacheNames
-            .filter((name) => name.startsWith('rijplanner-') && name !== CACHE_NAME)
-            .map((name) => {
-              console.log('[SW] Deleting old cache:', name);
-              return caches.delete(name);
-            })
+          cacheNames.map((cacheName) => {
+            if (cacheName !== CACHE_NAME) {
+              console.log('[SW] Deleting old cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
         );
       }),
       // Take control of all clients immediately
-      clients.claim(),
+      clients.claim().then(() => {
+        console.log('[SW] Claimed all clients');
+        // Notify all clients about the update
+        return clients.matchAll({ type: 'window' }).then((clients) => {
+          clients.forEach((client) => {
+            client.postMessage({
+              type: 'SW_ACTIVATED',
+              version: APP_VERSION
+            });
+          });
+        });
+      })
     ])
   );
 });
 
-// Listen for skip waiting message from the app
+// Listen for messages from the app
 self.addEventListener('message', (event) => {
   console.log('[SW] Received message:', event.data);
+  
   if (event.data && event.data.type === 'SKIP_WAITING') {
-    console.log('[SW] Received SKIP_WAITING message, activating new service worker...');
+    console.log('[SW] Received SKIP_WAITING, activating now...');
     self.skipWaiting();
+  }
+  
+  if (event.data && event.data.type === 'GET_VERSION') {
+    event.ports[0].postMessage({ version: APP_VERSION });
+  }
+  
+  // Force update check
+  if (event.data && event.data.type === 'CHECK_UPDATE') {
+    self.registration.update();
   }
 });
 
-// Handle push notifications - THIS IS THE KEY FOR BACKGROUND NOTIFICATIONS
+// Handle push notifications
 self.addEventListener('push', (event) => {
   console.log('[SW] Push notification received!');
-  console.log('[SW] Push event data:', event.data ? 'present' : 'empty');
 
-  // Default notification data
   let notificationData = {
     title: 'RijPlanner',
     body: 'Je hebt een nieuwe melding',
@@ -60,7 +99,6 @@ self.addEventListener('push', (event) => {
     },
   };
 
-  // Parse the push data if present
   if (event.data) {
     try {
       const payload = event.data.json();
@@ -80,10 +118,8 @@ self.addEventListener('push', (event) => {
       };
     } catch (e) {
       console.error('[SW] Error parsing push data:', e);
-      // Try to get text if JSON fails
       try {
         const text = event.data.text();
-        console.log('[SW] Push text:', text);
         notificationData.body = text;
       } catch (textError) {
         console.error('[SW] Error getting push text:', textError);
@@ -91,15 +127,14 @@ self.addEventListener('push', (event) => {
     }
   }
 
-  // Notification options with enhanced features
   const options = {
     body: notificationData.body,
     icon: notificationData.icon,
     badge: notificationData.badge,
     tag: notificationData.tag,
-    renotify: true, // Vibrate/alert even if replacing existing notification
-    requireInteraction: false, // Auto-dismiss after a while
-    vibrate: [200, 100, 200], // Vibration pattern
+    renotify: true,
+    requireInteraction: false,
+    vibrate: [200, 100, 200],
     data: notificationData.data,
     actions: [
       { action: 'open', title: 'Bekijken', icon: '/logo.png' },
@@ -107,46 +142,28 @@ self.addEventListener('push', (event) => {
     ],
   };
 
-  console.log('[SW] Showing notification:', notificationData.title, options);
-
-  // CRITICAL: Use waitUntil to keep the service worker alive during notification
   event.waitUntil(
     self.registration.showNotification(notificationData.title, options)
-      .then(() => {
-        console.log('[SW] Notification displayed successfully');
-      })
-      .catch((error) => {
-        console.error('[SW] Error showing notification:', error);
-      })
   );
 });
 
 // Handle notification click
 self.addEventListener('notificationclick', (event) => {
   console.log('[SW] Notification clicked:', event.action);
-  
-  // Close the notification
   event.notification.close();
 
-  // If user clicked close, don't open anything
   if (event.action === 'close') {
     return;
   }
 
-  // Get the URL to open (default to /agenda)
   const urlToOpen = event.notification.data?.url || '/agenda';
   const fullUrl = new URL(urlToOpen, self.location.origin).href;
 
-  console.log('[SW] Opening URL:', fullUrl);
-
-  // Open the app when notification is clicked
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
       .then((clientList) => {
-        // If app is already open, focus it and navigate
         for (const client of clientList) {
           if (client.url.includes(self.location.origin) && 'focus' in client) {
-            console.log('[SW] Found existing window, focusing...');
             return client.focus().then((focusedClient) => {
               if (focusedClient && 'navigate' in focusedClient) {
                 return focusedClient.navigate(urlToOpen);
@@ -154,8 +171,6 @@ self.addEventListener('notificationclick', (event) => {
             });
           }
         }
-        // Otherwise open new window
-        console.log('[SW] Opening new window...');
         if (clients.openWindow) {
           return clients.openWindow(fullUrl);
         }
@@ -163,29 +178,57 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// Handle notification close (for analytics if needed)
+// Handle notification close
 self.addEventListener('notificationclose', (event) => {
-  console.log('[SW] Notification closed by user');
+  console.log('[SW] Notification closed');
 });
 
-// Fetch event - for caching (optional, mainly for offline support)
+// Fetch event - network first with cache fallback
 self.addEventListener('fetch', (event) => {
-  // Only handle same-origin requests
   if (!event.request.url.startsWith(self.location.origin)) {
     return;
   }
 
-  // Skip non-GET requests
   if (event.request.method !== 'GET') {
     return;
   }
 
-  // For navigation requests, try network first
+  // For navigation requests, always try network first
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match('/index.html');
-      })
+      fetch(event.request)
+        .then((response) => {
+          // Cache successful responses
+          if (response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          return caches.match('/index.html');
+        })
     );
+    return;
   }
+
+  // For other requests, try cache first then network
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      return fetch(event.request).then((response) => {
+        if (response.status === 200) {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
+        }
+        return response;
+      });
+    })
+  );
 });
