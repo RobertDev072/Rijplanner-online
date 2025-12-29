@@ -15,7 +15,10 @@ import {
   FileSpreadsheet,
   Save,
   Loader2,
-  MessageCircle
+  MessageCircle,
+  RefreshCw,
+  Sparkles,
+  CheckCircle2
 } from 'lucide-react';
 import { exportLessonsToCSV, exportCreditsToCSV, exportFullReportToCSV } from '@/utils/csvExport';
 
@@ -31,6 +34,67 @@ export default function Settings() {
     whatsapp_number: '',
   });
   const [isSaving, setIsSaving] = React.useState(false);
+  const [isCheckingUpdate, setIsCheckingUpdate] = React.useState(false);
+  const [updateAvailable, setUpdateAvailable] = React.useState(false);
+
+  const handleCheckForUpdates = async () => {
+    if (!('serviceWorker' in navigator)) {
+      toast.error('Service Worker niet beschikbaar');
+      return;
+    }
+
+    setIsCheckingUpdate(true);
+    
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      await registration.update();
+      
+      // Wait a moment for the update check to complete
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      if (registration.waiting) {
+        setUpdateAvailable(true);
+        toast.success('Nieuwe versie beschikbaar!', {
+          description: 'Klik op "Nu bijwerken" om te updaten.',
+          duration: 5000,
+        });
+      } else {
+        toast.success('Je hebt de nieuwste versie!', {
+          description: 'Geen updates beschikbaar.',
+        });
+      }
+    } catch (error) {
+      console.error('Update check failed:', error);
+      toast.error('Kon niet controleren op updates');
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  };
+
+  const handleApplyUpdate = async () => {
+    setIsCheckingUpdate(true);
+    
+    try {
+      // Clear all caches
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map((name) => caches.delete(name)));
+      }
+
+      const registration = await navigator.serviceWorker.ready;
+      if (registration.waiting) {
+        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
+
+      // Wait for SW to activate then reload
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } catch (error) {
+      console.error('Update failed:', error);
+      window.location.reload();
+    }
+  };
 
   React.useEffect(() => {
     setLocalSettings({
@@ -263,6 +327,54 @@ export default function Settings() {
             <Download className="w-4 h-4" />
             Volledige backup downloaden
           </Button>
+        </div>
+      </div>
+
+      {/* App Updates */}
+      <div className="glass-card rounded-2xl p-5 mb-4">
+        <h3 className="section-title mb-4">
+          <Sparkles className="w-4 h-4 text-primary" />
+          App Updates
+        </h3>
+        
+        <p className="text-sm text-muted-foreground mb-4">
+          Controleer of er een nieuwe versie van de app beschikbaar is.
+        </p>
+
+        <div className="space-y-3">
+          {updateAvailable ? (
+            <Button 
+              onClick={handleApplyUpdate}
+              disabled={isCheckingUpdate}
+              className="w-full"
+            >
+              {isCheckingUpdate ? (
+                <RefreshCw className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+              Nu bijwerken
+            </Button>
+          ) : (
+            <Button 
+              variant="outline"
+              onClick={handleCheckForUpdates}
+              disabled={isCheckingUpdate}
+              className="w-full justify-start"
+            >
+              {isCheckingUpdate ? (
+                <RefreshCw className="w-4 h-4 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4" />
+              )}
+              {isCheckingUpdate ? 'Controleren...' : 'Controleer op updates'}
+            </Button>
+          )}
+          
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+            <span>Updates worden ook automatisch gecontroleerd</span>
+          </div>
         </div>
       </div>
     </MobileLayout>
