@@ -56,13 +56,105 @@ serve(async (req) => {
       );
     }
 
-    // Return user data (excluding sensitive pincode in response)
+    // Create a synthetic email for Supabase Auth based on user id
+    const authEmail = `${user.id}@rijplanner.local`;
+    const authPassword = `${user.id}-${normalizedPincode}-secure`;
+
+    // Try to sign in first
+    let session = null;
+    const { data: signInData, error: signInError } = await supabaseAdmin.auth.signInWithPassword({
+      email: authEmail,
+      password: authPassword,
+    });
+
+    if (signInError) {
+      console.log("Sign in failed, trying to create auth user:", signInError.message);
+      
+      // Create auth user if doesn't exist
+      const { data: signUpData, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
+        email: authEmail,
+        password: authPassword,
+        user_metadata: { user_id: user.id },
+        email_confirm: true,
+      });
+
+      if (signUpError) {
+        console.error("Failed to create auth user:", signUpError);
+        // User might already exist with different password, try to update it
+        const { data: userList } = await supabaseAdmin.auth.admin.listUsers();
+        const existingAuthUser = userList?.users?.find(u => u.email === authEmail);
+        
+        if (existingAuthUser) {
+          // Update the password
+          await supabaseAdmin.auth.admin.updateUserById(existingAuthUser.id, {
+            password: authPassword,
+          });
+          
+          // Try signing in again
+          const { data: retrySignIn, error: retryError } = await supabaseAdmin.auth.signInWithPassword({
+            email: authEmail,
+            password: authPassword,
+          });
+          
+          if (retryError) {
+            console.error("Retry sign in failed:", retryError);
+            return new Response(
+              JSON.stringify({ error: "Authenticatie mislukt" }),
+              { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+          session = retrySignIn.session;
+        }
+      } else {
+        // Sign in with newly created user
+        const { data: newSignIn } = await supabaseAdmin.auth.signInWithPassword({
+          email: authEmail,
+          password: authPassword,
+        });
+        session = newSignIn?.session;
+      }
+    } else {
+      session = signInData.session;
+    }
+
+    // Check if auth user id matches the users table id, if not update it
+    if (session?.user?.id && session.user.id !== user.id) {
+      console.log(`Auth user ID mismatch: ${session.user.id} vs ${user.id}, recreating...`);
+      
+      // Delete old auth user and create new one with correct ID
+      await supabaseAdmin.auth.admin.deleteUser(session.user.id);
+      
+      const { error: createError } = await supabaseAdmin.auth.admin.createUser({
+        id: user.id,
+        email: authEmail,
+        password: authPassword,
+        user_metadata: { user_id: user.id },
+        email_confirm: true,
+      });
+      
+      if (!createError) {
+        const { data: finalSignIn } = await supabaseAdmin.auth.signInWithPassword({
+          email: authEmail,
+          password: authPassword,
+        });
+        session = finalSignIn?.session;
+      }
+    }
+
+    // Return user data and session
     const { pincode: _removed, ...safeUser } = user;
 
-    console.log(`User ${user.username} logged in successfully`);
+    console.log(`User ${user.username} logged in successfully with auth session`);
 
     return new Response(
-      JSON.stringify({ user: safeUser }),
+      JSON.stringify({ 
+        user: safeUser,
+        session: session ? {
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
+          expires_at: session.expires_at,
+        } : null,
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 

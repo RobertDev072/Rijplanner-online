@@ -34,22 +34,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('rijplanner_user');
-    if (savedUser) {
-      try {
-        const user = JSON.parse(savedUser);
-        setState({
-          user,
-          isAuthenticated: true,
-          isLoading: false,
-        });
-      } catch {
-        localStorage.removeItem('rijplanner_user');
-        setState(prev => ({ ...prev, isLoading: false }));
+    const initAuth = async () => {
+      // Check for existing Supabase session first
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        // We have a valid session, try to get user data from localStorage
+        const savedUser = localStorage.getItem('rijplanner_user');
+        if (savedUser) {
+          try {
+            const user = JSON.parse(savedUser);
+            setState({
+              user,
+              isAuthenticated: true,
+              isLoading: false,
+            });
+            return;
+          } catch {
+            // Invalid saved user, clear it
+            localStorage.removeItem('rijplanner_user');
+          }
+        }
       }
-    } else {
+      
+      // No valid session or user data
+      localStorage.removeItem('rijplanner_user');
       setState(prev => ({ ...prev, isLoading: false }));
-    }
+    };
+
+    initAuth();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        localStorage.removeItem('rijplanner_user');
+        setState({ user: null, isAuthenticated: false, isLoading: false });
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const refreshUser = useCallback(async () => {
@@ -89,6 +112,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return false;
       }
 
+      // Set the Supabase session if we got one
+      if (result.session) {
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: result.session.access_token,
+          refresh_token: result.session.refresh_token,
+        });
+        
+        if (sessionError) {
+          console.error('Failed to set session:', sessionError);
+          return false;
+        }
+      }
+
       const user = mapUser(result.user);
       localStorage.setItem('rijplanner_user', JSON.stringify(user));
       setState({ user, isAuthenticated: true, isLoading: false });
@@ -99,7 +135,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     localStorage.removeItem('rijplanner_user');
     setState({ user: null, isAuthenticated: false, isLoading: false });
   };
