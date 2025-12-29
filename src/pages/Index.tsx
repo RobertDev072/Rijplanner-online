@@ -18,11 +18,15 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 
-// Import mockup images
-import mockupDashboard from '@/assets/mockup-dashboard.png';
-import mockupAgenda from '@/assets/mockup-agenda.png';
-import mockupProfile from '@/assets/mockup-profile.png';
-import mockupStudents from '@/assets/mockup-students.png';
+// Import real app screenshots
+import screenshotDashboard from '@/assets/screenshot-dashboard.png';
+import screenshotAgenda from '@/assets/screenshot-agenda.png';
+import screenshotInplannen from '@/assets/screenshot-inplannen.png';
+import screenshotLesdetails from '@/assets/screenshot-lesdetails.png';
+import screenshotLeerlingen from '@/assets/screenshot-leerlingen.png';
+import screenshotProfiel from '@/assets/screenshot-profiel.png';
+import screenshotMenu from '@/assets/screenshot-menu.png';
+
 // Animated background with floating elements
 const AnimatedBackground = () => (
   <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -353,52 +357,100 @@ const Index = () => {
             </p>
           </motion.div>
 
-          {/* Screenshot Gallery */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {[
-              { img: mockupDashboard, title: 'Dashboard', desc: 'Overzicht van alle lessen' },
-              { img: mockupAgenda, title: 'Agenda', desc: 'Weekplanning in één oogopslag' },
-              { img: mockupProfile, title: 'Profiel', desc: 'Leerling voortgang bijhouden' },
-              { img: mockupStudents, title: 'Leerlingen', desc: 'Beheer al je leerlingen' },
-            ].map((screen, i) => (
-              <motion.div
-                key={i}
-                className="group relative"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <div className="relative bg-gradient-to-b from-muted/50 to-muted/20 rounded-2xl md:rounded-3xl p-2 md:p-3 shadow-lg border border-border/50 overflow-hidden group-hover:shadow-xl group-hover:border-primary/30 transition-all duration-300">
-                  {/* Phone frame effect */}
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 md:w-16 h-1 md:h-1.5 bg-border/50 rounded-full mt-1" />
-                  
-                  <div className="relative rounded-xl md:rounded-2xl overflow-hidden mt-2">
-                    <motion.img
-                      src={screen.img}
-                      alt={screen.title}
-                      className="w-full h-auto object-cover"
-                      whileHover={{ scale: 1.02 }}
-                      transition={{ duration: 0.3 }}
-                    />
+          {/* Screenshot Gallery - Horizontal scrollable on mobile */}
+          <div className="overflow-x-auto pb-4 -mx-6 px-6 md:mx-0 md:px-0 md:overflow-visible">
+            <div className="flex md:grid md:grid-cols-4 gap-4 md:gap-6 min-w-max md:min-w-0">
+              {[
+                { img: screenshotDashboard, title: 'Dashboard', desc: 'Overzicht van alle lessen' },
+                { img: screenshotAgenda, title: 'Agenda', desc: 'Weekplanning in één oogopslag' },
+                { img: screenshotLeerlingen, title: 'Leerlingen', desc: 'Beheer al je leerlingen' },
+                { img: screenshotProfiel, title: 'Profiel', desc: 'Je account beheren' },
+              ].map((screen, i) => (
+                <motion.div
+                  key={i}
+                  className="group relative w-48 md:w-auto flex-shrink-0"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  <div className="relative bg-gradient-to-b from-muted/50 to-muted/20 rounded-2xl md:rounded-3xl p-2 md:p-3 shadow-lg border border-border/50 overflow-hidden group-hover:shadow-xl group-hover:border-primary/30 transition-all duration-300">
+                    {/* Phone notch */}
+                    <div className="absolute top-1 left-1/2 -translate-x-1/2 w-12 md:w-16 h-1 md:h-1.5 bg-border/50 rounded-full" />
                     
-                    {/* Hover overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
-                      <div className="p-3 md:p-4 text-primary-foreground">
-                        <p className="font-semibold text-sm md:text-base">{screen.title}</p>
-                        <p className="text-[10px] md:text-xs opacity-90">{screen.desc}</p>
+                    <div className="relative rounded-xl md:rounded-2xl overflow-hidden mt-2">
+                      <motion.img
+                        src={screen.img}
+                        alt={screen.title}
+                        className="w-full h-auto object-cover"
+                        whileHover={{ scale: 1.02 }}
+                        transition={{ duration: 0.3 }}
+                      />
+                      
+                      {/* Hover overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+                        <div className="p-3 md:p-4 text-primary-foreground">
+                          <p className="font-semibold text-sm md:text-base">{screen.title}</p>
+                          <p className="text-[10px] md:text-xs opacity-90">{screen.desc}</p>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-                
-                {/* Title below on mobile */}
-                <div className="mt-2 md:mt-3 text-center">
-                  <p className="font-medium text-foreground text-sm">{screen.title}</p>
-                  <p className="text-muted-foreground text-xs hidden md:block">{screen.desc}</p>
-                </div>
-              </motion.div>
-            ))}
+                  
+                  {/* Title below */}
+                  <div className="mt-2 md:mt-3 text-center">
+                    <p className="font-medium text-foreground text-sm">{screen.title}</p>
+                    <p className="text-muted-foreground text-xs hidden md:block">{screen.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Second row with more screens */}
+          <div className="overflow-x-auto pb-4 -mx-6 px-6 md:mx-0 md:px-0 md:overflow-visible mt-6">
+            <div className="flex md:grid md:grid-cols-3 gap-4 md:gap-6 min-w-max md:min-w-0 justify-center">
+              {[
+                { img: screenshotInplannen, title: 'Les Inplannen', desc: 'Selecteer leerling' },
+                { img: screenshotLesdetails, title: 'Les Details', desc: 'Datum, tijd en voertuig' },
+                { img: screenshotMenu, title: 'Navigatie', desc: 'Alle functies bereikbaar' },
+              ].map((screen, i) => (
+                <motion.div
+                  key={i}
+                  className="group relative w-48 md:w-auto flex-shrink-0"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.4 + i * 0.1 }}
+                >
+                  <div className="relative bg-gradient-to-b from-muted/50 to-muted/20 rounded-2xl md:rounded-3xl p-2 md:p-3 shadow-lg border border-border/50 overflow-hidden group-hover:shadow-xl group-hover:border-primary/30 transition-all duration-300">
+                    <div className="absolute top-1 left-1/2 -translate-x-1/2 w-12 md:w-16 h-1 md:h-1.5 bg-border/50 rounded-full" />
+                    
+                    <div className="relative rounded-xl md:rounded-2xl overflow-hidden mt-2">
+                      <motion.img
+                        src={screen.img}
+                        alt={screen.title}
+                        className="w-full h-auto object-cover"
+                        whileHover={{ scale: 1.02 }}
+                        transition={{ duration: 0.3 }}
+                      />
+                      
+                      <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+                        <div className="p-3 md:p-4 text-primary-foreground">
+                          <p className="font-semibold text-sm md:text-base">{screen.title}</p>
+                          <p className="text-[10px] md:text-xs opacity-90">{screen.desc}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-2 md:mt-3 text-center">
+                    <p className="font-medium text-foreground text-sm">{screen.title}</p>
+                    <p className="text-muted-foreground text-xs hidden md:block">{screen.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
 
           {/* Additional info */}
