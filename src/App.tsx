@@ -38,6 +38,7 @@ const Vehicles = lazy(() => import("./pages/Vehicles"));
 const Feedback = lazy(() => import("./pages/Feedback"));
 const Credits = lazy(() => import("./pages/Credits"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const MarketingGallery = lazy(() => import("./pages/MarketingGallery"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -179,6 +180,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <Credits />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/marketing"
+          element={
+            <ProtectedRoute>
+              <MarketingGallery />
             </ProtectedRoute>
           }
         />

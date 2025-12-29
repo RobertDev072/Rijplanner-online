@@ -260,6 +260,20 @@ export default function Tenants() {
           </div>
         )}
 
+        {/* Marketing Gallery Button */}
+        <Button
+          onClick={() => navigate('/marketing')}
+          variant="outline"
+          className="w-full h-14 text-base gap-3 border-primary/30 hover:bg-primary/5 transition-all duration-300"
+          size="lg"
+        >
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-primary" />
+          </div>
+          Marketing Gallery & Demo
+          <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground" />
+        </Button>
+
         {/* Add Button */}
         <Button
           onClick={() => setShowAddForm(!showAddForm)}
