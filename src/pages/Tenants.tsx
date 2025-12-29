@@ -68,6 +68,9 @@ export default function Tenants() {
   const [resetPincodeUser, setResetPincodeUser] = useState<{ id: string; name: string } | null>(null);
   const [newPincode, setNewPincode] = useState('');
   const [isResetting, setIsResetting] = useState(false);
+  const [deleteTenant, setDeleteTenant] = useState<{ id: string; name: string } | null>(null);
+  const [deleteConfirmName, setDeleteConfirmName] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (user?.role !== 'superadmin') {
@@ -184,24 +187,56 @@ export default function Tenants() {
     }
   };
 
-  const handleDeleteTenant = async (tenantId: string, tenantName: string) => {
-    if (!confirm(`Weet je zeker dat je "${tenantName}" wilt verwijderen? Alle gebruikers en lessen worden ook verwijderd.`)) {
+  const handleDeleteTenant = async () => {
+    if (!deleteTenant || deleteConfirmName !== deleteTenant.name) {
+      toast.error('Typ de exacte naam om te bevestigen');
       return;
     }
 
+    setIsDeleting(true);
     try {
-      const { error } = await supabase
-        .from('tenants')
-        .delete()
-        .eq('id', tenantId);
+      // First delete all related data in order (respecting foreign keys)
+      // 1. Delete lesson feedback
+      await supabase.from('lesson_feedback').delete().eq('tenant_id', deleteTenant.id);
+      
+      // 2. Delete lesson progress
+      await supabase.from('lesson_progress').delete().eq('tenant_id', deleteTenant.id);
+      
+      // 3. Delete lessons
+      await supabase.from('lessons').delete().eq('tenant_id', deleteTenant.id);
+      
+      // 4. Delete lesson credits
+      await supabase.from('lesson_credits').delete().eq('tenant_id', deleteTenant.id);
+      
+      // 5. Delete push subscriptions
+      await supabase.from('push_subscriptions').delete().eq('tenant_id', deleteTenant.id);
+      
+      // 6. Delete vehicles
+      await supabase.from('vehicles').delete().eq('tenant_id', deleteTenant.id);
+      
+      // 7. Delete feature flags
+      await supabase.from('feature_flags').delete().eq('tenant_id', deleteTenant.id);
+      
+      // 8. Delete audit logs
+      await supabase.from('audit_logs').delete().eq('tenant_id', deleteTenant.id);
+      
+      // 9. Delete users
+      await supabase.from('users').delete().eq('tenant_id', deleteTenant.id);
+      
+      // 10. Finally delete the tenant
+      const { error } = await supabase.from('tenants').delete().eq('id', deleteTenant.id);
 
       if (error) throw error;
 
-      toast.success(`Rijschool "${tenantName}" verwijderd`);
+      toast.success(`Rijschool "${deleteTenant.name}" en alle data verwijderd`);
+      setDeleteTenant(null);
+      setDeleteConfirmName('');
       fetchTenants();
     } catch (error) {
       console.error('Error deleting tenant:', error);
       toast.error('Fout bij verwijderen rijschool');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -284,6 +319,63 @@ export default function Tenants() {
                 disabled={newPincode.length !== 4 || isResetting}
               >
                 {isResetting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Opslaan'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Delete Tenant Dialog */}
+        <AlertDialog open={!!deleteTenant} onOpenChange={() => { setDeleteTenant(null); setDeleteConfirmName(''); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-destructive flex items-center gap-2">
+                <Trash2 className="w-5 h-5" />
+                Rijschool verwijderen
+              </AlertDialogTitle>
+              <AlertDialogDescription className="space-y-3">
+                <p>
+                  Je staat op het punt om <strong className="text-foreground">"{deleteTenant?.name}"</strong> permanent te verwijderen.
+                </p>
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-sm">
+                  <p className="font-semibold text-destructive mb-2">Dit verwijdert ook:</p>
+                  <ul className="text-muted-foreground space-y-1 list-disc list-inside">
+                    <li>Alle gebruikers (admins, instructeurs, leerlingen)</li>
+                    <li>Alle lessen en lesvoortgang</li>
+                    <li>Alle voertuigen</li>
+                    <li>Alle feedback en credits</li>
+                  </ul>
+                </div>
+                <p className="text-sm">
+                  Typ <strong className="font-mono bg-muted px-1 rounded">{deleteTenant?.name}</strong> om te bevestigen:
+                </p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="py-2">
+              <Input
+                placeholder="Typ de naam van de rijschool"
+                value={deleteConfirmName}
+                onChange={(e) => setDeleteConfirmName(e.target.value)}
+                className="font-mono"
+              />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setDeleteConfirmName('')}>Annuleren</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteTenant}
+                disabled={deleteConfirmName !== deleteTenant?.name || isDeleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    Verwijderen...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Permanent verwijderen
+                  </>
+                )}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -494,7 +586,7 @@ export default function Tenants() {
                         size="icon"
                         variant="ghost"
                         className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl"
-                        onClick={() => handleDeleteTenant(tenant.id, tenant.name)}
+                        onClick={() => setDeleteTenant({ id: tenant.id, name: tenant.name })}
                       >
                         <Trash2 className="w-5 h-5" />
                       </Button>
