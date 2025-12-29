@@ -6,7 +6,7 @@
  * PROPRIETARY SOFTWARE - Niet kopiëren of distribueren zonder toestemming.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -191,6 +191,23 @@ const Index = () => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuth();
   const [showContent, setShowContent] = useState(false);
+  const [activeHeroImage, setActiveHeroImage] = useState(0);
+
+  const heroImages = [
+    { src: heroLogin, label: 'Inloggen' },
+    { src: heroDashboard, label: 'Dashboard' },
+  ];
+
+  // Auto-switch hero images
+  useEffect(() => {
+    if (!showContent) return;
+    
+    const interval = setInterval(() => {
+      setActiveHeroImage((prev) => (prev + 1) % heroImages.length);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [showContent, heroImages.length]);
 
   useEffect(() => {
     if (!isLoading) {
@@ -369,7 +386,7 @@ const Index = () => {
             </div>
           </motion.div>
 
-          {/* Right - Hero image */}
+          {/* Right - Hero image carousel */}
           <motion.div
             className="relative"
             initial={{ opacity: 0, x: 50 }}
@@ -380,11 +397,43 @@ const Index = () => {
               {/* Glow effect behind image */}
               <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/20 rounded-3xl blur-3xl scale-95" />
               
-              <img
-                src={heroLogin}
-                alt="RijPlanner App"
-                className="relative z-10 w-full h-auto rounded-2xl"
-              />
+              {/* Image container with crossfade */}
+              <div className="relative z-10 overflow-hidden rounded-2xl">
+                {heroImages.map((image, index) => (
+                  <motion.img
+                    key={index}
+                    src={image.src}
+                    alt={`RijPlanner ${image.label}`}
+                    className={`w-full h-auto ${index === 0 ? '' : 'absolute inset-0'}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ 
+                      opacity: activeHeroImage === index ? 1 : 0,
+                      scale: activeHeroImage === index ? 1 : 1.05,
+                    }}
+                    transition={{ duration: 0.8, ease: 'easeInOut' }}
+                  />
+                ))}
+              </div>
+
+              {/* Image indicator dots */}
+              <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+                {heroImages.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setActiveHeroImage(index)}
+                    className={`group flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-300 ${
+                      activeHeroImage === index 
+                        ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30' 
+                        : 'bg-muted/80 text-muted-foreground hover:bg-muted'
+                    }`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full transition-all ${
+                      activeHeroImage === index ? 'bg-primary-foreground' : 'bg-current'
+                    }`} />
+                    <span className="text-xs font-medium">{image.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </motion.div>
         </div>
