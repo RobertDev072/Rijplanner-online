@@ -462,6 +462,20 @@
     }
   }
 
+  /* Landing page float animation */
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0) rotate(0deg);
+    }
+    50% {
+      transform: translateY(-12px) rotate(3deg);
+    }
+  }
+
+  .animate-float {
+    animation: float 4s ease-in-out infinite;
+  }
+
   /* Swipe page indicator */
   .swipe-indicator {
     @apply fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-3 py-1.5 bg-card/90 backdrop-blur-lg rounded-full border border-border/40 shadow-soft;
