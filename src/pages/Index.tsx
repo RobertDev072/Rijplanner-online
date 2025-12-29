@@ -266,14 +266,9 @@ const Index = () => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuth();
   const [showContent, setShowContent] = useState(false);
-  const heroRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: heroRef,
-    offset: ["start start", "end start"]
-  });
-  
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
-  const heroY = useTransform(scrollYProgress, [0, 0.5], [0, 100]);
+  const { scrollY } = useScroll();
+  const heroOpacity = useTransform(scrollY, [0, 400], [1, 0]);
+  const heroY = useTransform(scrollY, [0, 400], [0, 100]);
 
   useEffect(() => {
     if (!isLoading) {
@@ -402,7 +397,6 @@ const Index = () => {
 
       {/* Hero Section */}
       <motion.section 
-        ref={heroRef}
         className="relative z-10 min-h-[90vh] flex flex-col justify-center"
         style={{ opacity: heroOpacity, y: heroY }}
       >
