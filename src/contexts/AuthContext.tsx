@@ -70,20 +70,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (username: string, pincode: string): Promise<boolean> => {
     try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .ilike('username', username)
-        .eq('pincode', pincode)
-        .maybeSingle();
+      // Use edge function to bypass RLS for login
+      const response = await fetch(
+        'https://mlbeciqslbemjrezgclq.supabase.co/functions/v1/secure-login',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username, pincode }),
+        }
+      );
 
-      if (error || !data) return false;
+      const result = await response.json();
 
-      const user = mapUser(data);
+      if (!response.ok || !result.user) {
+        console.error('Login failed:', result.error);
+        return false;
+      }
+
+      const user = mapUser(result.user);
       localStorage.setItem('rijplanner_user', JSON.stringify(user));
       setState({ user, isAuthenticated: true, isLoading: false });
       return true;
-    } catch {
+    } catch (error) {
+      console.error('Login error:', error);
       return false;
     }
   };
