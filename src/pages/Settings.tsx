@@ -22,6 +22,9 @@ import {
 } from 'lucide-react';
 import { exportLessonsToCSV, exportCreditsToCSV, exportFullReportToCSV } from '@/utils/csvExport';
 
+// App version - update this with each release
+export const APP_VERSION = '3.0.0';
+
 export default function Settings() {
   const { user } = useAuth();
   const { lessons, credits, users } = useData();
@@ -374,6 +377,15 @@ export default function Settings() {
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
             <span>Updates worden ook automatisch gecontroleerd</span>
+          </div>
+          
+          <div className="pt-2 border-t border-border">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Huidige versie</span>
+              <span className="font-mono font-medium text-foreground bg-muted px-2 py-0.5 rounded">
+                v{APP_VERSION}
+              </span>
+            </div>
           </div>
         </div>
       </div>
