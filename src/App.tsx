@@ -7,7 +7,6 @@
  */
 
 import { useState, useEffect, lazy, Suspense } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,6 +19,7 @@ import { SplashScreen } from "@/components/SplashScreen";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { SwipeablePages } from "@/components/SwipeablePages";
+import { UpdatePrompt } from "@/components/UpdatePrompt";
 
 
 // Lazy load pages for better performance
@@ -214,6 +214,7 @@ function AppWithSplash() {
   return (
     <div className="w-full h-full animate-fade-in">
       <OfflineIndicator />
+      <UpdatePrompt />
       <Toaster />
       <Sonner />
       <BrowserRouter>
