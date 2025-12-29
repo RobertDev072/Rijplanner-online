@@ -239,7 +239,12 @@ END:VCALENDAR`;
                 <MessageCircle className="w-4 h-4" />
               </button>
             ) : (
-              <span className="ml-auto text-[10px] text-muted-foreground italic">Geen nr.</span>
+              <span 
+                className="ml-auto text-[10px] text-muted-foreground italic cursor-help"
+                title="Instructeur heeft nog geen telefoonnummer ingesteld"
+              >
+                Geen tel.
+              </span>
             )
           )}
         </div>

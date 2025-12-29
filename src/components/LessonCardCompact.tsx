@@ -124,7 +124,12 @@ export function LessonCardCompact({ lesson, showActions = false, onStatusChange 
               <MessageCircle className="w-4 h-4" />
             </button>
           ) : (
-            <span className="text-[10px] text-muted-foreground italic shrink-0 pr-1">Geen nr.</span>
+            <span 
+              className="text-[10px] text-muted-foreground italic shrink-0 pr-1 cursor-help"
+              title="Instructeur heeft nog geen telefoonnummer ingesteld"
+            >
+              Geen tel.
+            </span>
           )
         )}
 
