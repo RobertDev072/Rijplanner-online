@@ -8,7 +8,8 @@ import { CreditsBadge } from '@/components/CreditsBadge';
 import { InstallPWA } from '@/components/InstallPWA';
 import { UpdatePrompt } from '@/components/UpdatePrompt';
 import { PageSkeleton } from '@/components/PageSkeleton';
-import { Users, GraduationCap, Calendar, Clock, Building2, Sparkles, ArrowRight } from 'lucide-react';
+import { InstructorTodayLessons } from '@/components/InstructorTodayLessons';
+import { Users, GraduationCap, Calendar, Clock, Building2, Sparkles, ArrowRight, CalendarDays } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
@@ -147,6 +148,11 @@ export default function Dashboard() {
     .filter(l => l.date >= today && l.status !== 'cancelled')
     .sort((a, b) => a.date.localeCompare(b.date) || a.start_time.localeCompare(b.start_time));
   const pendingLessons = lessons.filter(l => l.status === 'pending');
+  
+  // Today's lessons for instructor
+  const todayLessons = lessons
+    .filter(l => l.date === today && l.status !== 'cancelled')
+    .sort((a, b) => a.start_time.localeCompare(b.start_time));
 
   return (
     <MobileLayout showLogo>
@@ -176,6 +182,27 @@ export default function Dashboard() {
       >
         <InstallPWA />
       </motion.div>
+
+      {/* Instructor Today's Lessons */}
+      {user.role === 'instructor' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="mb-6"
+        >
+          <h3 className="section-title mb-3">
+            <CalendarDays className="w-4 h-4 text-primary" />
+            Lessen vandaag
+            {todayLessons.length > 0 && (
+              <span className="ml-auto text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
+                {todayLessons.length} {todayLessons.length === 1 ? 'les' : 'lessen'}
+              </span>
+            )}
+          </h3>
+          <InstructorTodayLessons lessons={todayLessons} />
+        </motion.div>
+      )}
 
       {/* Admin Stats */}
       {user.role === 'admin' && (
