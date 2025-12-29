@@ -226,17 +226,21 @@ END:VCALENDAR`;
               : (student?.name || 'Leerling')}
           </span>
           {/* WhatsApp button for students to contact instructor */}
-          {user?.role === 'student' && instructor?.phone && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                openWhatsAppInstructor();
-              }}
-              className="ml-auto p-1.5 rounded-full bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#25D366] transition-colors"
-              title="WhatsApp instructeur"
-            >
-              <MessageCircle className="w-4 h-4" />
-            </button>
+          {user?.role === 'student' && (
+            instructor?.phone ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openWhatsAppInstructor();
+                }}
+                className="ml-auto p-1.5 rounded-full bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#25D366] transition-colors"
+                title="WhatsApp instructeur"
+              >
+                <MessageCircle className="w-4 h-4" />
+              </button>
+            ) : (
+              <span className="ml-auto text-[10px] text-muted-foreground italic">Geen nr.</span>
+            )
           )}
         </div>
       </div>

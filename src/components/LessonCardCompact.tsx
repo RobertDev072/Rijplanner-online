@@ -111,17 +111,21 @@ export function LessonCardCompact({ lesson, showActions = false, onStatusChange 
         </div>
 
         {/* WhatsApp button for students to contact instructor */}
-        {user?.role === 'student' && instructor?.phone && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              openWhatsApp(instructor.phone!, instructor.name || 'Instructeur');
-            }}
-            className="p-2 rounded-full bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#25D366] transition-colors shrink-0"
-            title="WhatsApp instructeur"
-          >
-            <MessageCircle className="w-4 h-4" />
-          </button>
+        {user?.role === 'student' && (
+          instructor?.phone ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                openWhatsApp(instructor.phone!, instructor.name || 'Instructeur');
+              }}
+              className="p-2 rounded-full bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#25D366] transition-colors shrink-0"
+              title="WhatsApp instructeur"
+            >
+              <MessageCircle className="w-4 h-4" />
+            </button>
+          ) : (
+            <span className="text-[10px] text-muted-foreground italic shrink-0 pr-1">Geen nr.</span>
+          )
         )}
 
         {/* Actions for pending lessons OR arrow for details */}
