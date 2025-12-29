@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Car, Menu, X, MessageCircle, User, LogOut, Settings, Home, Calendar, Users, BookOpen, FileText, Coins, HelpCircle, Bug } from 'lucide-react';
+import { Car, Menu, X, MessageCircle, User, LogOut, Settings, Home, Calendar, Users, BookOpen, FileText, Coins, HelpCircle, Bug, RefreshCw, Download } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { BugReportDialog } from '@/components/BugReportDialog';
 import { HelpDialog } from '@/components/HelpDialog';
+import { toast } from 'sonner';
+import { APP_VERSION } from '@/config/appVersion';
 
 interface HeaderProps {
   title?: string;
@@ -15,6 +17,8 @@ export function Header({ title, showLogo = false }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showBugReport, setShowBugReport] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
   const { user, logout } = useAuth();
   const { theme } = useTheme();
   const navigate = useNavigate();
@@ -61,6 +65,58 @@ export function Header({ title, showLogo = false }: HeaderProps) {
   const handleOpenHelp = () => {
     setIsMenuOpen(false);
     setTimeout(() => setShowHelp(true), 150);
+  };
+
+  const handleCheckForUpdates = async () => {
+    if (!('serviceWorker' in navigator)) {
+      toast.error('Updates niet beschikbaar');
+      return;
+    }
+
+    setIsCheckingUpdate(true);
+
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      await registration.update();
+
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      if (registration.waiting) {
+        setUpdateAvailable(true);
+        toast.success('Nieuwe versie beschikbaar!');
+      } else {
+        toast.success('Je hebt de nieuwste versie!');
+      }
+    } catch (error) {
+      console.error('Update check failed:', error);
+      toast.error('Kon niet controleren op updates');
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  };
+
+  const handleApplyUpdate = async () => {
+    setIsCheckingUpdate(true);
+    setIsMenuOpen(false);
+
+    try {
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map((name) => caches.delete(name)));
+      }
+
+      const registration = await navigator.serviceWorker.ready;
+      if (registration.waiting) {
+        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } catch (error) {
+      console.error('Update failed:', error);
+      window.location.reload();
+    }
   };
 
   const handleLogout = () => {
@@ -188,6 +244,35 @@ export function Header({ title, showLogo = false }: HeaderProps) {
                 <span className="font-medium">Bug Melden</span>
               </button>
 
+              {/* Updates */}
+              {updateAvailable ? (
+                <button
+                  onClick={handleApplyUpdate}
+                  disabled={isCheckingUpdate}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-colors mt-2"
+                >
+                  {isCheckingUpdate ? (
+                    <RefreshCw className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Download className="w-5 h-5" />
+                  )}
+                  <span className="font-medium">Nu bijwerken</span>
+                </button>
+              ) : (
+                <button
+                  onClick={handleCheckForUpdates}
+                  disabled={isCheckingUpdate}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-foreground hover:bg-muted transition-colors active:scale-[0.98] mt-2"
+                >
+                  {isCheckingUpdate ? (
+                    <RefreshCw className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-5 h-5" />
+                  )}
+                  <span className="font-medium">{isCheckingUpdate ? 'Controleren...' : 'Controleer updates'}</span>
+                </button>
+              )}
+
               {/* WhatsApp Support - voor leerlingen en instructeurs */}
               {(user?.role === 'student' || user?.role === 'instructor') && (
                 theme?.whatsapp_number ? (
@@ -209,6 +294,10 @@ export function Header({ title, showLogo = false }: HeaderProps) {
 
             {/* Logout Section */}
             <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border/50 bg-background safe-area-bottom">
+              <div className="flex items-center justify-between mb-2 px-2">
+                <span className="text-xs text-muted-foreground">Versie</span>
+                <span className="text-xs font-mono text-muted-foreground">v{APP_VERSION}</span>
+              </div>
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-destructive hover:bg-destructive/10 transition-colors active:scale-[0.98]"

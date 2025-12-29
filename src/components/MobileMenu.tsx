@@ -15,7 +15,7 @@ import { useData } from "@/contexts/DataContext";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { BugReportDialog } from "@/components/BugReportDialog";
 import { HelpDialog } from "@/components/HelpDialog";
-import { APP_VERSION } from "@/pages/Settings";
+import { APP_VERSION } from "@/config/appVersion";
 import { toast } from "sonner";
 
 export function MobileMenu() {
