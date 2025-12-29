@@ -7,15 +7,19 @@
  */
 
 import React, { useState } from "react";
-import { Menu, X, MessageCircle, User, LogOut, Settings, Home, Calendar, Users, Car, BookOpen, FileText, Coins, Bell } from "lucide-react";
+import { Menu, X, MessageCircle, User, LogOut, Settings, Home, Calendar, Users, Car, BookOpen, FileText, Coins, Bell, Bug, HelpCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
+import { BugReportDialog } from "@/components/BugReportDialog";
+import { HelpDialog } from "@/components/HelpDialog";
 
 export function MobileMenu() {
   const [isOpen, setIsOpen] = useState(false);
+  const [showBugReport, setShowBugReport] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const { user, logout } = useAuth();
   const { theme } = useTheme();
   const { lessons } = useData();
@@ -70,6 +74,16 @@ export function MobileMenu() {
     if (info.offset.x > 100) {
       setIsOpen(false);
     }
+  };
+
+  const handleOpenBugReport = () => {
+    setIsOpen(false);
+    setTimeout(() => setShowBugReport(true), 200);
+  };
+
+  const handleOpenHelp = () => {
+    setIsOpen(false);
+    setTimeout(() => setShowHelp(true), 200);
   };
 
   const menuItems = [
@@ -167,7 +181,7 @@ export function MobileMenu() {
               )}
 
               {/* Menu Items */}
-              <div className="p-3 space-y-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+              <div className="p-3 space-y-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 280px)' }}>
                 {filteredMenuItems.map((item) => (
                   <button
                     key={item.path}
@@ -181,11 +195,32 @@ export function MobileMenu() {
                   </button>
                 ))}
 
+                {/* Divider */}
+                <div className="my-3 border-t border-border/50" />
+
+                {/* Help Button */}
+                <button
+                  onClick={handleOpenHelp}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-foreground hover:bg-muted transition-colors"
+                >
+                  <HelpCircle className="w-5 h-5" />
+                  <span className="font-medium">Hulp & Uitleg</span>
+                </button>
+
+                {/* Bug Report Button */}
+                <button
+                  onClick={handleOpenBugReport}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-foreground hover:bg-muted transition-colors"
+                >
+                  <Bug className="w-5 h-5" />
+                  <span className="font-medium">Bug Melden</span>
+                </button>
+
                 {/* WhatsApp Support */}
                 {theme.whatsapp_number && user?.role === 'student' && (
                   <button
                     onClick={handleWhatsAppSupport}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 transition-colors mt-4"
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 transition-colors mt-2"
                   >
                     <MessageCircle className="w-5 h-5" />
                     <span className="font-medium">Support via WhatsApp</span>
@@ -210,6 +245,10 @@ export function MobileMenu() {
           </>
         )}
       </AnimatePresence>
+
+      {/* Dialogs */}
+      <BugReportDialog open={showBugReport} onOpenChange={setShowBugReport} />
+      <HelpDialog open={showHelp} onOpenChange={setShowHelp} />
     </>
   );
 }

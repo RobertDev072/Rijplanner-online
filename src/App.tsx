@@ -20,7 +20,7 @@ import { SplashScreen } from "@/components/SplashScreen";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { SwipeablePages } from "@/components/SwipeablePages";
-import { BugReportButton } from "@/components/BugReportButton";
+
 
 // Lazy load pages for better performance
 const Index = lazy(() => import("./pages/Index"));
@@ -222,7 +222,7 @@ function AppWithSplash() {
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <BugReportButton />
+            
             <SwipeablePages>
               <AppRoutes />
             </SwipeablePages>
