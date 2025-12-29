@@ -21,9 +21,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { exportLessonsToCSV, exportCreditsToCSV, exportFullReportToCSV } from '@/utils/csvExport';
-
-// App version - update this with each release
-export const APP_VERSION = '3.0.0';
+import { APP_VERSION } from '@/config/appVersion';
 
 export default function Settings() {
   const { user } = useAuth();
