@@ -7,7 +7,7 @@
  */
 
 import React, { useState } from "react";
-import { Menu, X, MessageCircle, User, LogOut, Settings, Home, Calendar, Users, Car, BookOpen, FileText, Coins, Bell, Bug, HelpCircle } from "lucide-react";
+import { Menu, X, MessageCircle, User, LogOut, Settings, Home, Calendar, Users, Car, BookOpen, FileText, Coins, Bell, Bug, HelpCircle, RefreshCw, Download } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -15,11 +15,15 @@ import { useData } from "@/contexts/DataContext";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { BugReportDialog } from "@/components/BugReportDialog";
 import { HelpDialog } from "@/components/HelpDialog";
+import { APP_VERSION } from "@/pages/Settings";
+import { toast } from "sonner";
 
 export function MobileMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const [showBugReport, setShowBugReport] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
   const { user, logout } = useAuth();
   const { theme } = useTheme();
   const { lessons } = useData();
@@ -84,6 +88,58 @@ export function MobileMenu() {
   const handleOpenHelp = () => {
     setIsOpen(false);
     setTimeout(() => setShowHelp(true), 200);
+  };
+
+  const handleCheckForUpdates = async () => {
+    if (!('serviceWorker' in navigator)) {
+      toast.error('Updates niet beschikbaar');
+      return;
+    }
+
+    setIsCheckingUpdate(true);
+    
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      await registration.update();
+      
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      if (registration.waiting) {
+        setUpdateAvailable(true);
+        toast.success('Nieuwe versie beschikbaar!');
+      } else {
+        toast.success('Je hebt de nieuwste versie!');
+      }
+    } catch (error) {
+      console.error('Update check failed:', error);
+      toast.error('Kon niet controleren op updates');
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  };
+
+  const handleApplyUpdate = async () => {
+    setIsCheckingUpdate(true);
+    setIsOpen(false);
+    
+    try {
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map((name) => caches.delete(name)));
+      }
+
+      const registration = await navigator.serviceWorker.ready;
+      if (registration.waiting) {
+        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } catch (error) {
+      console.error('Update failed:', error);
+      window.location.reload();
+    }
   };
 
   const menuItems = [
@@ -216,6 +272,37 @@ export function MobileMenu() {
                   <span className="font-medium">Bug Melden</span>
                 </button>
 
+                {/* Update Check Button */}
+                {updateAvailable ? (
+                  <button
+                    onClick={handleApplyUpdate}
+                    disabled={isCheckingUpdate}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                  >
+                    {isCheckingUpdate ? (
+                      <RefreshCw className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <Download className="w-5 h-5" />
+                    )}
+                    <span className="font-medium">Nu bijwerken</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleCheckForUpdates}
+                    disabled={isCheckingUpdate}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-foreground hover:bg-muted transition-colors"
+                  >
+                    {isCheckingUpdate ? (
+                      <RefreshCw className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-5 h-5" />
+                    )}
+                    <span className="font-medium">
+                      {isCheckingUpdate ? 'Controleren...' : 'Controleer updates'}
+                    </span>
+                  </button>
+                )}
+
                 {/* WhatsApp Support */}
                 {theme.whatsapp_number && user?.role === 'student' && (
                   <button
@@ -233,6 +320,10 @@ export function MobileMenu() {
 
               {/* Logout Section */}
               <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-border/50 bg-background">
+                <div className="flex items-center justify-between mb-2 px-2">
+                  <span className="text-xs text-muted-foreground">Versie</span>
+                  <span className="text-xs font-mono text-muted-foreground">v{APP_VERSION}</span>
+                </div>
                 <button
                   onClick={handleLogout}
                   className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-destructive hover:bg-destructive/10 transition-colors"
