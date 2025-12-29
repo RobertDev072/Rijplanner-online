@@ -71,6 +71,14 @@ export default function Tenants() {
   const [deleteTenant, setDeleteTenant] = useState<{ id: string; name: string } | null>(null);
   const [deleteConfirmName, setDeleteConfirmName] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchTenants();
+    setIsRefreshing(false);
+    toast.success('Data bijgewerkt');
+  };
 
   useEffect(() => {
     if (user?.role !== 'superadmin') {
@@ -454,17 +462,29 @@ export default function Tenants() {
           </div>
         )}
 
-        {/* Add Button */}
-        <Button
-          onClick={() => setShowAddForm(!showAddForm)}
-          className="w-full h-14 text-base gap-3 shadow-lg hover:shadow-xl transition-all duration-300"
-          size="lg"
-        >
-          <div className="w-8 h-8 rounded-full bg-primary-foreground/20 flex items-center justify-center">
-            <Plus className="w-5 h-5" />
-          </div>
-          Nieuwe rijschool toevoegen
-        </Button>
+        {/* Header with Refresh */}
+        <div className="flex items-center justify-between gap-3">
+          <Button
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="flex-1 h-14 text-base gap-3 shadow-lg hover:shadow-xl transition-all duration-300"
+            size="lg"
+          >
+            <div className="w-8 h-8 rounded-full bg-primary-foreground/20 flex items-center justify-center">
+              <Plus className="w-5 h-5" />
+            </div>
+            Nieuwe rijschool
+          </Button>
+          
+          <Button
+            onClick={handleRefresh}
+            variant="outline"
+            size="lg"
+            className="h-14 w-14 p-0"
+            disabled={isRefreshing || isLoading}
+          >
+            <RefreshCw className={cn("w-5 h-5", isRefreshing && "animate-spin")} />
+          </Button>
+        </div>
 
         {/* Add Form */}
         {showAddForm && (
