@@ -62,7 +62,7 @@ export function LessonCardCompact({ lesson, showActions = false, onStatusChange 
     return credits > 0;
   };
 
-  const openWhatsApp = (phone: string) => {
+  const openWhatsApp = (phone: string, name: string) => {
     // Clean phone number - remove spaces, dashes, etc.
     let cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
     // If it starts with 0, replace with +31 (Netherlands)
@@ -74,7 +74,7 @@ export function LessonCardCompact({ lesson, showActions = false, onStatusChange 
       cleanPhone = '+31' + cleanPhone;
     }
     
-    const message = encodeURIComponent(`Hoi ${student?.name || 'daar'}, betreft je rijles op ${format(new Date(lesson.date), 'd MMMM', { locale: nl })} om ${lesson.start_time.slice(0, 5)}.`);
+    const message = encodeURIComponent(`Hoi ${name.split(' ')[0] || 'daar'}, betreft mijn rijles op ${format(new Date(lesson.date), 'd MMMM', { locale: nl })} om ${lesson.start_time.slice(0, 5)}.`);
     window.open(`https://wa.me/${cleanPhone.replace('+', '')}?text=${message}`, '_blank');
   };
 
@@ -109,6 +109,20 @@ export function LessonCardCompact({ lesson, showActions = false, onStatusChange 
             <p className="text-xs text-muted-foreground truncate">{lesson.remarks}</p>
           )}
         </div>
+
+        {/* WhatsApp button for students to contact instructor */}
+        {user?.role === 'student' && instructor?.phone && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              openWhatsApp(instructor.phone!, instructor.name || 'Instructeur');
+            }}
+            className="p-2 rounded-full bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#25D366] transition-colors shrink-0"
+            title="WhatsApp instructeur"
+          >
+            <MessageCircle className="w-4 h-4" />
+          </button>
+        )}
 
         {/* Actions for pending lessons OR arrow for details */}
         {showActions && lesson.status === 'pending' && user?.role === 'student' ? (
@@ -196,7 +210,7 @@ export function LessonCardCompact({ lesson, showActions = false, onStatusChange 
                     className="h-10 w-10 rounded-full bg-[#25D366] hover:bg-[#128C7E] text-white shrink-0"
                     onClick={(e) => {
                       e.stopPropagation();
-                      openWhatsApp(student.phone!);
+                      openWhatsApp(student.phone!, student.name || 'Leerling');
                     }}
                   >
                     <MessageCircle className="w-5 h-5" />
