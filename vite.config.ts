@@ -16,32 +16,22 @@ export default defineConfig(({ mode }) => ({
     minify: 'esbuild',
     cssMinify: true,
     sourcemap: false,
-    // Faster builds
-    reportCompressedSize: false,
     rollupOptions: {
       output: {
-        // Compact output
-        compact: true,
-        manualChunks(id) {
-          // Core React - smallest possible
-          if (id.includes('react-dom')) return 'react-dom';
-          if (id.includes('node_modules/react/')) return 'react';
-          if (id.includes('react-router')) return 'router';
-          // Supabase separate chunk
-          if (id.includes('@supabase')) return 'supabase';
-          // UI libraries
-          if (id.includes('@radix-ui')) return 'radix';
-          if (id.includes('framer-motion')) return 'motion';
-          // Charts only when needed
-          if (id.includes('recharts') || id.includes('d3-')) return 'charts';
-          // Query client
-          if (id.includes('@tanstack')) return 'query';
-          // Date utilities
-          if (id.includes('date-fns')) return 'dates';
+        manualChunks: {
+          // Vendor chunk for React ecosystem
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          // UI components chunk
+          'ui-vendor': ['framer-motion', '@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tabs'],
+          // Data management chunk
+          'data-vendor': ['@tanstack/react-query', '@supabase/supabase-js'],
+          // Charts chunk (loaded only when needed)
+          'charts': ['recharts'],
         },
       },
     },
-    chunkSizeWarningLimit: 600,
+    // Increase chunk size warning limit
+    chunkSizeWarningLimit: 500,
   },
   // Optimize dependencies
   optimizeDeps: {

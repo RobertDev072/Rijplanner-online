@@ -6,7 +6,7 @@
  * PROPRIETARY SOFTWARE - Niet kopiëren of distribueren zonder toestemming.
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -20,61 +20,51 @@ import {
   Star,
   Smartphone,
   Bell,
-  Lock,
-  MessageCircle,
-  Zap,
+  ChevronLeft,
   ChevronRight
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 
-// Import new hero images
-import heroLogin from '@/assets/landing-hero-login.png';
-import heroDashboard from '@/assets/landing-hero-dashboard.png';
+// Import real app screenshots
+import screenshotDashboard from '@/assets/screenshot-dashboard.png';
+import screenshotAgenda from '@/assets/screenshot-agenda.png';
+import screenshotInplannen from '@/assets/screenshot-inplannen.png';
+import screenshotLesdetails from '@/assets/screenshot-lesdetails.png';
+import screenshotLeerlingen from '@/assets/screenshot-leerlingen.png';
+import screenshotProfiel from '@/assets/screenshot-profiel.png';
+import screenshotMenu from '@/assets/screenshot-menu.png';
 
-// Import app screenshots
-import screenshotInstructorToday from '@/assets/screenshot-instructor-today.png';
-import screenshotLessonDetail from '@/assets/screenshot-lesson-detail.png';
-import screenshotLessonList from '@/assets/screenshot-lesson-list.png';
-import screenshotAdminDashboard from '@/assets/screenshot-admin-dashboard.png';
-import screenshotFeedback from '@/assets/screenshot-feedback.png';
-
-// Animated gradient background
+// Animated background with floating elements
 const AnimatedBackground = () => (
   <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    {/* Base gradient */}
-    <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/50 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
+    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-accent/5" />
     
-    {/* Animated orbs */}
+    {/* Floating circles */}
     <motion.div
-      className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-gradient-to-br from-primary/20 to-primary/5 rounded-full blur-3xl"
+      className="absolute top-20 right-10 w-64 h-64 bg-primary/10 rounded-full blur-3xl"
       animate={{
-        y: [0, -50, 0],
-        x: [0, 30, 0],
+        y: [0, -30, 0],
         scale: [1, 1.1, 1],
       }}
-      transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
+      transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
     />
     <motion.div
-      className="absolute top-1/2 -left-40 w-[400px] h-[400px] bg-gradient-to-br from-accent/20 to-accent/5 rounded-full blur-3xl"
+      className="absolute bottom-40 left-10 w-80 h-80 bg-accent/10 rounded-full blur-3xl"
       animate={{
-        y: [0, 40, 0],
-        x: [0, -20, 0],
+        y: [0, 20, 0],
         scale: [1.1, 1, 1.1],
-      }}
-      transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-    />
-    <motion.div
-      className="absolute bottom-20 right-1/4 w-[300px] h-[300px] bg-gradient-to-br from-success/10 to-success/5 rounded-full blur-3xl"
-      animate={{
-        scale: [1, 1.2, 1],
-        opacity: [0.5, 0.8, 0.5],
       }}
       transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
     />
-    
-    {/* Subtle grid pattern */}
-    <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:60px_60px] dark:bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)]" />
+    <motion.div
+      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary/5 rounded-full blur-3xl"
+      animate={{
+        scale: [1, 1.2, 1],
+        opacity: [0.3, 0.5, 0.3],
+      }}
+      transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+    />
   </div>
 );
 
@@ -83,106 +73,36 @@ const FeatureCard = ({
   icon: Icon, 
   title, 
   description, 
-  delay,
-  gradient
+  delay 
 }: { 
   icon: React.ElementType; 
   title: string; 
   description: string; 
   delay: number;
-  gradient: string;
 }) => (
   <motion.div
-    className="group relative bg-card/60 backdrop-blur-md border border-border/50 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-500 hover:border-primary/40 overflow-hidden"
-    initial={{ opacity: 0, y: 30 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true }}
+    className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all hover:border-primary/30"
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
     transition={{ delay, duration: 0.5 }}
-    whileHover={{ y: -8, scale: 1.02 }}
+    whileHover={{ y: -5 }}
   >
-    {/* Gradient glow on hover */}
-    <div className={`absolute inset-0 ${gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl`} />
-    
-    <div className="relative z-10">
-      <div className={`w-14 h-14 ${gradient} rounded-xl flex items-center justify-center mb-5 shadow-lg`}>
-        <Icon className="w-7 h-7 text-white" />
-      </div>
-      <h3 className="font-bold text-foreground text-lg mb-2">{title}</h3>
-      <p className="text-muted-foreground text-sm leading-relaxed">{description}</p>
+    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
+      <Icon className="w-6 h-6 text-primary" />
     </div>
+    <h3 className="font-semibold text-foreground text-lg mb-2">{title}</h3>
+    <p className="text-muted-foreground text-sm leading-relaxed">{description}</p>
   </motion.div>
 );
 
 // Trust badge component
-const TrustBadge = ({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description: string }) => (
-  <motion.div 
-    className="flex items-center gap-3 bg-card/60 backdrop-blur-sm border border-border/50 rounded-xl px-4 py-3"
-    whileHover={{ scale: 1.05 }}
-    transition={{ type: 'spring', stiffness: 300 }}
-  >
-    <div className="w-10 h-10 bg-success/10 rounded-lg flex items-center justify-center">
-      <Icon className="w-5 h-5 text-success" />
+const TrustBadge = ({ icon: Icon, text }: { icon: React.ElementType; text: string }) => (
+  <div className="flex items-center gap-2 text-muted-foreground">
+    <div className="w-5 h-5 bg-success/10 rounded-full flex items-center justify-center">
+      <Icon className="w-3 h-3 text-success" />
     </div>
-    <div>
-      <p className="font-semibold text-foreground text-sm">{title}</p>
-      <p className="text-muted-foreground text-xs">{description}</p>
-    </div>
-  </motion.div>
-);
-
-// Screenshot card component
-const ScreenshotCard = ({ 
-  image, 
-  title, 
-  description, 
-  delay,
-  badge
-}: { 
-  image: string; 
-  title: string; 
-  description: string; 
-  delay: number;
-  badge?: string;
-}) => (
-  <motion.div
-    className="group relative flex-shrink-0 w-64 md:w-auto"
-    initial={{ opacity: 0, y: 40 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true }}
-    transition={{ delay, duration: 0.6 }}
-  >
-    <div className="relative bg-gradient-to-b from-slate-200 to-slate-100 dark:from-slate-800 dark:to-slate-900 rounded-[2rem] p-2 shadow-2xl border border-border/50 overflow-hidden group-hover:shadow-3xl transition-all duration-500">
-      {/* Phone frame */}
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 w-20 h-6 bg-black/80 rounded-full z-10" />
-      
-      {/* Screen */}
-      <div className="relative rounded-[1.5rem] overflow-hidden bg-background">
-        <motion.img
-          src={image}
-          alt={title}
-          className="w-full h-auto"
-          whileHover={{ scale: 1.03 }}
-          transition={{ duration: 0.4 }}
-        />
-        
-        {/* Shine effect on hover */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-      </div>
-      
-      {/* Badge */}
-      {badge && (
-        <div className="absolute top-6 right-4 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-          {badge}
-        </div>
-      )}
-    </div>
-    
-    {/* Title */}
-    <div className="mt-4 text-center">
-      <p className="font-bold text-foreground">{title}</p>
-      <p className="text-muted-foreground text-sm">{description}</p>
-    </div>
-  </motion.div>
+    <span className="text-sm">{text}</span>
+  </div>
 );
 
 const LANDING_SEEN_KEY = 'rijplanner_landing_seen';
@@ -191,41 +111,28 @@ const Index = () => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuth();
   const [showContent, setShowContent] = useState(false);
-  const [activeHeroImage, setActiveHeroImage] = useState(0);
-
-  const heroImages = [
-    { src: heroLogin, label: 'Inloggen' },
-    { src: heroDashboard, label: 'Dashboard' },
-  ];
-
-  // Auto-switch hero images
-  useEffect(() => {
-    if (!showContent) return;
-    
-    const interval = setInterval(() => {
-      setActiveHeroImage((prev) => (prev + 1) % heroImages.length);
-    }, 4000);
-
-    return () => clearInterval(interval);
-  }, [showContent, heroImages.length]);
 
   useEffect(() => {
     if (!isLoading) {
       if (isAuthenticated) {
+        // Authenticated users always go to dashboard
         localStorage.setItem(LANDING_SEEN_KEY, 'true');
         navigate('/dashboard');
       } else {
+        // Check if user has seen landing before (returning user)
         const hasSeenLanding = localStorage.getItem(LANDING_SEEN_KEY);
         if (hasSeenLanding) {
+          // Skip landing, go directly to login
           navigate('/login');
         } else {
+          // First time visitor, show landing page
           setShowContent(true);
         }
       }
     }
   }, [isAuthenticated, isLoading, navigate]);
 
-  if (isLoading) {
+  if (isLoading || !showContent) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <motion.div
@@ -234,11 +141,9 @@ const Index = () => {
           animate={{ opacity: 1 }}
         >
           <div className="relative">
-            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
-              <Car className="w-8 h-8 text-primary-foreground" />
-            </div>
-            <div className="absolute -top-1 -right-1 w-6 h-6 bg-accent rounded-lg flex items-center justify-center shadow-md">
-              <span className="text-accent-foreground font-black text-xs">L</span>
+            <Car className="w-12 h-12 text-primary" />
+            <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-5 h-5 bg-primary rounded flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-[10px]">L</span>
             </div>
           </div>
           <div className="flex gap-1">
@@ -261,37 +166,31 @@ const Index = () => {
       icon: Calendar,
       title: 'Slimme Planning',
       description: 'Plan rijlessen moeiteloos met onze intuïtieve agenda. Bekijk beschikbaarheid in één oogopslag.',
-      gradient: 'bg-gradient-to-br from-blue-500 to-blue-600',
     },
     {
       icon: Users,
       title: 'Leerlingbeheer',
       description: 'Houd voortgang bij, beheer documenten en communiceer direct met je leerlingen.',
-      gradient: 'bg-gradient-to-br from-purple-500 to-purple-600',
     },
     {
       icon: Smartphone,
       title: 'Mobiele App',
       description: 'Altijd en overal toegang via je smartphone. Werkt op iPhone en Android.',
-      gradient: 'bg-gradient-to-br from-green-500 to-emerald-600',
-    },
-    {
-      icon: MessageCircle,
-      title: 'WhatsApp Integratie',
-      description: 'Stuur direct een WhatsApp naar je leerlingen met één tik.',
-      gradient: 'bg-gradient-to-br from-emerald-500 to-green-600',
     },
     {
       icon: Bell,
       title: 'Notificaties',
       description: 'Automatische herinneringen voor lessen zodat niemand een afspraak vergeet.',
-      gradient: 'bg-gradient-to-br from-amber-500 to-orange-600',
     },
     {
-      icon: Zap,
-      title: 'Snelle Feedback',
-      description: 'Geef direct feedback na elke les met onze snelle beoordelingssysteem.',
-      gradient: 'bg-gradient-to-br from-pink-500 to-rose-600',
+      icon: Shield,
+      title: 'Veilig & Betrouwbaar',
+      description: 'Jouw gegevens zijn veilig. AVG-compliant en gehost in Nederland.',
+    },
+    {
+      icon: Clock,
+      title: 'Tijdbesparing',
+      description: 'Minder administratie, meer tijd voor wat echt telt: lesgeven.',
     },
   ];
 
@@ -300,7 +199,7 @@ const Index = () => {
       <AnimatedBackground />
       
       {/* Header */}
-      <header className="relative z-10 border-b border-border/30 bg-background/60 backdrop-blur-xl sticky top-0">
+      <header className="relative z-10 border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <motion.div 
             className="flex items-center gap-3"
@@ -308,11 +207,11 @@ const Index = () => {
             animate={{ opacity: 1, x: 0 }}
           >
             <div className="relative">
-              <div className="w-11 h-11 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-lg shadow-primary/25">
-                <Car className="w-6 h-6 text-primary-foreground" />
+              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-md">
+                <Car className="w-5 h-5 text-primary-foreground" />
               </div>
-              <div className="absolute -top-1 -right-1 w-5 h-5 bg-accent rounded-lg flex items-center justify-center shadow-md">
-                <span className="text-accent-foreground font-black text-[9px]">L</span>
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-accent rounded flex items-center justify-center">
+                <span className="text-accent-foreground font-black text-[8px]">L</span>
               </div>
             </div>
             <span className="text-xl font-bold text-foreground">
@@ -325,7 +224,7 @@ const Index = () => {
             animate={{ opacity: 1, x: 0 }}
           >
             <Link to="/login">
-              <Button className="rounded-xl shadow-lg shadow-primary/25 font-semibold">
+              <Button className="rounded-xl shadow-sm">
                 Inloggen
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
@@ -335,115 +234,105 @@ const Index = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative z-10 max-w-6xl mx-auto px-6 pt-12 pb-16 md:pt-20 md:pb-24">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Left - Text content */}
+      <section className="relative z-10 max-w-6xl mx-auto px-6 pt-16 pb-20 md:pt-24 md:pb-28">
+        <div className="text-center max-w-3xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
+            {/* Trust badges */}
             <motion.div 
-              className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-6"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
+              className="flex flex-wrap justify-center gap-4 mb-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
             >
-              <Sparkles className="w-4 h-4" />
-              Speciaal voor Nederlandse rijscholen
+              <TrustBadge icon={CheckCircle2} text="Gratis proberen" />
+              <TrustBadge icon={Shield} text="AVG-compliant" />
+              <TrustBadge icon={Star} text="Made in Nederland" />
             </motion.div>
 
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-[1.1] mb-6">
-              Rijlessen{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary to-accent">
-                eenvoudig gepland.
-              </span>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-6">
+              Rijlessen plannen{' '}
+              <span className="text-primary">eenvoudig gemaakt</span>
             </h1>
             
-            <p className="text-lg text-muted-foreground mb-8 leading-relaxed max-w-lg">
-              De complete app voor rijscholen. Plan lessen, beheer leerlingen en bespaar uren tijd per week. Alles in één moderne app.
+            <p className="text-lg md:text-xl text-muted-foreground mb-10 leading-relaxed">
+              De complete oplossing voor rijscholen. Plan lessen, beheer leerlingen en 
+              bespaar tijd met RijPlanner. Speciaal ontwikkeld voor Nederlandse rijscholen.
             </p>
 
             <motion.div 
-              className="flex flex-col sm:flex-row gap-4 mb-10"
+              className="flex flex-col sm:flex-row gap-4 justify-center"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
             >
               <Link to="/login">
-                <Button size="lg" className="rounded-xl shadow-xl shadow-primary/30 text-base px-8 h-14 w-full sm:w-auto font-semibold">
+                <Button size="lg" className="rounded-xl shadow-lg text-base px-8 h-14 w-full sm:w-auto">
                   <Car className="w-5 h-5 mr-2" />
                   Direct Beginnen
-                  <ChevronRight className="w-5 h-5 ml-1" />
                 </Button>
               </Link>
             </motion.div>
-
-            {/* Trust badges */}
-            <div className="flex flex-wrap gap-3">
-              <TrustBadge icon={Shield} title="AVG-compliant" description="Privacy beschermd" />
-              <TrustBadge icon={Lock} title="SSL beveiligd" description="Veilig & versleuteld" />
-            </div>
-          </motion.div>
-
-          {/* Right - Hero image carousel */}
-          <motion.div
-            className="relative"
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-          >
-            <div className="relative">
-              {/* Glow effect behind image */}
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/20 rounded-3xl blur-3xl scale-95" />
-              
-              {/* Image container with crossfade */}
-              <div className="relative z-10 overflow-hidden rounded-2xl">
-                {heroImages.map((image, index) => (
-                  <motion.img
-                    key={index}
-                    src={image.src}
-                    alt={`RijPlanner ${image.label}`}
-                    className={`w-full h-auto ${index === 0 ? '' : 'absolute inset-0'}`}
-                    initial={{ opacity: 0 }}
-                    animate={{ 
-                      opacity: activeHeroImage === index ? 1 : 0,
-                      scale: activeHeroImage === index ? 1 : 1.05,
-                    }}
-                    transition={{ duration: 0.8, ease: 'easeInOut' }}
-                  />
-                ))}
-              </div>
-
-              {/* Image indicator dots */}
-              <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-                {heroImages.map((image, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setActiveHeroImage(index)}
-                    className={`group flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-300 ${
-                      activeHeroImage === index 
-                        ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30' 
-                        : 'bg-muted/80 text-muted-foreground hover:bg-muted'
-                    }`}
-                  >
-                    <span className={`w-1.5 h-1.5 rounded-full transition-all ${
-                      activeHeroImage === index ? 'bg-primary-foreground' : 'bg-current'
-                    }`} />
-                    <span className="text-xs font-medium">{image.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
           </motion.div>
         </div>
+
+        {/* App Preview - Floating cards */}
+        <motion.div
+          className="mt-16 md:mt-20 relative"
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.8 }}
+        >
+          <div className="bg-gradient-to-b from-card to-card/50 border border-border/50 rounded-3xl p-6 md:p-10 shadow-xl max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Sample lesson cards */}
+              {[
+                { time: '09:00', name: 'Jan de Vries', status: 'Bevestigd' },
+                { time: '11:00', name: 'Maria Peters', status: 'In afwachting' },
+                { time: '14:00', name: 'Pieter Jansen', status: 'Bevestigd' },
+              ].map((lesson, i) => (
+                <motion.div
+                  key={i}
+                  className="bg-background border border-border/50 rounded-2xl p-4 shadow-sm"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.8 + i * 0.1 }}
+                  whileHover={{ scale: 1.02 }}
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                      <Users className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground text-sm">{lesson.name}</p>
+                      <p className="text-xs text-muted-foreground">{lesson.time} - Rijles</p>
+                    </div>
+                  </div>
+                  <div className={`text-xs px-2 py-1 rounded-full inline-flex items-center gap-1 ${
+                    lesson.status === 'Bevestigd' 
+                      ? 'bg-success/10 text-success' 
+                      : 'bg-warning/10 text-warning'
+                  }`}>
+                    <div className={`w-1.5 h-1.5 rounded-full ${
+                      lesson.status === 'Bevestigd' ? 'bg-success' : 'bg-warning'
+                    }`} />
+                    {lesson.status}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
       </section>
 
       {/* Features Section */}
       <section className="relative z-10 bg-muted/30 py-20 md:py-28">
         <div className="max-w-6xl mx-auto px-6">
           <motion.div 
-            className="text-center mb-16"
+            className="text-center mb-14"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -463,19 +352,18 @@ const Index = () => {
                 icon={feature.icon}
                 title={feature.title}
                 description={feature.description}
-                gradient={feature.gradient}
-                delay={0.1 + i * 0.08}
+                delay={0.1 + i * 0.1}
               />
             ))}
           </div>
         </div>
       </section>
 
-      {/* App Screenshots Gallery */}
-      <section className="relative z-10 py-20 md:py-28 overflow-hidden">
+      {/* App Screenshots Gallery Section */}
+      <section className="relative z-10 py-20 md:py-28">
         <div className="max-w-6xl mx-auto px-6">
           <motion.div 
-            className="text-center mb-16"
+            className="text-center mb-14"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -484,79 +372,119 @@ const Index = () => {
               Bekijk de app in actie
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Ontdek hoe RijPlanner je dagelijkse werk eenvoudiger maakt.
+              Een blik op de belangrijkste schermen van RijPlanner. Ontdek hoe eenvoudig het is.
             </p>
           </motion.div>
 
-          {/* Screenshots carousel */}
-          <div className="overflow-x-auto pb-6 -mx-6 px-6 md:overflow-visible">
-            <div className="flex md:grid md:grid-cols-3 lg:grid-cols-5 gap-6 min-w-max md:min-w-0">
-              <ScreenshotCard
-                image={screenshotInstructorToday}
-                title="Instructeur Dashboard"
-                description="Lessen van vandaag"
-                delay={0.1}
-                badge="Nieuw"
-              />
-              <ScreenshotCard
-                image={screenshotLessonList}
-                title="Lesoverzicht"
-                description="Compacte weergave"
-                delay={0.2}
-              />
-              <ScreenshotCard
-                image={screenshotLessonDetail}
-                title="Les Details"
-                description="Alle info op één plek"
-                delay={0.3}
-              />
-              <ScreenshotCard
-                image={screenshotAdminDashboard}
-                title="Admin Dashboard"
-                description="Beheer je rijschool"
-                delay={0.4}
-              />
-              <ScreenshotCard
-                image={screenshotFeedback}
-                title="Feedback"
-                description="Lesbeoordelingen"
-                delay={0.5}
-              />
+          {/* Screenshot Gallery - Horizontal scrollable on mobile */}
+          <div className="overflow-x-auto pb-4 -mx-6 px-6 md:mx-0 md:px-0 md:overflow-visible">
+            <div className="flex md:grid md:grid-cols-4 gap-4 md:gap-6 min-w-max md:min-w-0">
+              {[
+                { img: screenshotDashboard, title: 'Dashboard', desc: 'Overzicht van alle lessen' },
+                { img: screenshotAgenda, title: 'Agenda', desc: 'Weekplanning in één oogopslag' },
+                { img: screenshotLeerlingen, title: 'Leerlingen', desc: 'Beheer al je leerlingen' },
+                { img: screenshotProfiel, title: 'Profiel', desc: 'Je account beheren' },
+              ].map((screen, i) => (
+                <motion.div
+                  key={i}
+                  className="group relative w-48 md:w-auto flex-shrink-0"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  <div className="relative bg-gradient-to-b from-muted/50 to-muted/20 rounded-2xl md:rounded-3xl p-2 md:p-3 shadow-lg border border-border/50 overflow-hidden group-hover:shadow-xl group-hover:border-primary/30 transition-all duration-300">
+                    {/* Phone notch */}
+                    <div className="absolute top-1 left-1/2 -translate-x-1/2 w-12 md:w-16 h-1 md:h-1.5 bg-border/50 rounded-full" />
+                    
+                    <div className="relative rounded-xl md:rounded-2xl overflow-hidden mt-2">
+                      <motion.img
+                        src={screen.img}
+                        alt={screen.title}
+                        className="w-full h-auto object-cover"
+                        whileHover={{ scale: 1.02 }}
+                        transition={{ duration: 0.3 }}
+                      />
+                      
+                      {/* Hover overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+                        <div className="p-3 md:p-4 text-primary-foreground">
+                          <p className="font-semibold text-sm md:text-base">{screen.title}</p>
+                          <p className="text-[10px] md:text-xs opacity-90">{screen.desc}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Title below */}
+                  <div className="mt-2 md:mt-3 text-center">
+                    <p className="font-medium text-foreground text-sm">{screen.title}</p>
+                    <p className="text-muted-foreground text-xs hidden md:block">{screen.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Second hero image section */}
-      <section className="relative z-10 bg-gradient-to-b from-muted/30 to-background py-20 md:py-28">
-        <div className="max-w-6xl mx-auto px-6">
+          {/* Second row with more screens */}
+          <div className="overflow-x-auto pb-4 -mx-6 px-6 md:mx-0 md:px-0 md:overflow-visible mt-6">
+            <div className="flex md:grid md:grid-cols-3 gap-4 md:gap-6 min-w-max md:min-w-0 justify-center">
+              {[
+                { img: screenshotInplannen, title: 'Les Inplannen', desc: 'Selecteer leerling' },
+                { img: screenshotLesdetails, title: 'Les Details', desc: 'Datum, tijd en voertuig' },
+                { img: screenshotMenu, title: 'Navigatie', desc: 'Alle functies bereikbaar' },
+              ].map((screen, i) => (
+                <motion.div
+                  key={i}
+                  className="group relative w-48 md:w-auto flex-shrink-0"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.4 + i * 0.1 }}
+                >
+                  <div className="relative bg-gradient-to-b from-muted/50 to-muted/20 rounded-2xl md:rounded-3xl p-2 md:p-3 shadow-lg border border-border/50 overflow-hidden group-hover:shadow-xl group-hover:border-primary/30 transition-all duration-300">
+                    <div className="absolute top-1 left-1/2 -translate-x-1/2 w-12 md:w-16 h-1 md:h-1.5 bg-border/50 rounded-full" />
+                    
+                    <div className="relative rounded-xl md:rounded-2xl overflow-hidden mt-2">
+                      <motion.img
+                        src={screen.img}
+                        alt={screen.title}
+                        className="w-full h-auto object-cover"
+                        whileHover={{ scale: 1.02 }}
+                        transition={{ duration: 0.3 }}
+                      />
+                      
+                      <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+                        <div className="p-3 md:p-4 text-primary-foreground">
+                          <p className="font-semibold text-sm md:text-base">{screen.title}</p>
+                          <p className="text-[10px] md:text-xs opacity-90">{screen.desc}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-2 md:mt-3 text-center">
+                    <p className="font-medium text-foreground text-sm">{screen.title}</p>
+                    <p className="text-muted-foreground text-xs hidden md:block">{screen.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Additional info */}
           <motion.div
-            className="text-center mb-12"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            className="mt-12 text-center"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Ontworpen voor professionals
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Van instructeur tot rijschoolhouder - RijPlanner past zich aan jouw rol aan.
-            </p>
-          </motion.div>
-
-          <motion.div
-            className="relative max-w-4xl mx-auto"
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/10 rounded-3xl blur-3xl scale-95" />
-            <img
-              src={heroDashboard}
-              alt="RijPlanner Dashboard"
-              className="relative z-10 w-full h-auto rounded-2xl shadow-2xl"
-            />
+            <div className="inline-flex items-center gap-2 bg-muted/50 border border-border/50 rounded-full px-4 py-2">
+              <Smartphone className="w-4 h-4 text-primary" />
+              <span className="text-sm text-muted-foreground">
+                Werkt op iPhone, Android en desktop
+              </span>
+            </div>
           </motion.div>
         </div>
       </section>
@@ -569,17 +497,17 @@ const Index = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <div className="bg-gradient-to-br from-primary/10 via-card to-accent/10 border border-border/50 rounded-3xl p-10 md:p-16 shadow-xl">
+            <div className="bg-gradient-to-br from-primary/10 via-card to-accent/10 border border-border/50 rounded-3xl p-10 md:p-16">
               <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
                 Klaar om te beginnen?
               </h2>
               <p className="text-muted-foreground text-lg mb-8 max-w-xl mx-auto">
-                Neem contact op met je rijschool om toegang te krijgen tot RijPlanner.
+                Sluit je aan bij rijscholen die al gebruik maken van RijPlanner. 
+                Start vandaag nog en ervaar het verschil.
               </p>
               <Link to="/login">
-                <Button size="lg" className="rounded-xl shadow-xl shadow-primary/30 text-base px-10 h-14 font-semibold">
-                  <Car className="w-5 h-5 mr-2" />
-                  Naar Inloggen
+                <Button size="lg" className="rounded-xl shadow-lg text-base px-10 h-14">
+                  Inloggen op RijPlanner
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
@@ -589,47 +517,50 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-border/30 bg-muted/20 py-10">
-        <div className="max-w-6xl mx-auto px-6">
+      <footer className="relative z-10 border-t border-border/50 bg-muted/20">
+        <div className="max-w-6xl mx-auto px-6 py-10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            {/* Logo */}
             <div className="flex items-center gap-3">
               <div className="relative">
-                <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                   <Car className="w-4 h-4 text-primary-foreground" />
                 </div>
-                <div className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-accent rounded flex items-center justify-center">
-                  <span className="text-accent-foreground font-black text-[7px]">L</span>
+                <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-accent rounded flex items-center justify-center">
+                  <span className="text-accent-foreground font-black text-[6px]">L</span>
                 </div>
               </div>
-              <span className="font-bold text-foreground">RijPlanner</span>
+              <span className="font-bold text-foreground">
+                Rij<span className="text-primary">Planner</span>
+              </span>
             </div>
-            
-            <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
-              <TrustBadge icon={Shield} title="AVG-compliant" description="Privacy" />
-              <TrustBadge icon={Lock} title="SSL" description="Beveiligd" />
-              <TrustBadge icon={Star} title="Made in NL" description="Nederlands" />
+
+            {/* Trust info */}
+            <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <Shield className="w-4 h-4" />
+                AVG-compliant
+              </span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4" />
+                SSL beveiligd
+              </span>
             </div>
-          </div>
-          
-          <div className="mt-8 pt-6 border-t border-border/30 text-center text-sm text-muted-foreground">
-            <p>© 2026 Robert Rocha / ROBERTDEV.NL - Alle rechten voorbehouden</p>
-            <p className="mt-1 text-xs">www.rijplanner.online</p>
+
+            {/* Copyright */}
+            <div className="text-center md:text-right">
+              <p className="text-sm text-muted-foreground">
+                © 2026 RijPlanner
+              </p>
+              <p className="text-xs text-muted-foreground/70 mt-1">
+                Gebouwd door <span className="font-medium text-muted-foreground">ROBERTDEV.NL</span>
+              </p>
+            </div>
           </div>
         </div>
       </footer>
     </div>
   );
 };
-
-// Sparkles icon component
-const Sparkles = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
-    <path d="M5 3v4"/>
-    <path d="M19 17v4"/>
-    <path d="M3 5h4"/>
-    <path d="M17 19h4"/>
-  </svg>
-);
 
 export default Index;

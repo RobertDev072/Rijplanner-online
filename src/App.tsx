@@ -7,6 +7,7 @@
  */
 
 import { useState, useEffect, lazy, Suspense } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,7 +20,6 @@ import { SplashScreen } from "@/components/SplashScreen";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { SwipeablePages } from "@/components/SwipeablePages";
-import { UpdatePrompt } from "@/components/UpdatePrompt";
 
 
 // Lazy load pages for better performance
@@ -203,26 +203,42 @@ function AppWithSplash() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false);
-    }, 1200);
+    }, 1500);
     return () => clearTimeout(timer);
   }, []);
 
-  if (showSplash) {
-    return <SplashScreen />;
-  }
-
   return (
-    <div className="w-full h-full animate-fade-in">
-      <OfflineIndicator />
-      <UpdatePrompt />
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <SwipeablePages>
-          <AppRoutes />
-        </SwipeablePages>
-      </BrowserRouter>
-    </div>
+    <AnimatePresence mode="wait">
+      {showSplash ? (
+        <motion.div
+          key="splash"
+          initial={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="fixed inset-0 z-[100]"
+        >
+          <SplashScreen />
+        </motion.div>
+      ) : (
+        <motion.div
+          key="app"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="w-full h-full"
+        >
+          <OfflineIndicator />
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            
+            <SwipeablePages>
+              <AppRoutes />
+            </SwipeablePages>
+          </BrowserRouter>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 

@@ -43,42 +43,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const initAuth = async () => {
-      try {
-        // Add timeout to prevent hanging
-        const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise<null>((resolve) => 
-          setTimeout(() => resolve(null), 3000)
-        );
-        
-        const result = await Promise.race([sessionPromise, timeoutPromise]);
-        
-        if (result && 'data' in result && result.data.session) {
-          // We have a valid session, try to get user data from localStorage
-          const savedUser = localStorage.getItem('rijplanner_user');
-          if (savedUser) {
-            try {
-              const user = JSON.parse(savedUser);
-              setState({
-                user,
-                isAuthenticated: true,
-                isLoading: false,
-              });
-              return;
-            } catch {
-              // Invalid saved user, clear it
-              localStorage.removeItem('rijplanner_user');
-            }
+      // Check for existing Supabase session first
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        // We have a valid session, try to get user data from localStorage
+        const savedUser = localStorage.getItem('rijplanner_user');
+        if (savedUser) {
+          try {
+            const user = JSON.parse(savedUser);
+            setState({
+              user,
+              isAuthenticated: true,
+              isLoading: false,
+            });
+            return;
+          } catch {
+            // Invalid saved user, clear it
+            localStorage.removeItem('rijplanner_user');
           }
         }
-        
-        // No valid session or user data
-        localStorage.removeItem('rijplanner_user');
-        setState(prev => ({ ...prev, isLoading: false }));
-      } catch (error) {
-        console.error('Auth init error:', error);
-        localStorage.removeItem('rijplanner_user');
-        setState(prev => ({ ...prev, isLoading: false }));
       }
+      
+      // No valid session or user data
+      localStorage.removeItem('rijplanner_user');
+      setState(prev => ({ ...prev, isLoading: false }));
     };
 
     initAuth();
