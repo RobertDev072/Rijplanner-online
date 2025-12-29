@@ -97,6 +97,8 @@ const TrustBadge = ({ icon: Icon, text }: { icon: React.ElementType; text: strin
   </div>
 );
 
+const LANDING_SEEN_KEY = 'rijplanner_landing_seen';
+
 const Index = () => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuth();
@@ -105,10 +107,19 @@ const Index = () => {
   useEffect(() => {
     if (!isLoading) {
       if (isAuthenticated) {
+        // Authenticated users always go to dashboard
+        localStorage.setItem(LANDING_SEEN_KEY, 'true');
         navigate('/dashboard');
       } else {
-        // Show landing page for non-authenticated users
-        setShowContent(true);
+        // Check if user has seen landing before (returning user)
+        const hasSeenLanding = localStorage.getItem(LANDING_SEEN_KEY);
+        if (hasSeenLanding) {
+          // Skip landing, go directly to login
+          navigate('/login');
+        } else {
+          // First time visitor, show landing page
+          setShowContent(true);
+        }
       }
     }
   }, [isAuthenticated, isLoading, navigate]);
