@@ -3,11 +3,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { MobileLayout } from '@/components/MobileLayout';
 import { LessonCard } from '@/components/LessonCard';
+import { LessonCardCompact } from '@/components/LessonCardCompact';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Calendar, Clock, CheckCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Clock, CheckCircle, List, LayoutGrid } from 'lucide-react';
 import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const STATUS_COLORS = {
   pending: {
@@ -40,6 +42,7 @@ export default function Agenda() {
   const { user } = useAuth();
   const { getLessonsForUser, updateLessonStatus } = useData();
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [compactView, setCompactView] = useState(true);
 
   if (!user) return null;
 
@@ -183,6 +186,16 @@ export default function Agenda() {
             <Calendar className="w-4 h-4 text-primary" />
             {format(selectedDate, "EEEE d MMMM", { locale: nl })}
           </h3>
+          {dayLessons.length > 3 && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-lg"
+              onClick={() => setCompactView(!compactView)}
+            >
+              {compactView ? <LayoutGrid className="w-4 h-4" /> : <List className="w-4 h-4" />}
+            </Button>
+          )}
         </div>
 
         {/* Day summary badges */}
@@ -212,6 +225,9 @@ export default function Agenda() {
                 {pendingCount} wachtend
               </div>
             )}
+            <div className="ml-auto text-xs text-muted-foreground">
+              {dayLessons.length} {dayLessons.length === 1 ? 'les' : 'lessen'}
+            </div>
           </div>
         )}
       </div>
@@ -227,12 +243,32 @@ export default function Agenda() {
             <p className="text-sm text-muted-foreground">Er zijn geen lessen gepland op deze dag</p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {dayLessons.map((lesson) => (
-              <div key={lesson.id}>
-                <LessonCard lesson={lesson} showActions={user.role === 'student'} onStatusChange={updateLessonStatus} />
-              </div>
-            ))}
+          <div className={cn("space-y-2", !compactView && "space-y-3")}>
+            <AnimatePresence mode="wait">
+              {dayLessons.map((lesson) => (
+                <motion.div
+                  key={lesson.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  {compactView ? (
+                    <LessonCardCompact 
+                      lesson={lesson} 
+                      showActions={user.role === 'student'} 
+                      onStatusChange={updateLessonStatus} 
+                    />
+                  ) : (
+                    <LessonCard 
+                      lesson={lesson} 
+                      showActions={user.role === 'student'} 
+                      onStatusChange={updateLessonStatus} 
+                    />
+                  )}
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         )}
       </div>
