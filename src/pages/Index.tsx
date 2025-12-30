@@ -304,36 +304,44 @@ const Index = () => {
               <span className="font-bold text-foreground text-lg">RijPlanner</span>
             </div>
 
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground leading-tight mb-6">
-              Rijlessen{' '}
+            {/* SEO Optimized H1 */}
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-6">
+              Rijplanner: Dé{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary to-accent">
-                eenvoudig gepland.
-              </span>
+                rijles planning software
+              </span>{' '}
+              voor rijscholen in Nederland
             </h1>
             
-            <p className="text-lg md:text-xl text-muted-foreground mb-10 leading-relaxed max-w-2xl mx-auto">
-              De complete app voor rijscholen. Plan lessen, beheer leerlingen en 
-              communiceer direct. Speciaal ontwikkeld voor Nederlandse rijinstructeurs.
+            {/* SEO Optimized paragraph */}
+            <p className="text-lg md:text-xl text-muted-foreground mb-10 leading-relaxed max-w-3xl mx-auto">
+              Rijplanner is de moderne agenda en planningstool speciaal voor Nederlandse rijscholen en rijinstructeurs. 
+              Gevestigd in Alkmaar (Noord-Holland), maar gebruikt door rijscholen door heel Nederland. 
+              Plan rijlessen eenvoudig, beheer leerlingen centraal en voorkom dubbele boekingen.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <Link to="/login">
-                <Button size="lg" className="rounded-2xl shadow-xl shadow-primary/30 text-base px-8 h-14 w-full sm:w-auto group">
+              {/* Primary CTA - Extra prominent */}
+              <Link to="/login" className="relative group">
+                <div className="absolute -inset-1 bg-primary/50 rounded-2xl blur-lg opacity-75 group-hover:opacity-100 transition-opacity animate-pulse" />
+                <Button size="lg" className="relative rounded-2xl shadow-xl shadow-primary/40 text-base px-10 h-16 w-full sm:w-auto font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary">
+                  <Sparkles className="w-5 h-5 mr-2" />
                   Direct Beginnen
                   <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
+              {/* Demo CTA - Pulsing green */}
               <a 
                 href="https://wa.me/31687892174?text=Hallo%2C%20ik%20wil%20graag%20een%20demo%20van%20RijPlanner!" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="relative"
+                className="relative group"
               >
                 <div className="absolute -inset-1 bg-green-500/40 rounded-2xl blur-lg animate-pulse" />
                 <Button 
                   size="lg" 
                   variant="outline" 
-                  className="relative rounded-2xl text-base px-8 h-14 w-full sm:w-auto group border-2 border-green-500 bg-green-500/10 text-green-600 hover:bg-green-500 hover:text-white hover:border-green-500 shadow-lg shadow-green-500/20"
+                  className="relative rounded-2xl text-base px-8 h-16 w-full sm:w-auto group border-2 border-green-500 bg-green-500/10 text-green-600 hover:bg-green-500 hover:text-white hover:border-green-500 shadow-lg shadow-green-500/20 font-semibold"
                 >
                   <MessageCircle className="w-5 h-5 mr-2 animate-bounce" />
                   Vraag een Demo aan
@@ -505,12 +513,14 @@ const Index = () => {
                 Sluit je aan bij rijscholen die al profiteren van efficiëntere lesplanning met RijPlanner.
               </p>
               
-              <Link to="/login">
+              <Link to="/login" className="relative group">
+                <div className="absolute -inset-1 bg-white/50 rounded-2xl blur-lg opacity-75 group-hover:opacity-100 transition-opacity animate-pulse" />
                 <Button 
                   size="lg" 
                   variant="secondary"
-                  className="rounded-2xl shadow-xl text-base px-10 h-14 bg-white text-primary hover:bg-white/90 group"
+                  className="relative rounded-2xl shadow-xl text-base px-12 h-16 bg-white text-primary hover:bg-white/90 font-bold"
                 >
+                  <Sparkles className="w-5 h-5 mr-2" />
                   Aan de slag
                   <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
@@ -567,8 +577,12 @@ const Index = () => {
             </div>
           </div>
           
-          <div className="mt-8 pt-8 border-t border-border/30 text-center">
-            <p className="text-sm text-muted-foreground">
+          {/* SEO Footer Text */}
+          <div className="mt-8 pt-8 border-t border-border/30 text-center space-y-3">
+            <p className="text-sm text-muted-foreground font-medium">
+              Rijplanner.online • Rijschool planning software • Alkmaar, Noord-Holland • Voor rijscholen in heel Nederland
+            </p>
+            <p className="text-xs text-muted-foreground/70">
               © 2026 RijPlanner - Robert Rocha / ROBERTDEV.NL. Alle rechten voorbehouden.
             </p>
           </div>
