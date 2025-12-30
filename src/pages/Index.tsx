@@ -327,13 +327,15 @@ const Index = () => {
                 href="https://wa.me/31687892174?text=Hallo%2C%20ik%20wil%20graag%20een%20demo%20van%20RijPlanner!" 
                 target="_blank" 
                 rel="noopener noreferrer"
+                className="relative"
               >
+                <div className="absolute -inset-1 bg-green-500/40 rounded-2xl blur-lg animate-pulse" />
                 <Button 
                   size="lg" 
                   variant="outline" 
-                  className="rounded-2xl text-base px-8 h-14 w-full sm:w-auto group border-2 border-green-500 bg-green-500/10 text-green-600 hover:bg-green-500 hover:text-white hover:border-green-500"
+                  className="relative rounded-2xl text-base px-8 h-14 w-full sm:w-auto group border-2 border-green-500 bg-green-500/10 text-green-600 hover:bg-green-500 hover:text-white hover:border-green-500 shadow-lg shadow-green-500/20"
                 >
-                  <MessageCircle className="w-5 h-5 mr-2" />
+                  <MessageCircle className="w-5 h-5 mr-2 animate-bounce" />
                   Vraag een Demo aan
                 </Button>
               </a>
