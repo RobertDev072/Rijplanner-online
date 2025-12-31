@@ -126,6 +126,53 @@ export type Database = {
         }
         Relationships: []
       }
+      instructor_availability: {
+        Row: {
+          created_at: string
+          date: string
+          day_of_week: number | null
+          end_time: string
+          id: string
+          instructor_id: string
+          is_recurring: boolean
+          start_time: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          day_of_week?: number | null
+          end_time: string
+          id?: string
+          instructor_id: string
+          is_recurring?: boolean
+          start_time: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          day_of_week?: number | null
+          end_time?: string
+          id?: string
+          instructor_id?: string
+          is_recurring?: boolean
+          start_time?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instructor_availability_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lesson_credits: {
         Row: {
           created_at: string
@@ -255,6 +302,7 @@ export type Database = {
       lessons: {
         Row: {
           created_at: string
+          created_by: string
           date: string
           duration: number
           id: string
@@ -268,6 +316,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          created_by: string
           date: string
           duration?: number
           id?: string
@@ -281,6 +330,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          created_by?: string
           date?: string
           duration?: number
           id?: string
@@ -293,6 +343,13 @@ export type Database = {
           vehicle_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "lessons_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "lessons_instructor_id_fkey"
             columns: ["instructor_id"]
