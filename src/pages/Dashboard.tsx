@@ -19,7 +19,10 @@ import { UpdatePrompt } from '@/components/UpdatePrompt';
 import { PageSkeleton } from '@/components/PageSkeleton';
 import { InstructorTodayLessons } from '@/components/InstructorTodayLessons';
 import { OnboardingFlow } from '@/components/OnboardingFlow';
-import { Users, GraduationCap, Calendar, Clock, Building2, Sparkles, ArrowRight, CalendarDays, ChevronDown, ChevronUp, List, LayoutGrid } from 'lucide-react';
+import { Users, GraduationCap, Calendar, Clock, Building2, Sparkles, ArrowRight, CalendarDays, ChevronDown, ChevronUp, List, LayoutGrid, Brain } from 'lucide-react';
+import { AICoachCard } from '@/components/AICoachCard';
+import { AIProgressChart } from '@/components/AIProgressChart';
+import { AIInsights } from '@/types';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
@@ -285,20 +288,28 @@ export default function Dashboard() {
 
       {/* Student Credits */}
       {user.role === 'student' && (
-        <div className="glass-card p-5 mb-6 bg-gradient-to-br from-primary/5 to-transparent">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-white" />
+        <>
+          <div className="glass-card p-5 mb-6 bg-gradient-to-br from-primary/5 to-transparent">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
+                  <Sparkles className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground font-medium">Jouw lescredits</p>
+                  <p className="text-xs text-muted-foreground">Beschikbaar voor lessen</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground font-medium">Jouw lescredits</p>
-                <p className="text-xs text-muted-foreground">Beschikbaar voor lessen</p>
-              </div>
+              <CreditsBadge credits={getCreditsForStudent(user.id)} size="lg" />
             </div>
-            <CreditsBadge credits={getCreditsForStudent(user.id)} size="lg" />
           </div>
-        </div>
+
+          {/* AI Coach Section */}
+          <div className="grid gap-4 mb-6">
+            <AIProgressChart insights={user.ai_insights as unknown as AIInsights | null} />
+            <AICoachCard studentId={user.id} initialInsights={user.ai_insights as unknown as AIInsights | null} />
+          </div>
+        </>
       )}
 
       {/* Pending Lessons for Student */}

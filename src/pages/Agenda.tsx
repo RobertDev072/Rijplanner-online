@@ -5,7 +5,8 @@ import { MobileLayout } from '@/components/MobileLayout';
 import { LessonCard } from '@/components/LessonCard';
 import { LessonCardCompact } from '@/components/LessonCardCompact';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Calendar, Clock, CheckCircle, List, LayoutGrid } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Clock, CheckCircle, List, LayoutGrid, Route } from 'lucide-react';
+import { RouteOptimizeButton } from '@/components/RouteOptimizeButton';
 import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -40,9 +41,15 @@ const STATUS_COLORS = {
 
 export default function Agenda() {
   const { user } = useAuth();
-  const { getLessonsForUser, updateLessonStatus } = useData();
+  const { getLessonsForUser, updateLessonStatus, refreshData } = useData();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [compactView, setCompactView] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handleRouteOptimized = async () => {
+    await refreshData();
+    setRefreshKey(prev => prev + 1);
+  };
 
   if (!user) return null;
 
@@ -181,11 +188,19 @@ export default function Agenda() {
 
       {/* Selected Day Header */}
       <div className="mb-4">
-        <div className="flex items-center justify-between">
-          <h3 className="section-title mb-0">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="section-title mb-0 flex-1">
             <Calendar className="w-4 h-4 text-primary" />
             {format(selectedDate, "EEEE d MMMM", { locale: nl })}
           </h3>
+          {user.role === 'instructor' && (
+            <RouteOptimizeButton
+              instructorId={user.id}
+              date={selectedDateStr}
+              lessonsCount={dayLessons.length}
+              onOptimized={handleRouteOptimized}
+            />
+          )}
           {dayLessons.length > 3 && (
             <Button
               variant="ghost"
