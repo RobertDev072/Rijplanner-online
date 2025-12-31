@@ -386,6 +386,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           status: lesson.status,
           remarks: lesson.remarks,
           vehicle_id: lesson.vehicle_id || null,
+          created_by: lesson.created_by,
         });
 
       if (error) throw error;
