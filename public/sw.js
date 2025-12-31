@@ -2,9 +2,9 @@
 // Version: 3.0.0 - Enhanced PWA auto-update system
 // IMPORTANT: Increment CACHE_VERSION on each release!
 
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const CACHE_NAME = `rijplanner-${CACHE_VERSION}`;
-const APP_VERSION = '3.0.0';
+const APP_VERSION = '3.0.1';
 
 // Assets to pre-cache for offline support
 const PRECACHE_ASSETS = [
@@ -183,52 +183,44 @@ self.addEventListener('notificationclose', (event) => {
   console.log('[SW] Notification closed');
 });
 
-// Fetch event - network first with cache fallback
+// Fetch event - avoid caching JS/CSS bundles (prevents stale React copies)
 self.addEventListener('fetch', (event) => {
-  if (!event.request.url.startsWith(self.location.origin)) {
+  if (!event.request.url.startsWith(self.location.origin)) return;
+  if (event.request.method !== 'GET') return;
+
+  // Never cache scripts/styles; always go to network to prevent stale bundles
+  const dest = event.request.destination;
+  if (dest === 'script' || dest === 'style') {
+    event.respondWith(fetch(event.request));
     return;
   }
 
-  if (event.request.method !== 'GET') {
-    return;
-  }
-
-  // For navigation requests, always try network first
+  // For navigation requests, network-first with index.html fallback
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
-          // Cache successful responses
           if (response.status === 200) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseClone);
-            });
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put('/index.html', clone));
           }
           return response;
         })
-        .catch(() => {
-          return caches.match('/index.html');
-        })
+        .catch(() => caches.match('/index.html'))
     );
     return;
   }
 
-  // For other requests, try cache first then network
+  // For other assets (images/fonts), network-first with cache fallback
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).then((response) => {
-        if (response.status === 200) {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
+    fetch(event.request)
+      .then((response) => {
+        if (response.status === 200 && (dest === 'image' || dest === 'font')) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         }
         return response;
-      });
-    })
+      })
+      .catch(() => caches.match(event.request))
   );
 });
