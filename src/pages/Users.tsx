@@ -322,7 +322,8 @@ export default function Users() {
   // Check if user can reset pincode for target user
   const canResetPincode = (targetRole: UserRole): boolean => {
     if (user.role === 'superadmin') return true;
-    if (user.role === 'admin' && targetRole === 'instructor') return true;
+    // Admin can reset pincodes for both instructors AND students
+    if (user.role === 'admin' && (targetRole === 'instructor' || targetRole === 'student')) return true;
     if (user.role === 'instructor' && targetRole === 'student') return true;
     return false;
   };
