@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.secure-login]
 verify_jwt = false
+
+[functions.analyze-student-progress]
+verify_jwt = false
+
+[functions.optimize-driving-route]
+verify_jwt = false

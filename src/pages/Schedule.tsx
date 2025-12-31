@@ -117,6 +117,7 @@ export default function Schedule() {
         status: 'pending',
         remarks: remarks.trim() || null,
         vehicle_id: selectedVehicleId || instructorVehicle?.id || null,
+        created_by: user.id,
       });
 
       toast.success('Lesverzoek verstuurd!');

@@ -16,6 +16,13 @@ export interface Tenant {
   created_at: string;
 }
 
+export interface AIInsights {
+  overall_score: number;
+  top_weaknesses: string[];
+  estimated_lessons_to_exam: number;
+  last_analyzed_at: string;
+}
+
 export interface User {
   id: string;
   tenant_id: string | null;
@@ -29,6 +36,7 @@ export interface User {
   address?: string | null;
   theory_passed?: boolean;
   theory_passed_at?: string | null;
+  ai_insights?: AIInsights | null;
   created_at: string;
 }
 
@@ -55,6 +63,7 @@ export interface Lesson {
   status: LessonStatus;
   remarks?: string | null;
   vehicle_id?: string | null;
+  created_by: string;
   created_at: string;
   instructor?: User;
   student?: User;

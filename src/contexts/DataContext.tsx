@@ -161,6 +161,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           status,
           remarks: l.remarks,
           vehicle_id: l.vehicle_id,
+          created_by: l.created_by,
           created_at: l.created_at,
         };
       });
