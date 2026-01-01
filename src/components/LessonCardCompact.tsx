@@ -57,9 +57,19 @@ export function LessonCardCompact({ lesson, showActions = false, onStatusChange 
   };
 
   const canAccept = () => {
-    if (user?.role !== 'student') return false;
-    const credits = getCreditsForStudent(user.id);
-    return credits > 0;
+    if (user?.role === 'student') {
+      const credits = getCreditsForStudent(user.id);
+      return credits > 0;
+    }
+    // Instructors can always accept
+    return true;
+  };
+
+  // Check if current user should see action buttons (pending lesson they didn't create)
+  const shouldShowPendingActions = () => {
+    if (lesson.status !== 'pending') return false;
+    // The person who DIDN'T create the lesson sees the buttons
+    return lesson.created_by !== user?.id;
   };
 
   const openWhatsApp = (phone: string, name: string) => {
@@ -133,8 +143,8 @@ export function LessonCardCompact({ lesson, showActions = false, onStatusChange 
           )
         )}
 
-        {/* Actions for pending lessons OR arrow for details */}
-        {showActions && lesson.status === 'pending' && user?.role === 'student' ? (
+        {/* Actions for pending lessons (shown to the person who didn't create the lesson) */}
+        {shouldShowPendingActions() ? (
           <div className="flex gap-1.5">
             <Button
               size="icon"

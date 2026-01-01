@@ -17,6 +17,7 @@ const TAB_ITEMS: TabItem[] = [
   { icon: Home, label: 'Home', path: '/dashboard', roles: ['admin', 'instructor', 'student', 'superadmin'] },
   { icon: Building2, label: 'Rijscholen', path: '/tenants', roles: ['superadmin'] },
   { icon: Calendar, label: 'Agenda', path: '/agenda', roles: ['instructor', 'student'] },
+  { icon: Plus, label: 'Boeken', path: '/book', roles: ['student'] },
   { icon: Plus, label: 'Inplannen', path: '/schedule', roles: ['instructor'] },
   { icon: Users, label: 'Leerlingen', path: '/students', roles: ['instructor'] },
   { icon: Users, label: 'Gebruikers', path: '/users', roles: ['admin', 'superadmin'] },

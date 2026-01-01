@@ -29,6 +29,7 @@ interface DataContextType {
   getVehicleForInstructor: (instructorId: string) => Vehicle | undefined;
   getLessonsForUser: (userId: string, role: string) => Lesson[];
   getCreditsForStudent: (studentId: string) => number;
+  getStudentCredits: (studentId: string) => LessonCredits | undefined;
   getStudentsWithLowCredits: () => { student: User; credits: number }[];
   getFeedbackForLesson: (lessonId: string) => LessonFeedback | undefined;
   getFeedbackForStudent: (studentId: string) => LessonFeedback[];
@@ -270,6 +271,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return credit.total_credits - credit.used_credits;
   };
 
+  const getStudentCredits = (studentId: string) => {
+    return credits.find(c => c.student_id === studentId);
+  };
+
   // Get students with low credits (≤3)
   const getStudentsWithLowCredits = () => {
     const studentsList = users.filter(u => u.role === 'student');
@@ -402,13 +407,26 @@ export function DataProvider({ children }: { children: ReactNode }) {
         // Local browser notification
         sendLessonNotification('planned', student.name, instructor.name, formattedDate, formattedTime);
         
-        // Push notification to student - pending lesson request
-        sendPushNotification(
-          [lesson.student_id],
-          '📩 Nieuw lesverzoek',
-          `${instructor.name} wil een les inplannen op ${formattedDate} om ${formattedTime}. Tik om te accepteren of weigeren.`,
-          lesson.tenant_id
-        );
+        // Check who created the lesson to send notification to the right person
+        const isStudentCreated = lesson.created_by === lesson.student_id;
+        
+        if (isStudentCreated) {
+          // Student booked the lesson -> notify instructor
+          sendPushNotification(
+            [lesson.instructor_id],
+            '📩 Nieuw lesverzoek',
+            `${student.name} wil een les boeken op ${formattedDate} om ${formattedTime}. Tik om te accepteren of weigeren.`,
+            lesson.tenant_id
+          );
+        } else {
+          // Instructor scheduled the lesson -> notify student
+          sendPushNotification(
+            [lesson.student_id],
+            '📩 Nieuw lesverzoek',
+            `${instructor.name} wil een les inplannen op ${formattedDate} om ${formattedTime}. Tik om te accepteren of weigeren.`,
+            lesson.tenant_id
+          );
+        }
       }
 
       await fetchData();
@@ -680,6 +698,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         getVehicleForInstructor,
         getLessonsForUser,
         getCreditsForStudent,
+        getStudentCredits,
         getStudentsWithLowCredits,
         getFeedbackForLesson,
         getFeedbackForStudent,
