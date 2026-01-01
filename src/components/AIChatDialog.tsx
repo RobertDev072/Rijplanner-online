@@ -5,15 +5,16 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Bot, Send, User, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
 }
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`;
-
 export function AIChatDialog() {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -27,78 +28,41 @@ export function AIChatDialog() {
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || !user) return;
 
     const userMessage: Message = { role: 'user', content: input.trim() };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
 
-    let assistantContent = '';
+    // Add loading message
+    setMessages(prev => [...prev, { role: 'assistant', content: '...' }]);
 
     try {
-      const response = await fetch(CHAT_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({ messages: [...messages, userMessage] }),
+      const { data, error } = await supabase.functions.invoke('ai-chat', {
+        body: { 
+          messages: [...messages, userMessage],
+          user_id: user.id,
+          tenant_id: user.tenant_id
+        }
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Fout bij verzenden bericht');
-      }
+      if (error) throw error;
 
-      if (!response.body) throw new Error('Geen response body');
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let textBuffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        textBuffer += decoder.decode(value, { stream: true });
-
-        let newlineIndex: number;
-        while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
-          textBuffer = textBuffer.slice(newlineIndex + 1);
-
-          if (line.endsWith('\r')) line = line.slice(0, -1);
-          if (line.startsWith(':') || line.trim() === '') continue;
-          if (!line.startsWith('data: ')) continue;
-
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === '[DONE]') break;
-
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              assistantContent += content;
-              setMessages(prev => {
-                const last = prev[prev.length - 1];
-                if (last?.role === 'assistant') {
-                  return prev.map((m, i) => 
-                    i === prev.length - 1 ? { ...m, content: assistantContent } : m
-                  );
-                }
-                return [...prev, { role: 'assistant', content: assistantContent }];
-              });
-            }
-          } catch {
-            textBuffer = line + '\n' + textBuffer;
-            break;
-          }
-        }
-      }
-    } catch (error) {
+      // Replace loading message with actual response
+      setMessages(prev => {
+        const newMessages = [...prev];
+        newMessages[newMessages.length - 1] = { 
+          role: 'assistant', 
+          content: data.content || 'Sorry, ik kon geen antwoord genereren.' 
+        };
+        return newMessages;
+      });
+    } catch (error: any) {
       console.error('Chat error:', error);
-      toast.error(error instanceof Error ? error.message : 'Fout bij verzenden bericht');
+      // Remove loading message on error
+      setMessages(prev => prev.slice(0, -1));
+      toast.error(error.message || 'Fout bij verzenden bericht');
     } finally {
       setIsLoading(false);
     }
@@ -110,6 +74,9 @@ export function AIChatDialog() {
       sendMessage();
     }
   };
+
+  // Only show for students (they can book/cancel lessons)
+  if (!user || user.role !== 'student') return null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -134,8 +101,14 @@ export function AIChatDialog() {
           {messages.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">
               <Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-sm">Hoi! Ik ben je AI-assistent.</p>
-              <p className="text-sm">Vraag me alles over rijlessen, theorie of verkeersregels!</p>
+              <p className="text-sm font-medium">Hoi! Ik ben je AI-assistent.</p>
+              <p className="text-sm mt-2">Ik kan je helpen met:</p>
+              <ul className="text-sm mt-2 space-y-1">
+                <li>📅 Lessen boeken</li>
+                <li>❌ Lessen annuleren</li>
+                <li>💳 Credits bekijken</li>
+                <li>❓ Vragen over rijlessen</li>
+              </ul>
             </div>
           ) : (
             <div className="space-y-4">
@@ -156,7 +129,11 @@ export function AIChatDialog() {
                         : 'bg-muted'
                     }`}
                   >
-                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                    {msg.content === '...' ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <p className="whitespace-pre-wrap">{msg.content}</p>
+                    )}
                   </div>
                   {msg.role === 'user' && (
                     <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
@@ -165,16 +142,6 @@ export function AIChatDialog() {
                   )}
                 </div>
               ))}
-              {isLoading && messages[messages.length - 1]?.role === 'user' && (
-                <div className="flex gap-3">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Bot className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="bg-muted rounded-lg px-3 py-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </ScrollArea>
@@ -185,7 +152,7 @@ export function AIChatDialog() {
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Stel een vraag..."
+              placeholder="Bijv. 'Boek een les voor morgen'"
               disabled={isLoading}
               className="flex-1"
             />
