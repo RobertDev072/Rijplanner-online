@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Home, Calendar, User, LogOut, Users, Plus, Settings, Building2, BookOpen, Car } from 'lucide-react';
+import { Home, Calendar, User, LogOut, Users, Plus, Settings, Building2, BookOpen, Car, CalendarOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { hapticImpact, hapticSelection } from '@/utils/capacitor';
@@ -19,6 +19,7 @@ const TAB_ITEMS: TabItem[] = [
   { icon: Calendar, label: 'Agenda', path: '/agenda', roles: ['instructor', 'student'] },
   { icon: Plus, label: 'Boeken', path: '/book', roles: ['student'] },
   { icon: Plus, label: 'Inplannen', path: '/schedule', roles: ['instructor'] },
+  { icon: CalendarOff, label: 'Afwezig', path: '/availability', roles: ['instructor'] },
   { icon: Users, label: 'Leerlingen', path: '/students', roles: ['instructor'] },
   { icon: Users, label: 'Gebruikers', path: '/users', roles: ['admin', 'superadmin'] },
   { icon: BookOpen, label: 'Lessen', path: '/lessons', roles: ['admin'] },
