@@ -12,6 +12,7 @@ import { useData } from '@/contexts/DataContext';
 import { BottomTabNav } from '@/components/BottomTabNav';
 import { Header } from '@/components/Header';
 import { PullToRefresh } from '@/components/PullToRefresh';
+import { AIChatDialog } from '@/components/AIChatDialog';
 
 interface MobileLayoutProps {
   children: ReactNode;
@@ -45,6 +46,9 @@ export function MobileLayout({ children, title, showLogo }: MobileLayoutProps) {
 
       {/* Bottom Tab Navigation */}
       <BottomTabNav />
+      
+      {/* AI Chat Button */}
+      <AIChatDialog />
     </div>
   );
 }
