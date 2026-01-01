@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bot, Send, User, Loader2 } from 'lucide-react';
+import { Bot, Send, User, Loader2, CalendarPlus, ListChecks, CreditCard, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +12,13 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
 }
+
+const QUICK_ACTIONS = [
+  { icon: CalendarPlus, label: 'Les boeken', message: 'Ik wil een les boeken' },
+  { icon: ListChecks, label: 'Mijn lessen', message: 'Toon mijn aankomende lessen' },
+  { icon: CreditCard, label: 'Credits', message: 'Hoeveel credits heb ik nog?' },
+  { icon: XCircle, label: 'Annuleren', message: 'Ik wil een les annuleren' },
+];
 
 export function AIChatDialog() {
   const { user } = useAuth();
@@ -27,10 +34,11 @@ export function AIChatDialog() {
     }
   }, [messages]);
 
-  const sendMessage = async () => {
-    if (!input.trim() || isLoading || !user) return;
+  const sendMessage = async (messageText?: string) => {
+    const text = messageText || input.trim();
+    if (!text || isLoading || !user) return;
 
-    const userMessage: Message = { role: 'user', content: input.trim() };
+    const userMessage: Message = { role: 'user', content: text };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
@@ -73,6 +81,10 @@ export function AIChatDialog() {
       e.preventDefault();
       sendMessage();
     }
+  };
+
+  const handleQuickAction = (message: string) => {
+    sendMessage(message);
   };
 
   // Only show for students (they can book/cancel lessons)
@@ -146,17 +158,33 @@ export function AIChatDialog() {
           )}
         </ScrollArea>
 
-        <div className="p-4 border-t">
+        <div className="p-4 pt-2 border-t space-y-3">
+          {/* Quick Actions */}
+          <div className="flex flex-wrap gap-2">
+            {QUICK_ACTIONS.map((action) => (
+              <button
+                key={action.label}
+                onClick={() => handleQuickAction(action.message)}
+                disabled={isLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+              >
+                <action.icon className="h-3.5 w-3.5" />
+                {action.label}
+              </button>
+            ))}
+          </div>
+          
+          {/* Input */}
           <div className="flex gap-2">
             <Input
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Bijv. 'Boek een les voor morgen'"
+              placeholder="Stel een vraag..."
               disabled={isLoading}
               className="flex-1"
             />
-            <Button onClick={sendMessage} disabled={!input.trim() || isLoading} size="icon">
+            <Button onClick={() => sendMessage()} disabled={!input.trim() || isLoading} size="icon">
               <Send className="h-4 w-4" />
             </Button>
           </div>
