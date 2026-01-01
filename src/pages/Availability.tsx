@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { MobileLayout } from '@/components/MobileLayout';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import { Card } from '@/components/ui/card';
 import {
   Select,
@@ -25,12 +26,9 @@ import {
   Plus, 
   Trash2, 
   Clock,
-  Info,
-  ChevronLeft,
-  ChevronRight,
-  Check
+  Info
 } from 'lucide-react';
-import { format, addDays, startOfWeek, isSameDay, parseISO, isBefore, startOfDay } from 'date-fns';
+import { format, addDays, startOfDay, isAfter, isBefore, parseISO } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -54,15 +52,11 @@ export default function Availability() {
   const { user } = useAuth();
   const [unavailability, setUnavailability] = useState<UnavailabilityPeriod[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [startTime, setStartTime] = useState('06:00');
   const [endTime, setEndTime] = useState('23:00');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
-
-  const today = startOfDay(new Date());
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   // Fetch unavailability periods
   const fetchUnavailability = async () => {
@@ -78,7 +72,11 @@ export default function Availability() {
         .order('date', { ascending: true });
       
       if (error) throw error;
-      setUnavailability(data || []);
+      
+      // Filter to only show future dates
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const futureData = (data || []).filter(d => d.date >= today);
+      setUnavailability(futureData);
     } catch (error) {
       console.error('Error fetching unavailability:', error);
       toast.error('Kon beschikbaarheid niet laden');
@@ -94,6 +92,7 @@ export default function Availability() {
   const handleAddUnavailability = async () => {
     if (!selectedDate || !user?.tenant_id) return;
     
+    // Validate times
     if (startTime >= endTime) {
       toast.error('Eindtijd moet na starttijd zijn');
       return;
@@ -116,7 +115,7 @@ export default function Availability() {
       if (error) throw error;
       
       toast.success('Afwezigheid toegevoegd');
-      setSelectedDate(null);
+      setSelectedDate(undefined);
       setStartTime('06:00');
       setEndTime('23:00');
       fetchUnavailability();
@@ -125,39 +124,6 @@ export default function Availability() {
       toast.error('Kon afwezigheid niet toevoegen');
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleQuickAddFullDay = async (date: Date) => {
-    if (!user?.tenant_id) return;
-    
-    const dateStr = format(date, 'yyyy-MM-dd');
-    
-    // Check if already has full day unavailability
-    const existing = unavailability.find(u => u.date === dateStr && u.start_time === '06:00' && u.end_time === '23:00');
-    if (existing) {
-      // Remove it
-      handleDelete(existing.id);
-      return;
-    }
-    
-    try {
-      const { error } = await supabase
-        .from('instructor_availability')
-        .insert({
-          tenant_id: user.tenant_id,
-          instructor_id: user.id,
-          date: dateStr,
-          start_time: '06:00',
-          end_time: '23:00',
-        });
-      
-      if (error) throw error;
-      toast.success('Hele dag afwezig gemarkeerd');
-      fetchUnavailability();
-    } catch (error) {
-      console.error('Error adding unavailability:', error);
-      toast.error('Kon afwezigheid niet toevoegen');
     }
   };
 
@@ -179,23 +145,14 @@ export default function Availability() {
     }
   };
 
-  const navigateWeek = (direction: 'prev' | 'next') => {
-    setWeekStart(prev => addDays(prev, direction === 'next' ? 7 : -7));
-  };
+  // Date constraints: only future dates, no Sundays
+  const today = startOfDay(new Date());
+  const maxDate = addDays(today, 365);
 
+  // Check if a date already has unavailability
   const getUnavailabilityForDate = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     return unavailability.filter(u => u.date === dateStr);
-  };
-
-  const isFullDayUnavailable = (date: Date) => {
-    const periods = getUnavailabilityForDate(date);
-    return periods.some(p => p.start_time === '06:00' && p.end_time === '23:00');
-  };
-
-  const hasPartialUnavailability = (date: Date) => {
-    const periods = getUnavailabilityForDate(date);
-    return periods.length > 0 && !isFullDayUnavailable(date);
   };
 
   if (!user) return null;
@@ -214,233 +171,62 @@ export default function Availability() {
           </div>
           <div>
             <p className="text-sm text-muted-foreground">
-              Tik op een dag om hele dag afwezig te markeren, of selecteer specifieke uren.
+              Registreer hier wanneer je <strong>niet</strong> beschikbaar bent. 
+              Leerlingen kunnen geen lessen boeken tijdens deze periodes.
             </p>
           </div>
         </div>
       </motion.div>
 
-      {/* Week Navigation */}
-      <div className="glass-card rounded-2xl p-4 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigateWeek('prev')}
-            className="rounded-xl"
+      {/* Add new unavailability */}
+      <div className="space-y-4 mb-8">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <CalendarOff className="w-5 h-5 text-primary" />
+          Afwezigheid toevoegen
+        </h2>
+
+        <Card className="p-4 rounded-2xl">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={setSelectedDate}
+            locale={nl}
+            disabled={(date) => 
+              isBefore(date, today) || 
+              isAfter(date, maxDate) || 
+              date.getDay() === 0
+            }
+            fromDate={today}
+            toDate={maxDate}
+            modifiers={{
+              unavailable: (date) => getUnavailabilityForDate(date).length > 0,
+            }}
+            modifiersClassNames={{
+              unavailable: 'bg-destructive/10 text-destructive',
+            }}
+            className={cn("w-full pointer-events-auto")}
+          />
+        </Card>
+
+        {selectedDate && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="space-y-4"
           >
-            <ChevronLeft className="w-5 h-5" />
-          </Button>
-          <div className="text-center">
-            <span className="font-bold text-lg">{format(weekStart, 'MMMM', { locale: nl })}</span>
-            <span className="text-muted-foreground ml-2">{format(weekStart, 'yyyy')}</span>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigateWeek('next')}
-            className="rounded-xl"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </Button>
-        </div>
-
-        {/* Week Grid */}
-        <div className="grid grid-cols-7 gap-1 mb-3">
-          {weekDays.map((day, idx) => {
-            const isToday = isSameDay(day, new Date());
-            const isPast = isBefore(day, today);
-            const isSunday = day.getDay() === 0;
-            const isUnavailable = isFullDayUnavailable(day);
-            const hasPartial = hasPartialUnavailability(day);
-            const dayPeriods = getUnavailabilityForDate(day);
-
-            return (
-              <button
-                key={idx}
-                onClick={() => {
-                  if (isPast || isSunday) return;
-                  handleQuickAddFullDay(day);
-                }}
-                disabled={isPast || isSunday}
-                className={cn(
-                  "flex flex-col items-center py-2 px-1 rounded-xl transition-all relative",
-                  "touch-manipulation active:scale-95",
-                  isPast && "opacity-40 cursor-not-allowed",
-                  isSunday && "opacity-30 cursor-not-allowed",
-                  isToday && !isUnavailable && "ring-2 ring-primary ring-offset-2 ring-offset-background",
-                  isUnavailable && "bg-destructive/20 text-destructive",
-                  hasPartial && !isUnavailable && "bg-warning/20 text-warning",
-                  !isUnavailable && !hasPartial && !isPast && !isSunday && "hover:bg-muted"
-                )}
-              >
-                <span className="text-[10px] font-medium uppercase opacity-70">
-                  {format(day, 'EEE', { locale: nl })}
-                </span>
-                <span className="text-lg font-bold">{format(day, 'd')}</span>
-                
-                {/* Status indicator */}
-                {isUnavailable && (
-                  <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive flex items-center justify-center">
-                    <CalendarOff className="w-2.5 h-2.5 text-destructive-foreground" />
-                  </div>
-                )}
-                {hasPartial && (
-                  <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-warning flex items-center justify-center">
-                    <Clock className="w-2.5 h-2.5 text-warning-foreground" />
-                  </div>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Legend */}
-        <div className="flex items-center justify-center gap-4 pt-3 border-t border-border/50">
-          <div className="flex items-center gap-1.5 text-xs">
-            <div className="w-3 h-3 rounded bg-success/20 border border-success/30" />
-            <span className="text-muted-foreground">Beschikbaar</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs">
-            <div className="w-3 h-3 rounded bg-warning/20 border border-warning/30" />
-            <span className="text-muted-foreground">Deels afwezig</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs">
-            <div className="w-3 h-3 rounded bg-destructive/20 border border-destructive/30" />
-            <span className="text-muted-foreground">Hele dag</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Week Details - Unavailability list for this week */}
-      <div className="space-y-3 mb-6">
-        <h3 className="text-sm font-semibold text-muted-foreground">Deze week</h3>
-        
-        {isLoading ? (
-          <div className="space-y-2">
-            {[1, 2].map(i => (
-              <div key={i} className="h-14 rounded-xl bg-muted animate-pulse" />
-            ))}
-          </div>
-        ) : (
-          <AnimatePresence mode="popLayout">
-            {weekDays.map(day => {
-              const periods = getUnavailabilityForDate(day);
-              if (periods.length === 0) return null;
-              
-              return (
-                <motion.div
-                  key={format(day, 'yyyy-MM-dd')}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="space-y-2"
-                >
-                  {periods.map(period => (
-                    <div
-                      key={period.id}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50"
-                    >
-                      <div className={cn(
-                        "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
-                        period.start_time === '06:00' && period.end_time === '23:00'
-                          ? "bg-destructive/10"
-                          : "bg-warning/10"
-                      )}>
-                        <CalendarOff className={cn(
-                          "w-5 h-5",
-                          period.start_time === '06:00' && period.end_time === '23:00'
-                            ? "text-destructive"
-                            : "text-warning"
-                        )} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-foreground text-sm">
-                          {format(parseISO(period.date), 'EEEE d MMM', { locale: nl })}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {period.start_time === '06:00' && period.end_time === '23:00' 
-                            ? 'Hele dag' 
-                            : `${period.start_time.slice(0, 5)} - ${period.end_time.slice(0, 5)}`}
-                        </p>
-                      </div>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 rounded-lg text-destructive hover:bg-destructive/10"
-                        onClick={() => setDeleteId(period.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        )}
-
-        {!isLoading && weekDays.every(day => getUnavailabilityForDate(day).length === 0) && (
-          <Card className="p-4 text-center rounded-xl">
-            <Check className="w-8 h-8 text-success mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">Volledig beschikbaar deze week</p>
-          </Card>
-        )}
-      </div>
-
-      {/* Add specific hours */}
-      <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          Specifieke uren toevoegen
-        </h3>
-
-        <div className="glass-card rounded-2xl p-4 space-y-4">
-          {/* Quick day select */}
-          <div className="grid grid-cols-7 gap-1">
-            {weekDays.map((day, idx) => {
-              const isPast = isBefore(day, today);
-              const isSunday = day.getDay() === 0;
-              const isSelected = selectedDate && isSameDay(day, selectedDate);
-              
-              return (
-                <button
-                  key={idx}
-                  onClick={() => {
-                    if (isPast || isSunday) return;
-                    setSelectedDate(isSelected ? null : day);
-                  }}
-                  disabled={isPast || isSunday}
-                  className={cn(
-                    "py-2 rounded-lg text-xs font-medium transition-all",
-                    isPast || isSunday 
-                      ? "opacity-30 cursor-not-allowed" 
-                      : "hover:bg-muted",
-                    isSelected && "bg-primary text-primary-foreground"
-                  )}
-                >
-                  {format(day, 'EEE', { locale: nl })}
-                </button>
-              );
-            })}
-          </div>
-
-          {selectedDate && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="space-y-3 pt-3 border-t border-border/50"
-            >
-              <p className="text-sm">
-                <span className="text-muted-foreground">Afwezig op </span>
-                <strong>{format(selectedDate, 'EEEE d MMMM', { locale: nl })}</strong>
+            <div className="glass-card rounded-2xl p-4">
+              <p className="text-sm text-muted-foreground mb-3">
+                Afwezig op <strong>{format(selectedDate, 'EEEE d MMMM', { locale: nl })}</strong>
               </p>
               
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">Van</label>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-primary" />
+                    Van
+                  </label>
                   <Select value={startTime} onValueChange={setStartTime}>
-                    <SelectTrigger className="h-10 rounded-lg">
+                    <SelectTrigger className="rounded-xl">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -451,10 +237,13 @@ export default function Availability() {
                   </Select>
                 </div>
                 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-muted-foreground">Tot</label>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-primary" />
+                    Tot
+                  </label>
                   <Select value={endTime} onValueChange={setEndTime}>
-                    <SelectTrigger className="h-10 rounded-lg">
+                    <SelectTrigger className="rounded-xl">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -467,7 +256,7 @@ export default function Availability() {
               </div>
 
               <Button
-                className="w-full h-11 rounded-xl"
+                className="w-full mt-4 h-12 rounded-xl"
                 onClick={handleAddUnavailability}
                 disabled={isSubmitting}
               >
@@ -479,14 +268,66 @@ export default function Availability() {
                   />
                 ) : (
                   <>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Toevoegen
+                    <Plus className="w-5 h-5 mr-2" />
+                    Afwezigheid toevoegen
                   </>
                 )}
               </Button>
-            </motion.div>
-          )}
-        </div>
+            </div>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Existing unavailability list */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold">Geplande afwezigheid</h2>
+
+        {isLoading ? (
+          <div className="space-y-2">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-16 rounded-xl bg-muted animate-pulse" />
+            ))}
+          </div>
+        ) : unavailability.length === 0 ? (
+          <Card className="p-6 text-center rounded-2xl">
+            <CalendarOff className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground">Geen afwezigheid gepland</p>
+          </Card>
+        ) : (
+          <div className="space-y-2">
+            <AnimatePresence>
+              {unavailability.map((period) => (
+                <motion.div
+                  key={period.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border/50"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center shrink-0">
+                    <CalendarOff className="w-5 h-5 text-destructive" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-foreground">
+                      {format(parseISO(period.date), 'EEEE d MMMM', { locale: nl })}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {period.start_time.slice(0, 5)} - {period.end_time.slice(0, 5)}
+                    </p>
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-9 w-9 rounded-xl text-destructive hover:bg-destructive/10"
+                    onClick={() => setDeleteId(period.id)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
       </div>
 
       {/* Delete confirmation dialog */}
@@ -495,7 +336,7 @@ export default function Availability() {
           <AlertDialogHeader>
             <AlertDialogTitle>Afwezigheid verwijderen</AlertDialogTitle>
             <AlertDialogDescription>
-              Weet je zeker dat je deze afwezigheid wilt verwijderen?
+              Weet je zeker dat je deze afwezigheid wilt verwijderen? Leerlingen kunnen dan weer lessen boeken op dit moment.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
