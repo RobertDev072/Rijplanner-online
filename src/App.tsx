@@ -28,6 +28,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Agenda = lazy(() => import("./pages/Agenda"));
 const Schedule = lazy(() => import("./pages/Schedule"));
 const BookLesson = lazy(() => import("./pages/BookLesson"));
+const Availability = lazy(() => import("./pages/Availability"));
 const Users = lazy(() => import("./pages/Users"));
 const Lessons = lazy(() => import("./pages/Lessons"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -116,6 +117,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <BookLesson />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/availability"
+          element={
+            <ProtectedRoute>
+              <Availability />
             </ProtectedRoute>
           }
         />
