@@ -182,9 +182,19 @@ END:VCALENDAR`;
   };
 
   const canAccept = () => {
-    if (user?.role !== 'student') return false;
-    const credits = getCreditsForStudent(user.id);
-    return credits > 0;
+    if (user?.role === 'student') {
+      const credits = getCreditsForStudent(user.id);
+      return credits > 0;
+    }
+    // Instructors can always accept
+    return true;
+  };
+
+  // Check if current user should see action buttons (pending lesson they didn't create)
+  const shouldShowPendingActions = () => {
+    if (lesson.status !== 'pending') return false;
+    // The person who DIDN'T create the lesson sees the buttons
+    return lesson.created_by !== user?.id;
   };
 
   return (
@@ -267,8 +277,8 @@ END:VCALENDAR`;
         </div>
       )}
 
-      {/* Action buttons for pending lessons (student) */}
-      {showActions && lesson.status === 'pending' && user?.role === 'student' && (
+      {/* Action buttons for pending lessons (shown to the person who didn't create the lesson) */}
+      {shouldShowPendingActions() && (
         <div className="flex gap-2 mb-2">
           <Button
             size="sm"

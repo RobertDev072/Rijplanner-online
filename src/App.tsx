@@ -27,6 +27,7 @@ const Login = lazy(() => import("./pages/Login"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Agenda = lazy(() => import("./pages/Agenda"));
 const Schedule = lazy(() => import("./pages/Schedule"));
+const BookLesson = lazy(() => import("./pages/BookLesson"));
 const Users = lazy(() => import("./pages/Users"));
 const Lessons = lazy(() => import("./pages/Lessons"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -107,6 +108,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <Schedule />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/book"
+          element={
+            <ProtectedRoute>
+              <BookLesson />
             </ProtectedRoute>
           }
         />
